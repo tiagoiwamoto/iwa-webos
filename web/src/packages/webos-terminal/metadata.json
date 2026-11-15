@@ -1,0 +1,8 @@
+{
+  "type": "application",
+  "name": "WebOSTerminal",
+  "category": "utilities",
+  "title": {"en_EN": "Terminal", "pt_BR": "Terminal"},
+  "description": {"en_EN": "Terminal", "pt_BR": "Terminal"},
+  "files": ["main.js"]
+}

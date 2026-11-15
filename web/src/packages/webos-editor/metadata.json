@@ -1,0 +1,13 @@
+{
+  "type": "application",
+  "name": "WebOSEditor",
+  "category": "utilities",
+  "title": {"en_EN": "Code Editor", "pt_BR": "Code Editor"},
+  "description": {"en_EN": "Code Editor", "pt_BR": "Code Editor"},
+  "files": ["main.js"],
+  "mimes": [
+    "^text/",
+    "^application/(json|xml|x-yaml|yaml|javascript|x-javascript|x-sh|x-shellscript|toml|x-php|x-perl|x-python|sql|x-config)$",
+    "^inode/x-empty$"
+  ]
+}

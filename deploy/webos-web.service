@@ -1,0 +1,17 @@
+[Unit]
+Description=WebOS desktop (OS.js server)
+After=network.target webos-agent.service
+Requires=webos-agent.service
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/webos/web
+Environment=NODE_ENV=production
+# Can run as root to make the 'host:/' VFS mount fully writable, or as a
+# regular user for reduced file access.
+ExecStart=/usr/bin/node src/server/index.js
+Restart=on-failure
+User=root
+
+[Install]
+WantedBy=multi-user.target

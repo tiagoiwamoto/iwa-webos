@@ -1,0 +1,599 @@
+/*!
+ * OS.js - JavaScript Cloud/Web Desktop Platform
+ *
+ * Copyright (c) 2011-2020, Anders Evenrud <andersevenrud@gmail.com>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice, this
+ *    list of conditions and the following disclaimer
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * @author  Anders Evenrud <andersevenrud@gmail.com>
+ * @licence Simplified BSD License
+ */
+
+//
+// This is the client base stylesheet.
+// This is where you add all your dependent styles and override any
+// OS.js defaults.
+//
+
+@import "~typeface-roboto/index.css";
+@import "~@osjs/client/dist/main.css";
+@import "~@osjs/gui/dist/main.css";
+@import "~@osjs/dialogs/dist/main.css";
+@import "~@osjs/panels/dist/main.css";
+
+body,
+html {
+  width: 100%;
+  height: 100%;
+}
+
+/* ---- WebOS visual polish ---- */
+
+.osjs-desktop {
+  background: radial-gradient(1200px 600px at 20% -10%, #2b3a67 0%, transparent 60%),
+              radial-gradient(1000px 500px at 90% 110%, #3b2b67 0%, transparent 55%),
+              linear-gradient(160deg, #141824 0%, #0d1017 100%) !important;
+}
+
+/* top panel: removed — the dock carries launchers, clock and menus */
+.osjs-panel {
+  display: none !important;
+}
+
+/* windows */
+.osjs-window {
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, .55),
+              0 0 0 1px rgba(255, 255, 255, .06) !important;
+}
+
+.osjs-window--focused .osjs-window-header {
+  background: linear-gradient(180deg, #2a3040 0%, #222735 100%);
+}
+
+@keyframes webos-window-in {
+  from { opacity: 0; transform: scale(.96) translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+.osjs-window {
+  animation: webos-window-in .16s ease-out;
+}
+
+/* login screen */
+.osjs-login {
+  background: radial-gradient(900px 500px at 30% 20%, #1c2a4a 0%, transparent 60%),
+              linear-gradient(160deg, #10141f, #0a0d13) !important;
+}
+.osjs-login .osjs-login-box,
+.osjs-login > div {
+  border-radius: 14px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, .6) !important;
+}
+
+/* scrollbars */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, .14);
+  border-radius: 6px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, .28); background-clip: padding-box; }
+
+/* ---- Dock ---- */
+
+.webos-dock {
+  position: fixed;
+  left: 50%;
+  bottom: 12px;
+  transform: translate(-50%, 130%);
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  padding: 8px 12px;
+  border-radius: 24px;
+  background: rgba(22, 26, 36, .52);
+  backdrop-filter: blur(20px) saturate(1.5);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  border: 1px solid rgba(255, 255, 255, .12);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, .55),
+              inset 0 1px 0 rgba(255, 255, 255, .1);
+  z-index: 900000;
+  opacity: 0;
+  transition: transform .35s cubic-bezier(.2, .9, .25, 1.2), opacity .3s;
+}
+.webos-dock.visible {
+  transform: translate(-50%, 0);
+  opacity: 1;
+}
+
+.webos-dock-item {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: width .12s ease-out, height .12s ease-out, transform .15s ease-out;
+}
+.webos-dock-item img {
+  width: 82%;
+  height: 82%;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, .45));
+}
+.webos-dock-item .glyph {
+  font-size: 1em;   /* item fontSize is set by the magnifier in dock.js */
+  line-height: 1;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, .45));
+}
+.webos-dock-item:active { transform: scale(.88); }
+
+/* running indicator */
+.webos-dock-item::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #7fd4ff;
+  box-shadow: 0 0 6px #7fd4ff;
+  transform: translateX(-50%) scale(0);
+  transition: transform .18s ease-out;
+}
+.webos-dock-item.running::after { transform: translateX(-50%) scale(1); }
+
+/* launch bounce */
+@keyframes webos-dock-bounce {
+  0%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-16px); }
+  70% { transform: translateY(-5px); }
+}
+.webos-dock-item.bounce { animation: webos-dock-bounce .45s ease-out; }
+
+/* tooltip */
+.webos-dock-item:hover::before {
+  content: attr(title);
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 3px 10px;
+  border-radius: 8px;
+  background: rgba(15, 18, 26, .9);
+  border: 1px solid rgba(255, 255, 255, .12);
+  color: #dde4f0;
+  font-size: 12px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* ---- Dock tray: clock + appearance popover ---- */
+
+.webos-dock-tray {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: 10px;
+  padding-left: 10px;
+  border-left: 1px solid rgba(255,255,255,.12);
+  height: 44px;
+}
+.webos-dock-clock {
+  color: #dde4f0;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: .02em;
+  padding-right: 4px;
+  user-select: none;
+}
+.webos-dock-popover {
+  position: absolute;
+  right: 8px;
+  bottom: calc(100% + 12px);
+  width: 230px;
+  background: rgba(22, 26, 36, .92);
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 14px;
+  padding: 12px 14px;
+  box-shadow: 0 16px 48px rgba(0,0,0,.55);
+  color: #dde4f0;
+  font-size: 12px;
+  animation: webos-pop-in .15s ease-out;
+}
+@keyframes webos-pop-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.webos-dock-popover h4 { margin: 0 0 10px; font-size: 12px;
+  text-transform: uppercase; letter-spacing: .06em; color: #8fb7e8; }
+.webos-dock-popover .row { display: flex; align-items: center;
+  gap: 8px; margin-bottom: 10px; }
+.webos-dock-popover .row label { flex: 0 0 100px; color: #9ab; }
+.webos-dock-popover select {
+  flex: 1; background: #14171f; border: 1px solid #333845;
+  color: #dde4f0; border-radius: 6px; padding: 4px 6px;
+}
+.webos-dock-popover input[type=range] { flex: 1; accent-color: #7fd4ff; }
+.webos-dock-popover .row span { width: 34px; text-align: right; color: #9ab; }
+
+/* ---- Window manager themes ---- */
+
+body[data-wm] .osjs-window-header {
+  --wbtn: var(--wbtn-size, 14px);
+}
+
+body[data-wm] .osjs-window-button > div { display: none !important; }
+body[data-wm] .osjs-window-button {
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 !important;
+}
+body[data-wm] .osjs-window-button::after {
+  font-family: sans-serif; line-height: 1; pointer-events: none;
+}
+
+/* macOS: traffic lights on the left */
+body[data-wm="macos"] .osjs-window-header {
+  background: linear-gradient(180deg, #ececec, #d8d8d8) !important;
+  padding: 6px 10px !important;
+}
+body[data-wm="macos"] .osjs-window-header * { color: #4a4a4a !important; }
+body[data-wm="macos"] .osjs-window-title { text-align: center; }
+body[data-wm="macos"] .osjs-window-icon { display: none; }
+body[data-wm="macos"] .osjs-window-button {
+  order: -1;
+  width: var(--wbtn); height: var(--wbtn);
+  min-width: var(--wbtn); flex-basis: var(--wbtn);
+  border-radius: 50%; margin-right: 8px !important;
+}
+body[data-wm="macos"] .osjs-window-button[data-action="close"] { order: -3; background: #ff5f57; }
+body[data-wm="macos"] .osjs-window-button[data-action="minimize"] { order: -2; background: #febc2e; }
+body[data-wm="macos"] .osjs-window-button[data-action="maximize"] { order: -1; background: #28c840; }
+body[data-wm="macos"] .osjs-window-header:hover .osjs-window-button::after {
+  color: rgba(0,0,0,.55); font-size: calc(var(--wbtn) * .75);
+}
+body[data-wm="macos"] .osjs-window-button[data-action="close"]:hover::after { content: '\00D7'; }
+body[data-wm="macos"] .osjs-window-button[data-action="minimize"]:hover::after { content: '\2212'; }
+body[data-wm="macos"] .osjs-window-button[data-action="maximize"]:hover::after { content: '+'; }
+
+/* Windows 11: flat wide buttons on the right */
+body[data-wm="win11"] .osjs-window-header {
+  background: #f3f3f3 !important;
+  padding: 0 0 0 10px !important;
+}
+body[data-wm="win11"] .osjs-window-header * { color: #1b1b1b !important; }
+body[data-wm="win11"] .osjs-window-button {
+  width: calc(var(--wbtn) * 3.2); height: calc(var(--wbtn) * 2.2);
+  min-width: unset; flex-basis: unset; border-radius: 0;
+}
+body[data-wm="win11"] .osjs-window-button::after { font-size: calc(var(--wbtn) * .8); color: #444; }
+body[data-wm="win11"] .osjs-window-button[data-action="close"]::after { content: '\2715'; }
+body[data-wm="win11"] .osjs-window-button[data-action="minimize"]::after { content: '\2013'; }
+body[data-wm="win11"] .osjs-window-button[data-action="maximize"]::after { content: '\25A1'; font-size: calc(var(--wbtn) * .62); }
+body[data-wm="win11"] .osjs-window-button:hover { background: rgba(0,0,0,.08); }
+body[data-wm="win11"] .osjs-window-button[data-action="close"]:hover { background: #e81123; }
+body[data-wm="win11"] .osjs-window-button[data-action="close"]:hover::after { color: #fff; }
+
+/* KDE Breeze: flat square buttons, subtle hovers */
+body[data-wm="kde"] .osjs-window-header {
+  background: #eff0f1 !important;
+  padding: 4px 8px !important;
+}
+body[data-wm="kde"] .osjs-window-header * { color: #232629 !important; }
+body[data-wm="kde"] .osjs-window-button {
+  width: calc(var(--wbtn) * 1.8); height: calc(var(--wbtn) * 1.8);
+  min-width: unset; flex-basis: unset; border-radius: 4px;
+}
+body[data-wm="kde"] .osjs-window-button::after { font-size: var(--wbtn); color: #5a6470; }
+body[data-wm="kde"] .osjs-window-button[data-action="close"]::after { content: '\00D7'; }
+body[data-wm="kde"] .osjs-window-button[data-action="minimize"]::after { content: '\2013'; }
+body[data-wm="kde"] .osjs-window-button[data-action="maximize"]::after { content: '\25B3'; font-size: calc(var(--wbtn) * .8); }
+body[data-wm="kde"] .osjs-window-button:hover { background: rgba(61,174,233,.25); }
+body[data-wm="kde"] .osjs-window-button:hover::after { color: #1d99f3; }
+body[data-wm="kde"] .osjs-window-button[data-action="close"]:hover { background: #da4453; }
+body[data-wm="kde"] .osjs-window-button[data-action="close"]:hover::after { color: #fff; }
+
+/* GNOME Adwaita: dark header, round buttons */
+body[data-wm="gnome"] .osjs-window-header {
+  background: linear-gradient(180deg, #353a3e, #2b2e32) !important;
+  padding: 6px 10px !important;
+}
+body[data-wm="gnome"] .osjs-window-header * { color: #eeeeec !important; }
+body[data-wm="gnome"] .osjs-window-title { text-align: center; }
+body[data-wm="gnome"] .osjs-window-button {
+  width: calc(var(--wbtn) * 1.7); height: calc(var(--wbtn) * 1.7);
+  min-width: unset; flex-basis: unset; border-radius: 50%;
+  background: #454a4f; margin-left: 6px !important;
+}
+body[data-wm="gnome"] .osjs-window-button::after { font-size: calc(var(--wbtn) * .9); color: #d5d8dc; }
+body[data-wm="gnome"] .osjs-window-button[data-action="close"]::after { content: '\00D7'; }
+body[data-wm="gnome"] .osjs-window-button[data-action="minimize"]::after { content: '\2013'; }
+body[data-wm="gnome"] .osjs-window-button[data-action="maximize"]::after { content: '\25A1'; font-size: calc(var(--wbtn) * .6); }
+body[data-wm="gnome"] .osjs-window-button:hover { background: #5a6067; }
+body[data-wm="gnome"] .osjs-window-button[data-action="close"]:hover { background: #e01b24; }
+body[data-wm="gnome"] .osjs-window-button[data-action="close"]:hover::after { color: #fff; }
+
+/* ---- IwaWebOs brand ---- */
+
+.osjs-login::before {
+  content: '';
+  display: block;
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 6px;
+  background: url('dog.svg') center/contain no-repeat;
+}
+.osjs-login::after {
+  content: 'IwaWebOs';
+  display: block;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 600;
+  color: #dde4f0;
+  margin-bottom: 18px;
+  letter-spacing: .04em;
+}
+
+/* ---- Dock separator + session menu ---- */
+
+.webos-dock-sep {
+  width: 1px;
+  height: 34px;
+  align-self: center;
+  background: rgba(255,255,255,.14);
+  margin: 0 6px;
+}
+.webos-dock-menu { padding: 6px; width: 170px; }
+.webos-dock-menu button {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  margin: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #dde4f0;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+.webos-dock-menu button:hover { background: rgba(127, 212, 255, .15); }
+
+/* ---- GNOME-style launcher ---- */
+
+.webos-launcher {
+  position: fixed;
+  inset: 0;
+  z-index: 950000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8vh 6vw;
+  background: rgba(10, 13, 19, .72);
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  animation: webos-launcher-in .18s ease-out;
+}
+@keyframes webos-launcher-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.webos-launcher-search {
+  width: 320px;
+  padding: 10px 18px;
+  margin-bottom: 5vh;
+  border-radius: 24px;
+  border: 1px solid rgba(255,255,255,.18);
+  background: rgba(255,255,255,.08);
+  color: #dde4f0;
+  font-size: 15px;
+  outline: none;
+  text-align: center;
+}
+.webos-launcher-search:focus { border-color: #7fd4ff; }
+.webos-launcher-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 110px);
+  gap: 26px;
+  justify-content: center;
+  max-width: 900px;
+  overflow-y: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* legacy Edge/IE */
+}
+.webos-launcher-grid::-webkit-scrollbar {
+  display: none; /* Chrome/Safari — wheel still scrolls */
+}
+.webos-launcher-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 12px;
+  transition: transform .12s ease-out, background .12s;
+}
+.webos-launcher-item:hover {
+  background: rgba(255,255,255,.08);
+  transform: scale(1.06);
+}
+.webos-launcher-item img { width: 56px; height: 56px;
+  filter: drop-shadow(0 6px 12px rgba(0,0,0,.4)); }
+.webos-launcher-item .glyph { font-size: 44px; line-height: 1;
+  filter: drop-shadow(0 6px 12px rgba(0,0,0,.4)); }
+.webos-launcher-item .lbl { font-size: 12px; color: #dde4f0;
+  text-align: center; }
+
+/* ---- IwaWebOs login ---- */
+
+.osjs-login {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+.osjs-login form,
+.osjs-login > div {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 300px;
+  padding: 28px;
+  border-radius: 20px;
+  background: rgba(22, 26, 36, .6);
+  backdrop-filter: blur(18px) saturate(1.4);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  border: 1px solid rgba(255,255,255,.12);
+  box-shadow: 0 24px 70px rgba(0,0,0,.6);
+}
+.osjs-login input {
+  padding: 11px 14px !important;
+  border-radius: 10px !important;
+  border: 1px solid rgba(255,255,255,.15) !important;
+  background: rgba(255,255,255,.07) !important;
+  color: #eef2fa !important;
+  font-size: 14px !important;
+  outline: none !important;
+}
+.osjs-login input::placeholder { color: #7a869c; }
+.osjs-login input:focus {
+  border-color: #7fd4ff !important;
+  box-shadow: 0 0 0 3px rgba(127,212,255,.18) !important;
+}
+.osjs-login input[type=submit] {
+  background: linear-gradient(135deg, #3d7bd9, #6a4fd0) !important;
+  border: 0 !important;
+  font-weight: 600 !important;
+  letter-spacing: .03em;
+  transition: filter .15s, transform .1s;
+}
+.osjs-login input[type=submit]:hover { filter: brightness(1.15); }
+.osjs-login input[type=submit]:active { transform: scale(.97); }
+
+/* ---- Desktop widgets ---- */
+
+.webos-widgets {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 210px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(22, 26, 36, .5);
+  backdrop-filter: blur(14px) saturate(1.3);
+  -webkit-backdrop-filter: blur(14px) saturate(1.3);
+  border: 1px solid rgba(255,255,255,.1);
+  box-shadow: 0 8px 30px rgba(0,0,0,.4);
+  z-index: 0;
+}
+.webos-widgets .ww-head {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: #8fb7e8;
+  margin-bottom: 8px;
+}
+.webos-widgets .ww-metric { margin-bottom: 7px; }
+.webos-widgets .ww-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  margin-bottom: 2px;
+}
+.webos-widgets .ww-label { color: #8b93a5; }
+.webos-widgets .ww-val { color: #dde4f0; font-variant-numeric: tabular-nums; }
+.webos-widgets .ww-bar {
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(255,255,255,.08);
+  overflow: hidden;
+}
+.webos-widgets .ww-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width .6s ease-out, background .6s;
+}
+.webos-widgets .ww-foot {
+  margin-top: 6px;
+  font-size: 10px;
+  color: #6b7280;
+  text-align: center;
+}
+
+/* ---- titlebar alignment fix ---- */
+
+.osjs-window-header {
+  display: flex;
+  align-items: center;
+}
+.osjs-window-header .osjs-window-icon {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.osjs-window-header .osjs-window-title {
+  display: flex;
+  align-items: center;
+  line-height: 1;
+  min-height: 1em;
+}
+body[data-wm="macos"] .osjs-window-title {
+  justify-content: center;
+}
+body[data-wm="gnome"] .osjs-window-title {
+  justify-content: center;
+}
+
+/* ---- wallpaper gallery (Settings -> Background) ---- */
+
+.webos-wallpaper-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  width: 100%;
+  margin: 6px 0 14px;
+}
+.webos-wallpaper-thumb {
+  width: 100%;
+  aspect-ratio: 16/9;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 2px solid rgba(255, 255, 255, .18);
+  cursor: pointer;
+  transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+.webos-wallpaper-thumb:hover {
+  transform: scale(1.04);
+  border-color: rgba(127, 212, 255, .7);
+}
+.webos-wallpaper-thumb[data-selected] {
+  border-color: #7fd4ff;
+  box-shadow: 0 0 0 3px rgba(127, 212, 255, .35);
+}

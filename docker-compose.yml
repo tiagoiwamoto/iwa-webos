@@ -1,0 +1,34 @@
+services:
+  webos:
+    build: .
+    container_name: linux-webos
+    privileged: true            # required for systemd as PID 1
+    stop_signal: SIGRTMIN+3     # systemd's shutdown signal
+    tmpfs:
+      - /run
+      - /run/lock
+      - /tmp
+    ports:
+      - "8000:8000"
+    environment:
+      # auth mode: 'pam' = real Linux users; anything else = dev null adapter
+      WEBOS_AUTH: pam
+      # only members of this unix group may log in (empty = any valid user)
+      WEBOS_REQUIRED_GROUPS: webos
+      # WEBOS_DENY_USERS: root
+      # real home dirs instead of web/vfs/<user>
+      WEBOS_VFS_ROOT: /home
+      # demo user created on boot (change the password!)
+      WEBOS_USER: webos
+      WEBOS_PASSWORD: webos
+      # server app store index (CasaOS-compatible format)
+      # WEBOS_STORE_URL: https://cdn.jsdelivr.net/gh/IceWhaleTech/CasaOS-AppStore@gh-pages
+      # WEBOS_TOKEN: set to pin a fixed agent token (random per boot otherwise)
+    volumes:
+      # lets the Docker app / app store manage the HOST's containers —
+      # full host root equivalent; remove if you don't need it
+      - /var/run/docker.sock:/var/run/docker.sock
+      - webos-apps:/srv/webos-apps
+
+volumes:
+  webos-apps:

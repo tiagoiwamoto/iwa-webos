@@ -1,0 +1,23 @@
+# secrets
+.env
+*.pem
+*.key
+
+# ide
+.idea/
+.vscode/
+
+# python
+__pycache__/
+*.pyc
+agent/.venv/
+
+# node
+web/node_modules/
+web/dist/
+web/packages.json
+web/vfs/
+
+# misc
+*.log
+.DS_Store

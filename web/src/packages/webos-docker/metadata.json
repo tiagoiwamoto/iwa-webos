@@ -1,0 +1,8 @@
+{
+  "type": "application",
+  "name": "WebOSDocker",
+  "category": "utilities",
+  "title": {"en_EN": "Docker", "pt_BR": "Docker"},
+  "description": {"en_EN": "Docker", "pt_BR": "Docker"},
+  "files": ["main.js"]
+}

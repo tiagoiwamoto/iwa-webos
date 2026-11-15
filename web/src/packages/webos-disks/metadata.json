@@ -1,0 +1,8 @@
+{
+  "type": "application",
+  "name": "WebOSDisks",
+  "category": "utilities",
+  "title": {"en_EN": "Disks", "pt_BR": "Disks"},
+  "description": {"en_EN": "Disks", "pt_BR": "Disks"},
+  "files": ["main.js"]
+}

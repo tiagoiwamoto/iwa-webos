@@ -1,0 +1,8 @@
+{
+  "type": "application",
+  "name": "WebOSProcesses",
+  "category": "utilities",
+  "title": {"en_EN": "Tasks", "pt_BR": "Tarefas"},
+  "description": {"en_EN": "Task Manager", "pt_BR": "Gerenciador de tarefas"},
+  "files": ["main.js"]
+}

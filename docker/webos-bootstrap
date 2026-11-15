@@ -1,0 +1,38 @@
+#!/bin/bash
+# Early boot bootstrap for the WebOS container (runs as a oneshot unit
+# before sysinit.target, i.e. before webos-agent/webos-web):
+#   - /etc/pam.d/webos PAM service (dedicated, avoids login-service quirks)
+#   - /opt/webos/.env rewritten from PID1's environment (docker run -e)
+#   - 'webos' gate group + demo user
+set -u
+
+ENV_FILE=/opt/webos/.env
+
+cat > /etc/pam.d/webos <<'EOF'
+auth     required  pam_unix.so
+account  required  pam_unix.so
+EOF
+
+# PID1 (systemd) inherits `docker run -e` env; harvest WEBOS_* into .env
+: > "$ENV_FILE"
+while IFS='=' read -r -d '' name value; do
+  case "$name" in
+    WEBOS_*) printf '%s=%s\n' "$name" "$value" >> "$ENV_FILE"; export "$name=$value" ;;
+  esac
+done < /proc/1/environ
+
+grep -q '^WEBOS_TOKEN=' "$ENV_FILE" \
+  || echo "WEBOS_TOKEN=$(head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n')" >> "$ENV_FILE"
+
+getent group webos >/dev/null 2>&1 || groupadd webos
+
+WEBOS_USER="${WEBOS_USER:-webos}"
+WEBOS_PASSWORD="${WEBOS_PASSWORD:-webos}"
+WEBOS_GROUPS="${WEBOS_GROUPS:-webos}"
+
+if ! id "$WEBOS_USER" >/dev/null 2>&1; then
+  # -N: don't create a same-name primary group (clashes with 'webos' group)
+  useradd -m -s /bin/bash -N "$WEBOS_USER"
+fi
+[ -n "$WEBOS_GROUPS" ] && usermod -aG "$WEBOS_GROUPS" "$WEBOS_USER"
+[ -n "$WEBOS_PASSWORD" ] && echo "$WEBOS_USER:$WEBOS_PASSWORD" | chpasswd

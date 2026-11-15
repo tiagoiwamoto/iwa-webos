@@ -1,0 +1,8 @@
+{
+  "type": "application",
+  "name": "WebOSServices",
+  "category": "utilities",
+  "title": {"en_EN": "Services", "pt_BR": "Services"},
+  "description": {"en_EN": "Services", "pt_BR": "Services"},
+  "files": ["main.js"]
+}

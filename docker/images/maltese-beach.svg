@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080">
+  <defs>
+    <linearGradient id="sk3" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8fd0ff"/><stop offset="1" stop-color="#ffe8c9"/>
+    </linearGradient>
+    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#43c2de"/><stop offset="1" stop-color="#1f86ad"/>
+    </linearGradient>
+  </defs>
+  <rect width="1920" height="640" fill="url(#sk3)"/>
+  <circle cx="300" cy="200" r="140" fill="#fff3c4" opacity=".4"/>
+  <circle cx="300" cy="200" r="90" fill="#ffe27a"/>
+  <g fill="#fff" opacity=".85">
+    <ellipse cx="800" cy="140" rx="160" ry="40"/><ellipse cx="1300" cy="240" rx="140" ry="34"/>
+  </g>
+  <path d="M0 640 H1920 V800 H0 Z" fill="url(#sea)"/>
+  <g stroke="#eafcff" stroke-width="8" fill="none" opacity=".8">
+    <path d="M0 690 q120 -24 240 0 t240 0 t240 0 t240 0 t240 0 t240 0 t240 0 t240 0"/>
+    <path d="M0 745 q160 -20 320 0 t320 0 t320 0 t320 0 t320 0 t320 0" opacity=".6"/>
+  </g>
+  <path d="M0 780 Q600 740 960 790 T1920 770 V1080 H0 Z" fill="#ffe3ae"/>
+  <path d="M0 780 Q600 740 960 790 T1920 770" stroke="#fdf6e3" stroke-width="16" fill="none" opacity=".9"/>
+  <g stroke="#5b6b7a" stroke-width="5" fill="none" stroke-linecap="round">
+    <path d="M600 300 q18 -16 36 0 q18 -16 36 0"/><path d="M760 250 q14 -13 28 0 q14 -13 28 0"/>
+    <path d="M1560 330 q16 -14 32 0 q16 -14 32 0"/>
+  </g>
+  <g transform="translate(560 870)"><!-- beach ball -->
+    <circle r="52" fill="#fff"/>
+    <path d="M0 -52 A52 52 0 0 1 50 12 L0 0 Z" fill="#e84b4b"/>
+    <path d="M50 12 A52 52 0 0 1 -30 42 L0 0 Z" fill="#ffd76a"/>
+    <path d="M-30 42 A52 52 0 0 1 -52 -6 L0 0 Z" fill="#3fa7e8"/>
+    <circle r="10" fill="#fff"/>
+  </g>
+  <g stroke="#fff" stroke-width="9" stroke-linecap="round" opacity=".5" fill="none">
+    <path d="M900 850 q60 -16 120 -6"/><path d="M880 910 q70 -12 130 0"/>
+  </g>
+  <g transform="translate(1250 860) scale(1.9)"><!-- maltese running on sand -->
+    <path d="M-58 -26 q-30 -18 -20 -50 q18 8 20 28 q8 -14 22 -14" fill="#fdfbf7"/>
+    <rect x="-54" y="16" width="14" height="44" rx="7" fill="#efe7dc"/>
+    <rect x="-28" y="20" width="14" height="42" rx="7" fill="#fdfbf7"/>
+    <ellipse cx="0" cy="0" rx="62" ry="40" fill="#fdfbf7"/>
+    <rect x="28" y="22" width="14" height="42" rx="7" fill="#efe7dc"/>
+    <rect x="52" y="14" width="14" height="50" rx="7" fill="#fdfbf7"/>
+    <circle cx="74" cy="-34" r="34" fill="#fdfbf7"/>
+    <ellipse cx="52" cy="-32" rx="10" ry="24" fill="#e9e2d8"/>
+    <ellipse cx="92" cy="-24" rx="9" ry="20" fill="#e9e2d8" transform="rotate(16 92 -24)"/>
+    <circle cx="60" cy="-62" r="10" fill="#fdfbf7"/><circle cx="76" cy="-66" r="11" fill="#fdfbf7"/><circle cx="92" cy="-60" r="9" fill="#fdfbf7"/>
+    <circle cx="88" cy="-40" r="4.5" fill="#2b2118"/><circle cx="90" cy="-42" r="1.6" fill="#fff"/>
+    <ellipse cx="104" cy="-28" rx="7" ry="5.5" fill="#2b2118"/>
+    <rect x="96" y="-22" width="11" height="20" rx="5.5" fill="#f4879b"/>
+    <line x1="101.5" y1="-17" x2="101.5" y2="-6" stroke="#d9607a" stroke-width="2" stroke-linecap="round"/>
+  </g>
+</svg>

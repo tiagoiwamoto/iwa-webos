@@ -1,0 +1,8 @@
+{
+  "type": "application",
+  "name": "WebOSPanel",
+  "category": "utilities",
+  "title": {"en_EN": "Control Panel", "pt_BR": "Control Panel"},
+  "description": {"en_EN": "Control Panel", "pt_BR": "Control Panel"},
+  "files": ["main.js"]
+}

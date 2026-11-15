@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <!-- floppy ears -->
+  <ellipse cx="20" cy="68" rx="13" ry="36" fill="#e9e2d8"/>
+  <ellipse cx="108" cy="68" rx="13" ry="36" fill="#e9e2d8"/>
+  <!-- head -->
+  <circle cx="64" cy="58" r="44" fill="#fdfbf7"/>
+  <!-- top fluff -->
+  <circle cx="44" cy="24" r="12" fill="#fdfbf7"/>
+  <circle cx="64" cy="17" r="13" fill="#fdfbf7"/>
+  <circle cx="84" cy="24" r="12" fill="#fdfbf7"/>
+  <!-- cheek fluff -->
+  <circle cx="26" cy="74" r="10" fill="#fdfbf7"/>
+  <circle cx="102" cy="74" r="10" fill="#fdfbf7"/>
+  <!-- eyes -->
+  <circle cx="47" cy="52" r="6" fill="#2b2118"/>
+  <circle cx="49" cy="50" r="2" fill="#fff"/>
+  <circle cx="81" cy="52" r="6" fill="#2b2118"/>
+  <circle cx="83" cy="50" r="2" fill="#fff"/>
+  <!-- nose -->
+  <ellipse cx="64" cy="69" rx="9" ry="7" fill="#2b2118"/>
+  <!-- mouth -->
+  <path d="M64 76 q-9 7 -15 3 M64 76 q9 7 15 3" stroke="#c9bfb4" stroke-width="3"
+        fill="none" stroke-linecap="round"/>
+  <!-- tongue out -->
+  <rect x="56" y="80" width="16" height="28" rx="8" fill="#f4879b"/>
+  <line x1="64" y1="85" x2="64" y2="102" stroke="#d9607a" stroke-width="2.5"
+        stroke-linecap="round"/>
+</svg>

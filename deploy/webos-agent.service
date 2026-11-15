@@ -1,0 +1,17 @@
+[Unit]
+Description=WebOS privileged agent (FastAPI)
+After=network.target docker.service
+Wants=docker.service
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/webos/agent
+EnvironmentFile=/opt/webos/.env
+ExecStart=/opt/webos/agent/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8765
+Restart=on-failure
+# Must be root (or equivalent) for useradd/usermod, chpasswd, udisksctl and
+# the docker socket. Consider hardening with polkit rules instead if desired.
+User=root
+
+[Install]
+WantedBy=multi-user.target

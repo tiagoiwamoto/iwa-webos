@@ -1,0 +1,8 @@
+{
+  "type": "application",
+  "name": "WebOSSysInfo",
+  "category": "utilities",
+  "title": {"en_EN": "System Information", "pt_BR": "System Information"},
+  "description": {"en_EN": "System Information", "pt_BR": "System Information"},
+  "files": ["main.js"]
+}

@@ -1,0 +1,8 @@
+{
+  "type": "application",
+  "name": "WebOSCron",
+  "category": "utilities",
+  "title": {"en_EN": "Cron Manager", "pt_BR": "Cron Manager"},
+  "description": {"en_EN": "visual crontab manager", "pt_BR": "visual crontab manager"},
+  "files": ["main.js"]
+}

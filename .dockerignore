@@ -1,0 +1,10 @@
+.git
+.env
+agent/.venv
+**/__pycache__
+web/node_modules
+web/session-store.db
+session-store.db
+Dockerfile
+docker-compose.yml
+.dockerignore

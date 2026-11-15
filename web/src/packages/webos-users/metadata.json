@@ -1,0 +1,8 @@
+{
+  "type": "application",
+  "name": "WebOSUsers",
+  "category": "utilities",
+  "title": {"en_EN": "Users", "pt_BR": "Users"},
+  "description": {"en_EN": "Users", "pt_BR": "Users"},
+  "files": ["main.js"]
+}
