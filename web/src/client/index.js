@@ -70,6 +70,22 @@ const init = () => {
   osjs.register(DialogServiceProvider);
   osjs.register(GUIServiceProvider);
 
+  // app windows abrem com metade da tela, centralizadas
+  // (dialogs e forms com resizable:false mantêm o tamanho)
+  osjs.on('osjs/window:create', win => {
+    const a = win.attributes || {};
+    if (a.resizable === false || a.maximizable === false || a.modal) {
+      return;
+    }
+    const w = Math.round(window.innerWidth / 2);
+    const h = Math.round(window.innerHeight / 2);
+    win.setDimension({width: w, height: h});
+    win.setPosition({
+      left: Math.round((window.innerWidth - w) / 2),
+      top: Math.round((window.innerHeight - h) / 2)
+    });
+  });
+
   createDock(osjs);
   const widgets = createWidgets();
   osjs.on('osjs/core:logged-in', () => setTimeout(widgets.build, 600));
