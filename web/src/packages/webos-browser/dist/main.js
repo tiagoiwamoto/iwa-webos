@@ -663,7 +663,7 @@ const register = (core, args, options, metadata) => {
   });
   const frame = Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_2__["el"])('iframe', {
     class: 'nn-view',
-    sandbox: 'allow-scripts allow-same-origin allow-forms allow-popups'
+    sandbox: 'allow-scripts allow-forms allow-popups'
   });
   const msg = Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_2__["el"])('span', {
     class: 'nn-msg'

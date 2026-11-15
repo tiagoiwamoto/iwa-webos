@@ -55,7 +55,7 @@ const HOME_HTML = `<!DOCTYPE html><html><body bgcolor="#c0c0c0" text="#000" link
 
 const register = (core, args, options, metadata) => {
   const proc = core.make('osjs/application', {args, options, metadata});
-  const frame = el('iframe', {class: 'nn-view', sandbox: 'allow-scripts allow-same-origin allow-forms allow-popups'});
+  const frame = el('iframe', {class: 'nn-view', sandbox: 'allow-scripts allow-forms allow-popups'});
   const msg = el('span', {class: 'nn-msg'}, 'Document: Done');
   const throb = el('div', {class: 'nn-throb'}, 'N');
   const url = el('input', {class: 'nn-loc', spellcheck: 'false'});
