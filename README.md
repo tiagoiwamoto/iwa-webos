@@ -14,8 +14,8 @@ alternativa à UI tradicional de Cockpit/CasaOS/Webmin.
 ## Instalação rápida
 
 ```bash
-git clone <url-do-repo> linux-webos
-cd linux-webos
+git clone https://github.com/tiagoiwamoto/iwa-webos.git
+cd iwa-webos
 ./install.sh
 ```
 

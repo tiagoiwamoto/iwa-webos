@@ -4,7 +4,7 @@
 # builda a imagem e sobe o container systemd.
 #
 # Uso:
-#   git clone <repo> linux-webos && cd linux-webos && ./install.sh
+#   git clone https://github.com/tiagoiwamoto/iwa-webos.git && cd iwa-webos && ./install.sh
 #   ./install.sh -y          # sem perguntas (instala deps automaticamente)
 #   ./install.sh --no-deps   # só detecta, não instala nada (falha se faltar)
 #
