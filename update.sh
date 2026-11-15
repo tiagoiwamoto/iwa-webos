@@ -45,4 +45,4 @@ fi
 
 # 3) reinstala (install.sh já exclui os arquivos de estado do rsync --delete
 #    e só escreve .env se não existir)
-exec sh ./install.sh -y
+exec bash ./install.sh -y
