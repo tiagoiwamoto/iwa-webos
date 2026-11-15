@@ -28,6 +28,8 @@ alternativa à UI tradicional de Cockpit/CasaOS/Webmin.
 | ![Store](docs/screenshots/18-store.png) | ![Terminal](docs/screenshots/19-terminal.png) | ![FileManager](docs/screenshots/20-filemanager.png) |
 | **Settings** | **Remote Access** | **Backup** |
 | ![Settings](docs/screenshots/21-settings.png) | ![Remote](docs/screenshots/22-remote.png) | ![Backup](docs/screenshots/24-backup.png) |
+| **Navigator** | | |
+| ![Navigator](docs/screenshots/25-navigator.png) | | |
 
 ## Plataformas testadas
 
@@ -124,6 +126,7 @@ PID 1 (`privileged`, `tmpfs /run`) sobe as mesmas unidades mais
 | Logs | Journald com filtros (unit/prio/tempo/texto), live tail, export | `journalctl` |
 | Remote Access | Conexões salvas SSH/SFTP/SCP/FTP + navegador remoto, exec de comandos e Git (clone/pull/push/log) | `ssh`/`scp`/`curl`/`git` |
 | Backup | Sync de pastas locais para Google Drive (OAuth via rclone, jobs com toggle + sync sob demanda) | `rclone` |
+| Navigator | Navegador web estilo Netscape clássico — back/forward/reload/stop, Location bar, home retrô e proxy same-origin para sites que bloqueiam iframe | iframe + proxy (`requests`) |
 | SysInfo | Gauges CPU/RAM/disco/rede, modelo, uptime, hostname | agente `/api/system` |
 | Editor | Monaco para arquivos do host | agente `/api/files` |
 | Settings | Temas, window style (Win11/macOS/KDE/GNOME), wallpapers | OS.js settings |

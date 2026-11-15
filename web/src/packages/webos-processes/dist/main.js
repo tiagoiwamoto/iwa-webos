@@ -1482,11 +1482,21 @@ var formWindow = function formWindow(proc, _ref3, cb) {
         gap: '8px'
       }
     }].concat(_babel_runtime_helpers_toConsumableArray__WEBPACK_IMPORTED_MODULE_0___default()(fields.map(function (f) {
-      inputs[f.name] = el('input', {
+      inputs[f.name] = f.options ? el('select', {
+        "class": 'webos-input'
+      }, f.options.map(function (o) {
+        var _o$value, _o$label;
+
+        return el('option', {
+          value: (_o$value = o.value) !== null && _o$value !== void 0 ? _o$value : o
+        }, (_o$label = o.label) !== null && _o$label !== void 0 ? _o$label : o);
+      })) : el('input', {
         "class": 'webos-input',
         type: f.type || 'text',
-        placeholder: f.placeholder || ''
+        placeholder: f.placeholder || '',
+        value: f.value || ''
       });
+      if (f.value) inputs[f.name].value = f.value;
       return el('label', {
         style: {
           display: 'grid',

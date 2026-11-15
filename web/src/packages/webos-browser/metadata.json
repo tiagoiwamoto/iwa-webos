@@ -1,0 +1,8 @@
+{
+  "type": "application",
+  "name": "WebOSBrowser",
+  "category": "utilities",
+  "title": {"en_EN": "Navigator", "pt_BR": "Navigator"},
+  "description": {"en_EN": "Web browser (Netscape style)", "pt_BR": "Navegador web (estilo Netscape)"},
+  "files": ["main.js"]
+}
