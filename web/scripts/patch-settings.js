@@ -1,5 +1,5 @@
 /*
- * Injects IwaWebOs appearance items into the Settings app:
+ * Injects Malta OS appearance items into the Settings app:
  *  - Themes: "Window style" + "Titlebar button size" selects
  *    (saved under osjs/desktop -> webos.{wm,wbtn} — only `desktop.*` and
  *    `locale.*` paths survive the app's save()).

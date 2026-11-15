@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# IwaWebOs installer.
+# Malta OS installer.
 #
 #   ./install.sh              # instala NATIVO no host (default) — o painel
 #                             # gerencia ESTE sistema: usuários, systemd,
@@ -112,7 +112,7 @@ ensure() { # $1 = dep lógico, $2 = teste (comando)
 
 cd "$(dirname "$(readlink -f "$0")")"
 [ -f docker-compose.yml ] || die "rode de dentro do repo (onde está docker-compose.yml)"
-[ "$(uname -s)" = "Linux" ] || die "IwaWebOs precisa de Linux."
+[ "$(uname -s)" = "Linux" ] || die "Malta OS precisa de Linux."
 
 # =========================================================================
 install_docker() {
@@ -173,7 +173,7 @@ install_docker() {
 
   cat <<EOF
 
-$(printf '\033[1;32m')IwaWebOs (demo em container) no ar!$(printf '\033[0m')
+$(printf '\033[1;32m')Malta OS (demo em container) no ar!$(printf '\033[0m')
 
   URL:    http://localhost:$PORT
   Login:  webos / webos   (criado no boot do container — é demo!)
@@ -327,7 +327,7 @@ EOF
   ip="$(hostname -I 2>/dev/null | awk '{print $1}')"
   cat <<EOF
 
-$(printf '\033[1;32m')IwaWebOs instalado e gerenciando ESTE sistema!$(printf '\033[0m')
+$(printf '\033[1;32m')Malta OS instalado e gerenciando ESTE sistema!$(printf '\033[0m')
 
   URL:    http://${ip:-localhost}:$PORT
   Login:  seu usuário Linux + senha  (precisa estar no grupo 'webos')

@@ -329,7 +329,7 @@ body[data-wm="gnome"] .osjs-window-button:hover { background: #5a6067; }
 body[data-wm="gnome"] .osjs-window-button[data-action="close"]:hover { background: #e01b24; }
 body[data-wm="gnome"] .osjs-window-button[data-action="close"]:hover::after { color: #fff; }
 
-/* ---- IwaWebOs brand ---- */
+/* ---- Malta OS brand ---- */
 
 @keyframes webos-login-in {
   from { opacity: 0; transform: translateY(16px) scale(.97); }
@@ -348,7 +348,7 @@ body[data-wm="gnome"] .osjs-window-button[data-action="close"]:hover::after { co
   animation: webos-login-in .5s ease-out;
 }
 .osjs-login::after {
-  content: 'IwaWebOs';
+  content: 'Malta OS';
   order: 2;
   text-align: center;
   font-size: 28px;

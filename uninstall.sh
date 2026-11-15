@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# IwaWebOs uninstaller.
+# Malta OS uninstaller.
 #
 #   ./uninstall.sh              # desinstala do MODO usado na instalação:
 #                               # nativo (units/PAM//opt/webos) se detectado,

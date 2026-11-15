@@ -52,7 +52,7 @@ webpack(configs, (err, stats) => {
     .forEach(f => {
       const file = path.join(root, 'dist', f);
       const src = fs.readFileSync(file, 'utf8');
-      fs.writeFileSync(file, src.replace(/OS\.js/g, 'IwaWebOs'));
+      fs.writeFileSync(file, src.replace(/OS\.js/g, 'Malta OS'));
     });
   process.exit(0);
 });

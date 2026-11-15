@@ -1,4 +1,4 @@
-# IwaWebOs
+# Malta OS
 
 Um "desktop de sistema operacional" no navegador para administrar Linux —
 alternativa à UI tradicional de Cockpit/CasaOS/Webmin.

@@ -175,8 +175,8 @@ export const createDock = core => {
     // brand/start button opens the app launcher
     const brand = document.createElement('div');
     brand.className = 'webos-dock-item';
-    brand.dataset.app = 'IwaWebOs';
-    brand.title = 'IwaWebOs';
+    brand.dataset.app = 'Malta OS';
+    brand.title = 'Malta OS';
     const brandImg = document.createElement('img');
     brandImg.src = '/dog.svg';
     brand.appendChild(brandImg);

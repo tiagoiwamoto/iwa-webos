@@ -47,7 +47,7 @@ module.exports = {
     new HtmlWebpackPlugin({
       template: path.resolve(__dirname, 'src/client/index.ejs'),
       favicon: path.resolve(__dirname, 'src/client/dog.svg'),
-      title: 'IwaWebOs'
+      title: 'Malta OS'
     }),
     new MiniCssExtractPlugin({
       filename: '[name].css'
