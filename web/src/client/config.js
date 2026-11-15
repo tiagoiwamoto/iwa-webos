@@ -55,7 +55,7 @@ export default {
       // (reachable through the 'host:' system mount). Users can override it
       // in Settings -> Background.
       background: {
-        src: {path: 'host:/home/images/maltes-run-ball.jpeg'},
+        src: {path: 'host:/home/images/maltes-sentado-pb-metade-wallpaper.png'},
         style: 'cover',
         color: '#131a44'
       }
