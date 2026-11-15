@@ -8,6 +8,9 @@
 #   ./install.sh --docker     # modo demo: tudo dentro de um container.
 #   ./install.sh -y           # sem perguntas (instala deps automaticamente)
 #   ./install.sh --no-deps    # só detecta; falha se algo faltar
+#   WEBOS_PORT=9090 ./install.sh   # define a porta sem perguntar
+#                             # (interativo pergunta a porta; update
+#                             # reutiliza a porta atual do .env)
 #
 # Fluxo:
 #   git clone https://github.com/tiagoiwamoto/iwa-webos.git
@@ -44,6 +47,12 @@ confirm() {
   [ "$YES" -eq 1 ] && return 0
   printf '%s [y/N] ' "$1"; read -r a </dev/tty 2>/dev/null || a=n
   [ "$a" = "y" ] || [ "$a" = "Y" ]
+}
+
+ask() { # ask "pergunta" default  -> resposta (ou default com -y/env)
+  [ "$YES" -eq 1 ] && { echo "$2"; return; }
+  printf '%s [%s] ' "$1" "$2"; read -r a </dev/tty 2>/dev/null || a=""
+  echo "${a:-$2}"
 }
 
 install_pkg() {
@@ -296,8 +305,19 @@ install_host() {
 
   # --- config ---
   log "Escrevendo .env e PAM"
+  # porta do painel: pergunta (interativo) ou WEBOS_PORT/-y/default
+  cur_port=""
+  [ -f "$PREFIX/.env" ] && \
+    cur_port="$($SUDO grep -oE '^WEBOS_PORT=[0-9]+' "$PREFIX/.env" | cut -d= -f2)"
+  PORT="${WEBOS_PORT:-$(ask 'Porta do painel web' "${cur_port:-8000}")}"
   if [ -f "$PREFIX/.env" ]; then
     ok ".env existente preservado (token/config mantidos)"
+    if $SUDO grep -q '^WEBOS_PORT=' "$PREFIX/.env"; then
+      $SUDO sed -i "s/^WEBOS_PORT=.*/WEBOS_PORT=$PORT/" "$PREFIX/.env"
+    else
+      echo "WEBOS_PORT=$PORT" | $SUDO tee -a "$PREFIX/.env" >/dev/null
+    fi
+    ok "porta: $PORT"
   else
     token="$(head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n')"
     $SUDO tee "$PREFIX/.env" >/dev/null <<EOF
@@ -306,6 +326,7 @@ WEBOS_REQUIRED_GROUPS=webos
 WEBOS_VFS_ROOT=/home
 WEBOS_TOKEN=$token
 WEBOS_SOURCE_DIR=$(pwd)
+WEBOS_PORT=$PORT
 EOF
   fi
   $SUDO tee /etc/pam.d/webos >/dev/null <<'EOF'
