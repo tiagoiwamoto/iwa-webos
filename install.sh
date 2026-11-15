@@ -87,6 +87,13 @@ pkg_for() { # $1 = dep lógico → nomes por distro
       elif need apk;     then echo "gcc musl-dev python3-dev"
       else echo "gcc"; fi ;;
     npm) echo "npm" ;;
+    remote) # app de acesso remoto: ssh/scp + sshpass + git + ftp-via-curl
+      if   need apt-get; then echo "openssh-client sshpass git curl"
+      elif need dnf;     then echo "openssh-clients sshpass git curl"
+      elif need pacman;  then echo "openssh sshpass git curl"
+      elif need zypper;  then echo "openssh sshpass git curl"
+      elif need apk;     then echo "openssh-client sshpass git curl"
+      else echo "openssh sshpass git curl"; fi ;;
   esac
 }
 
@@ -192,6 +199,7 @@ install_host() {
   # gcc + headers Python: pip compila psutil do source onde não há wheel (armv7l)
   { need gcc && python3 -c 'import sysconfig,os,sys; sys.exit(0 if os.path.isfile(sysconfig.get_path("include")+"/Python.h") else 1)'; } \
     || ensure build false
+  { need sshpass && need git && need ssh && need curl; } || ensure remote false
 
   # --- node >= 20.6 + npm ---
   NODEDIR_PKG="$PREFIX/node"   # runtime próprio, quando baixado

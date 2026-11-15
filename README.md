@@ -26,8 +26,8 @@ alternativa à UI tradicional de Cockpit/CasaOS/Webmin.
 | ![Docker](docs/screenshots/15-docker.png) | ![Users](docs/screenshots/16-users.png) | ![Cron](docs/screenshots/17-cron.png) |
 | **App Store** | **Terminal** | **File Manager** |
 | ![Store](docs/screenshots/18-store.png) | ![Terminal](docs/screenshots/19-terminal.png) | ![FileManager](docs/screenshots/20-filemanager.png) |
-| **Settings** | | |
-| ![Settings](docs/screenshots/21-settings.png) | | |
+| **Settings** | **Remote Access** | |
+| ![Settings](docs/screenshots/21-settings.png) | ![Remote](docs/screenshots/22-remote.png) | |
 
 ## Plataformas testadas
 
@@ -122,6 +122,7 @@ PID 1 (`privileged`, `tmpfs /run`) sobe as mesmas unidades mais
 | Users | CRUD de usuários, senha, lock/unlock | `useradd`/`usermod` |
 | Cron | Crontab visual: presets, toggle, por usuário | `crontab` |
 | Logs | Journald com filtros (unit/prio/tempo/texto), live tail, export | `journalctl` |
+| Remote Access | Conexões salvas SSH/SFTP/SCP/FTP + navegador remoto, exec de comandos e Git (clone/pull/push/log) | `ssh`/`scp`/`curl`/`git` |
 | SysInfo | Gauges CPU/RAM/disco/rede, modelo, uptime, hostname | agente `/api/system` |
 | Editor | Monaco para arquivos do host | agente `/api/files` |
 | Settings | Temas, window style (Win11/macOS/KDE/GNOME), wallpapers | OS.js settings |

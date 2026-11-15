@@ -1,0 +1,8 @@
+{
+  "type": "application",
+  "name": "WebOSRemote",
+  "category": "utilities",
+  "title": {"en_EN": "Remote Access", "pt_BR": "Acesso Remoto"},
+  "description": {"en_EN": "SSH/SFTP/SCP/FTP/Git remote access", "pt_BR": "acesso remoto SSH/SFTP/SCP/FTP/Git"},
+  "files": ["main.js"]
+}
