@@ -11,6 +11,24 @@ alternativa à UI tradicional de Cockpit/CasaOS/Webmin.
 - **Autenticação real**: login PAM contra usuários Linux do sistema
   (`WEBOS_AUTH=pam`); o terminal abre shell como o usuário da sessão.
 
+## Screenshots
+
+![Login](docs/screenshots/01-login.png)
+
+![Desktop](docs/screenshots/02-desktop.png)
+
+| Launcher | System Info | Logs |
+|---|---|---|
+| ![Launcher](docs/screenshots/03-launcher.png) | ![SysInfo](docs/screenshots/10-sysinfo.png) | ![Logs](docs/screenshots/11-logs.png) |
+| **Services** | **Processes** | **Disks** |
+| ![Services](docs/screenshots/12-services.png) | ![Processes](docs/screenshots/13-processes.png) | ![Disks](docs/screenshots/14-disks.png) |
+| **Docker** | **Users** | **Cron** |
+| ![Docker](docs/screenshots/15-docker.png) | ![Users](docs/screenshots/16-users.png) | ![Cron](docs/screenshots/17-cron.png) |
+| **App Store** | **Terminal** | **File Manager** |
+| ![Store](docs/screenshots/18-store.png) | ![Terminal](docs/screenshots/19-terminal.png) | ![FileManager](docs/screenshots/20-filemanager.png) |
+| **Settings** | | |
+| ![Settings](docs/screenshots/21-settings.png) | | |
+
 ## Instalação rápida
 
 ```bash
