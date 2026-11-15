@@ -22,7 +22,8 @@ css('webos-backup', `
     font-family: monospace; font-size: 11px; white-space: pre-wrap;
     border-radius: 6px; max-height: 160px; overflow: auto; }
   .wb-ok { color: #7ddc8f; } .wb-bad { color: #f66; }
-  .wb-pick { display: flex; flex-direction: column; height: 100%; }
+  .wb-pick { display: flex; flex-direction: column; height: 100%;
+    background: #20232a; color: #dde4f0; font-size: 13px; }
   .wb-pick-path { display: flex; gap: 6px; padding: 8px;
     border-bottom: 1px solid #2a2f3c; }
   .wb-pick-path input { flex: 1; background: #14171f; border: 1px solid #333845;
