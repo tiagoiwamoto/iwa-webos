@@ -75,22 +75,77 @@ if (src.includes('type":"gallery"') || src.includes('type:"gallery"')) {
   src = src.replace(bgAnchor, ',' + galleryItem + bgAnchor);
 }
 
-// --- gallery renderer: grid of clickable thumbnails in the settings pane ---
+// --- gallery renderer: grid of clickable thumbnails + upload tile ---
+// Lists host:/home/images via VFS (uploaded files appear automatically)
+// and appends a '+' tile that uploads png/jpg/jpeg via /vfs/writefile.
 const renderAnchor = ',fallback:function(t){return function(e,n){return f(G';
 const galleryRenderer = ',gallery:function(t){return function(e,n){' +
+  'var dir="host:/home/images";' +
   'var sel=t.value&&(t.value.path||t.value);' +
-  'return f("div",{class:"webos-wallpaper-grid"},' +
-  '(t.images||[]).map(function(g){' +
-  'return f("img",{class:"webos-wallpaper-thumb",' +
-  '"data-selected":sel===g.path?' +
-  '"true":void 0,title:g.label,' +
-  'src:"/vfs/readfile?path="+encodeURIComponent(g.path),' +
-  'onclick:function(){n.update({path:t.path,value:{path:g.path}})}})}))}}';
-if (!src.includes('webos-wallpaper-grid')) {
+  'var draw=function(box,imgs){' +
+    'box.querySelectorAll(".webos-wallpaper-thumb,' +
+      '.webos-wallpaper-upload").forEach(function(x){x.remove()});' +
+    'imgs.forEach(function(g){' +
+      'var im=document.createElement("img");' +
+      'im.className="webos-wallpaper-thumb";' +
+      'im.title=g.label||g.filename||"";' +
+      'if(sel===g.path)im.setAttribute("data-selected","true");' +
+      'im.src="/vfs/readfile?path="+encodeURIComponent(g.path);' +
+      'im.onclick=function(){n.update({path:t.path,' +
+        'value:{path:g.path}})};' +
+      'box.appendChild(im)});' +
+    'var up=document.createElement("div");' +
+    'up.className="webos-wallpaper-upload";' +
+    'up.title="Enviar imagem (png, jpg, jpeg)";' +
+    'up.textContent="+";' +
+    'box.appendChild(up);' +
+    'return up};' +
+  'var build=function(box){' +
+    'var pick=document.createElement("input");' +
+    'pick.type="file";pick.accept=".png,.jpg,.jpeg,image/png,image/jpeg";' +
+    'pick.style.display="none";box.appendChild(pick);' +
+    'var up=draw(box,t.images||[]);' +
+    'up.onclick=function(){pick.click()};' +
+    'var load=function(){' +
+      'fetch("/vfs/readdir?path="+encodeURIComponent(dir),' +
+        '{credentials:"same-origin"})' +
+      '.then(function(r){return r.json()})' +
+      '.then(function(list){' +
+        'var up2=draw(box,list.filter(function(f){' +
+          'return f.isFile&&/\\.(png|jpe?g|svg|gif|webp)$/i' +
+            '.test(f.filename)}));' +
+        'up2.onclick=function(){pick.click()}})' +
+      '.catch(function(){})};' +
+    'pick.onchange=function(){' +
+      'var file=pick.files&&pick.files[0];if(!file)return;' +
+      'var name=String(file.name).replace(/\\s+/g,"_");' +
+      'var fd=new FormData();' +
+      'fd.append("upload",file);' +
+      'fd.append("path",dir+"/"+name);' +
+      'fd.append("options",JSON.stringify({overwrite:true}));' +
+      'fetch("/vfs/writefile",{method:"POST",' +
+        'credentials:"same-origin",body:fd})' +
+      '.then(function(r){' +
+        'if(!r.ok)throw new Error("upload falhou: "+r.status);' +
+        'n.update({path:t.path,value:{path:dir+"/"+name}});' +
+        'load()})' +
+      '.catch(function(err){alert(err.message)})};' +
+    'load()};' +
+  'return f("div",{class:"webos-wallpaper-grid",oncreate:build})}}';
+const gStart = src.indexOf('gallery:function(t){return function(e,n){');
+if (gStart === -1) {
   if (!src.includes(renderAnchor)) {
     fail('renderer anchor not found');
   }
   src = src.replace(renderAnchor, galleryRenderer + renderAnchor);
+} else {
+  // replace any previously injected gallery renderer (idempotent):
+  // it always sits right before the `fallback` renderer anchor
+  const gEnd = src.indexOf(renderAnchor, gStart);
+  if (gEnd === -1) {
+    fail('gallery renderer end (fallback anchor) not found');
+  }
+  src = src.slice(0, gStart) + galleryRenderer.slice(1) + src.slice(gEnd);
 }
 
 fs.writeFileSync(file, src);
