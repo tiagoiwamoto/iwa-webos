@@ -1560,6 +1560,21 @@ Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["css"])('webos-backup', `
     font-family: monospace; font-size: 11px; white-space: pre-wrap;
     border-radius: 6px; max-height: 160px; overflow: auto; }
   .wb-ok { color: #7ddc8f; } .wb-bad { color: #f66; }
+  .wb-pick { display: flex; flex-direction: column; height: 100%; }
+  .wb-pick-path { display: flex; gap: 6px; padding: 8px;
+    border-bottom: 1px solid #2a2f3c; }
+  .wb-pick-path input { flex: 1; background: #14171f; border: 1px solid #333845;
+    color: #dde4f0; border-radius: 5px; padding: 5px 8px; font-size: 12px;
+    font-family: monospace; }
+  .wb-pick-list { flex: 1; overflow: auto; padding: 4px 8px; }
+  .wb-pick-dir { display: flex; align-items: center; gap: 8px;
+    padding: 6px 8px; border-radius: 6px; cursor: pointer;
+    font-size: 13px; color: #dde4f0; }
+  .wb-pick-dir:hover { background: rgba(127, 212, 255, .1); }
+  .wb-pick-dir .ic { width: 16px; text-align: center; }
+  .wb-pick-foot { display: flex; gap: 6px; justify-content: flex-end;
+    padding: 8px; border-top: 1px solid #2a2f3c; }
+  .wb-pick-empty { color: #66708a; font-size: 12px; padding: 14px 8px; }
 `);
 
 const register = (core, args, options, metadata) => {
@@ -1697,7 +1712,85 @@ const register = (core, args, options, metadata) => {
       tokenBox.classList.remove('open');
       refresh();
     }).catch(e => sb.error(e.message));
-  })); // ---------- jobs ----------
+  })); // ---------- dir picker (local host dirs ou pastas do Drive) ----------
+
+  const dirPicker = (title, listDirs, cb, remote) => {
+    let cur = remote ? '' : '/';
+    const listBox = Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
+      class: 'wb-pick-list'
+    });
+    const pathIn = Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('input', {
+      value: cur
+    });
+    const win = proc.createWindow({
+      title,
+      dimension: {
+        width: 420,
+        height: 360
+      },
+      attributes: {
+        resizable: false,
+        maximizable: false,
+        minimizable: false
+      }
+    });
+
+    const go = p => {
+      cur = p;
+      pathIn.value = p;
+      listBox.textContent = '';
+      listDirs(p).then(dirs => {
+        listBox.textContent = '';
+
+        if (!dirs.length) {
+          listBox.appendChild(Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
+            class: 'wb-pick-empty'
+          }, '(sem subpastas)'));
+        }
+
+        dirs.forEach(d => listBox.appendChild(Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
+          class: 'wb-pick-dir',
+          onclick: () => go(cur === '/' || cur === '' ? cur + d : cur + '/' + d)
+        }, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {
+          class: 'ic'
+        }, '📁'), d)));
+      }).catch(e => {
+        listBox.textContent = '';
+        listBox.appendChild(Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
+          class: 'wb-pick-empty'
+        }, 'erro: ' + e.message));
+      });
+    };
+
+    win.render($c => {
+      $c.appendChild(Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
+        class: 'wb-pick'
+      }, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
+        class: 'wb-pick-path'
+      }, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["button"])('⬆', () => {
+        if (cur === '/' || cur === '') {
+          return;
+        }
+
+        go(cur.slice(0, cur.lastIndexOf('/')) || (remote ? '' : '/'));
+      }), pathIn, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["button"])('Ir', () => go(pathIn.value.trim()))), listBox, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
+        class: 'wb-pick-foot'
+      }, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["button"])('Cancelar', () => win.destroy()), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["button"])('Selecionar esta pasta', () => {
+        cb(cur);
+        win.destroy();
+      }))));
+      go(cur);
+    });
+  };
+
+  const localDirs = p => fetch('/vfs/readdir?path=' + encodeURIComponent('host:' + p), {
+    credentials: 'same-origin'
+  }).then(r => r.json()).then(l => l.filter(f => f.isDirectory).map(f => f.filename).sort());
+
+  const remoteDirs = p => _shared_api_js__WEBPACK_IMPORTED_MODULE_2__["api"].get('backup/remote/list', {
+    path: p || ''
+  }).then(r => r.dirs); // ---------- jobs ----------
+
 
   const localIn = Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('input', {
     class: 'local',
@@ -1735,7 +1828,11 @@ const register = (core, args, options, metadata) => {
     style: {
       marginTop: '8px'
     }
-  }, localIn, remoteIn, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["button"])('Adicionar', () => {
+  }, localIn, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["button"])('📁', () => dirPicker('Selecionar pasta local', localDirs, p => {
+    localIn.value = p;
+  }), false), remoteIn, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["button"])('☁️', () => dirPicker('Selecionar pasta no Google Drive', remoteDirs, p => {
+    remoteIn.value = p;
+  }, true)), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["button"])('Adicionar', () => {
     _shared_api_js__WEBPACK_IMPORTED_MODULE_2__["api"].post('backup/jobs', {
       local: localIn.value,
       remote: remoteIn.value
