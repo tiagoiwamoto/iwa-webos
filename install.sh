@@ -265,6 +265,8 @@ install_host() {
     --exclude '.git' --exclude 'web/node_modules' --exclude 'web/dist' \
     --exclude 'agent/.venv' --exclude '.env' --exclude 'web/vfs' \
     --exclude 'node' \
+    --exclude 'rclone.conf' --exclude '.backup-jobs.json' \
+    --exclude '.remote-connections.json' --exclude '.remote-known-hosts' \
     ./ "$PREFIX/" 2>/dev/null \
     || { $SUDO cp -a agent web deploy docker install.sh uninstall.sh \
          docker-compose.yml Dockerfile README.md "$PREFIX/"; }
@@ -294,13 +296,17 @@ install_host() {
 
   # --- config ---
   log "Escrevendo .env e PAM"
-  token="$(head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n')"
-  $SUDO tee "$PREFIX/.env" >/dev/null <<EOF
+  if [ -f "$PREFIX/.env" ]; then
+    ok ".env existente preservado (token/config mantidos)"
+  else
+    token="$(head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n')"
+    $SUDO tee "$PREFIX/.env" >/dev/null <<EOF
 WEBOS_AUTH=pam
 WEBOS_REQUIRED_GROUPS=webos
 WEBOS_VFS_ROOT=/home
 WEBOS_TOKEN=$token
 EOF
+  fi
   $SUDO tee /etc/pam.d/webos >/dev/null <<'EOF'
 auth     required  pam_unix.so
 account  required  pam_unix.so

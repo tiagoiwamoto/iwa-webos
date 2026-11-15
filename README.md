@@ -80,6 +80,33 @@ Sobe o container Ubuntu com systemd como PID 1 — usuário `webos/webos`
 criado no boot. Útil para testar a UI sem tocar o sistema real; tudo o que
 o painel fizer acontece **dentro do container**.
 
+## Atualização (sem perder nada)
+
+```bash
+./update.sh               # git pull + reinstala preservando estado
+SKIP_GIT=1 ./update.sh    # pula o pull (fontes já atualizadas/manual)
+```
+
+O `update.sh` faz backup extra em `/opt/webos-state-backup/` e roda o
+`install.sh`, que **não toca** nos dados:
+
+| Preservado | Onde |
+|---|---|
+| Token/config | `/opt/webos/.env` |
+| Conexão Google Drive | `/opt/webos/rclone.conf` |
+| Jobs de backup | `/opt/webos/.backup-jobs.json` |
+| Conexões remotas (SSH/FTP/Git) | `/opt/webos/.remote-connections.json` |
+| Host keys de remotos | `/opt/webos/.remote-known-hosts` |
+| Runtime node, venv, node_modules | `/opt/webos/{node,agent/.venv,web/node_modules}` |
+| Wallpapers (incl. uploads) | `/home/images/` |
+| Usuários Linux e grupo `webos` | sistema |
+
+Em ARM (Pi) o rebuild do web leva ~15 min — é normal. Se preferir o
+caminho manual: `git pull`, copie os fontes para `/opt/webos` **sem**
+`--delete` (ou com os mesmos `--exclude` do `install.sh`), rebuild do web
+(`npm ci`, `patch-settings.js`, `npm run build`, `package:discover`) e
+`systemctl restart webos-agent webos-web`.
+
 ## Desinstalação
 
 ```bash
