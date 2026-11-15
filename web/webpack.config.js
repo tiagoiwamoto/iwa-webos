@@ -46,7 +46,7 @@ module.exports = {
     }),
     new HtmlWebpackPlugin({
       template: path.resolve(__dirname, 'src/client/index.ejs'),
-      favicon: path.resolve(__dirname, 'src/client/dog.svg'),
+      favicon: path.resolve(__dirname, 'src/client/icone.png'),
       title: 'Malta OS'
     }),
     new MiniCssExtractPlugin({

@@ -179,7 +179,7 @@ export const createDock = core => {
     brand.dataset.app = 'Malta OS';
     brand.title = 'Malta OS';
     const brandImg = document.createElement('img');
-    brandImg.src = '/dog.svg';
+    brandImg.src = '/icone.png';
     brand.appendChild(brandImg);
     sizeOf(brand, BASE);
     brand.addEventListener('click', () => openLauncher());
