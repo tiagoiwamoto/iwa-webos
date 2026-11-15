@@ -1482,11 +1482,21 @@ var formWindow = function formWindow(proc, _ref3, cb) {
         gap: '8px'
       }
     }].concat(_babel_runtime_helpers_toConsumableArray__WEBPACK_IMPORTED_MODULE_0___default()(fields.map(function (f) {
-      inputs[f.name] = el('input', {
+      inputs[f.name] = f.options ? el('select', {
+        "class": 'webos-input'
+      }, f.options.map(function (o) {
+        var _o$value, _o$label;
+
+        return el('option', {
+          value: (_o$value = o.value) !== null && _o$value !== void 0 ? _o$value : o
+        }, (_o$label = o.label) !== null && _o$label !== void 0 ? _o$label : o);
+      })) : el('input', {
         "class": 'webos-input',
         type: f.type || 'text',
-        placeholder: f.placeholder || ''
+        placeholder: f.placeholder || '',
+        value: f.value || ''
       });
+      if (f.value) inputs[f.name].value = f.value;
       return el('label', {
         style: {
           display: 'grid',
@@ -1541,24 +1551,54 @@ var _metadata_json__WEBPACK_IMPORTED_MODULE_1___namespace = /*#__PURE__*/__webpa
 
 
 
-Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["css"])('webos-disks', `
-  .wdisks-split { display: flex; height: 100%; }
-  .wdisks-left { flex: 1 1 55%; overflow: auto; border-right: 1px solid #17191f; }
-  .wdisks-right { flex: 1 1 45%; overflow: auto; padding: 8px; }
-  .wdisks-pre { font-family: monospace; font-size: 11px; white-space: pre;
-    color: #bcd; }
-`);
-
-const flatten = (nodes, depth = 0, out = []) => {
-  (nodes || []).forEach(n => {
-    out.push({
-      node: n,
-      depth
-    });
-    flatten(n.children, depth + 1, out);
-  });
-  return out;
+const FS_COLOR = {
+  ext4: '#5b8dd9',
+  ext3: '#5b8dd9',
+  ext2: '#5b8dd9',
+  xfs: '#8d6fd0',
+  btrfs: '#58b89b',
+  zfs: '#4fa8a0',
+  vfat: '#e0aa3e',
+  fat32: '#e0aa3e',
+  fat16: '#e0aa3e',
+  fat: '#e0aa3e',
+  exfat: '#d98e5b',
+  ntfs: '#58b864',
+  'linux-swap': '#c05555',
+  swap: '#c05555',
+  iso9660: '#8a8f98',
+  udf: '#8a8f98',
+  crypto_LUKS: '#6b7280'
 };
+
+const fsColor = fs => FS_COLOR[(fs || '').toLowerCase()] || '#7d8aa5';
+
+const FS_OPTS = ['ext4', 'xfs', 'btrfs', 'vfat', 'exfat', 'ntfs', 'swap'];
+Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["css"])('webos-disks', `
+  .wdk-diskbar { display: flex; gap: 8px; align-items: center; padding: 8px 10px;
+    background: #2a2e37; border-bottom: 1px solid #17191f; flex-wrap: wrap; }
+  .wdk-diskbar select { background: #17191f; color: #e8e8e8; border: 1px solid #3a4150;
+    border-radius: 4px; padding: 5px 8px; font-size: 13px; min-width: 300px; }
+  .wdk-diskinfo { color: #9ab; font-size: 12px; }
+  .wdk-usb { color: #e0aa3e; font-size: 11px; border: 1px solid #e0aa3e55;
+    border-radius: 8px; padding: 1px 8px; }
+  .wdk-graph { display: flex; height: 46px; margin: 12px 14px 4px;
+    border: 1px solid #17191f; border-radius: 4px; overflow: hidden; background: #14171f; }
+  .wdk-seg { display: flex; flex-direction: column; justify-content: center;
+    padding: 0 8px; overflow: hidden; cursor: pointer; color: #fff;
+    font-size: 11px; white-space: nowrap; text-overflow: ellipsis;
+    border-right: 1px solid #00000055; min-width: 2px; }
+  .wdk-seg.sel { outline: 2px solid #fff; outline-offset: -2px; }
+  .wdk-seg .sz { opacity: .8; font-size: 10px; }
+  .wdk-free { background: repeating-linear-gradient(45deg, #2a2f3a, #2a2f3a 8px, #242834 8px, #242834 16px);
+    color: #9aa4b8; align-items: center; flex-direction: row; justify-content: center; }
+  .wdk-legend { display: flex; gap: 14px; padding: 4px 16px 8px; font-size: 11px;
+    color: #9ab; flex-wrap: wrap; }
+  .wdk-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px;
+    margin-right: 5px; vertical-align: -1px; }
+  .wdk-tablewrap { flex: 1 1 auto; overflow: auto; }
+  .wdk-empty { padding: 30px; text-align: center; color: #9ab; }
+`);
 
 const register = (core, args, options, metadata) => {
   const proc = core.make('osjs/application', {
@@ -1566,71 +1606,191 @@ const register = (core, args, options, metadata) => {
     options,
     metadata
   });
-  const left = Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
-    class: 'wdisks-left'
-  });
-  const right = Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
-    class: 'wdisks-right'
-  });
   const sb = Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["statusbar"])();
-  let selected = null;
-  let rows = [];
+  const diskSel = Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('select', {
+    onchange: () => {
+      disk = disks.find(d => d.path === diskSel.value) || null;
+      sel = null;
+      renderDisk();
+    }
+  });
+  const diskInfo = Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {
+    class: 'wdk-diskinfo'
+  });
+  const graph = Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div');
+  const legend = Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
+    class: 'wdk-legend'
+  });
+  const tableWrap = Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
+    class: 'wdk-tablewrap'
+  });
+  let disks = []; // só discos inteiros (type=disk)
+
+  let disk = null; // disco selecionado
+
+  let sel = null; // partição selecionada, ou {free:true}
+
+  let label = ''; // gpt|dos detectado via fdisk
+
+  const parts = () => (disk && disk.children || []).filter(c => c.type === 'part');
+
+  const freeBytes = () => disk ? Math.max(0, disk.size - parts().reduce((s, p) => s + (p.size || 0), 0)) : 0;
+
+  const mounts = n => (n.mountpoints || []).filter(Boolean);
 
   const refresh = () => {
-    sb.set('loading...');
+    sb.set('carregando...');
     _shared_api_js__WEBPACK_IMPORTED_MODULE_2__["api"].get('disks').then(data => {
-      rows = flatten(data.blockdevices);
-      sb.set(`${rows.length} devices`);
-      left.innerHTML = '';
-      left.appendChild(Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["table"])(['Device', 'Type', 'Size', 'FS', 'Label', 'Used', 'Mounted at'], rows.map(({
-        node: n,
-        depth
-      }) => [' '.repeat(depth * 3) + (n.name || ''), n.type || '', Object(_shared_api_js__WEBPACK_IMPORTED_MODULE_2__["formatBytes"])(n.size), n.fstype || '', n.label || '', n['fsuse%'] != null ? `${n['fsuse%']}%` : '', (n.mountpoints || []).filter(Boolean).join(', ')]), tr => {
-        left.querySelectorAll('tr.selected').forEach(x => x.classList.remove('selected'));
-        tr.classList.add('selected');
-        selected = rows[Array.from(tr.parentNode.children).indexOf(tr)].node;
-        showTable();
-      }));
+      const keep = disk && disk.path;
+      disks = (data.blockdevices || []).filter(d => d.type === 'disk' && d.size > 0);
+      diskSel.innerHTML = '';
+      disks.forEach(d => {
+        const tag = d.rm || d.hotplug || d.tran === 'usb' ? ' ⏏' : '';
+        diskSel.appendChild(Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('option', {
+          value: d.path
+        }, `${d.path} — ${(d.model || '').trim() || 'disco'} — ${Object(_shared_api_js__WEBPACK_IMPORTED_MODULE_2__["formatBytes"])(d.size)}${tag}`));
+      });
+      disk = disks.find(d => d.path === keep) || disks[0] || null;
+      if (disk) diskSel.value = disk.path;
+      sel = null;
+      renderDisk();
+      sb.set(`${disks.length} disco(s)`);
     }).catch(e => sb.error(e.message));
   };
 
-  const showTable = () => {
-    right.innerHTML = '';
+  const renderDisk = () => {
+    graph.innerHTML = '';
+    legend.innerHTML = '';
+    tableWrap.innerHTML = '';
+    diskInfo.textContent = '';
 
-    if (!selected || selected.type !== 'disk') {
-      right.appendChild(Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
-        class: 'wdisks-pre'
-      }, selected ? `${selected.path} — select a whole disk to see its partition table` : 'select a device'));
+    if (!disk) {
+      tableWrap.appendChild(Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
+        class: 'wdk-empty'
+      }, 'nenhum disco encontrado'));
       return;
     }
+
+    const info = [Object(_shared_api_js__WEBPACK_IMPORTED_MODULE_2__["formatBytes"])(disk.size), (disk.model || '').trim(), disk.tran].filter(Boolean).join(' · ');
+    diskInfo.textContent = info;
+    const isUsb = disk.rm || disk.hotplug || disk.tran === 'usb';
+    if (isUsb) diskInfo.appendChild(Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {
+      class: 'wdk-usb',
+      style: {
+        marginLeft: '8px'
+      }
+    }, 'USB/removível')); // label da tabela de partições (via fdisk)
 
     _shared_api_js__WEBPACK_IMPORTED_MODULE_2__["api"].get('disks/table', {
-      device: selected.path
-    }).then(r => right.appendChild(Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('pre', {
-      class: 'wdisks-pre'
-    }, r.output))).catch(e => right.appendChild(Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
-      class: 'wdisks-pre'
-    }, `Error: ${e.message}`)));
-  };
+      device: disk.path
+    }).then(r => {
+      const m = /Disklabel type:\s*(\S+)/.exec(r.output || '');
+      label = m ? m[1] : '';
 
-  const call = (ep, extra = {}) => {
-    if (!selected || !selected.path) {
-      sb.set('select a device first');
-      return;
+      if (label && diskInfo) {
+        diskInfo.appendChild(Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {
+          class: 'wdk-usb',
+          style: {
+            marginLeft: '8px',
+            color: '#58b89b',
+            borderColor: '#58b89b55'
+          }
+        }, label.toUpperCase()));
+      }
+    }).catch(() => {}); // barra gráfica
+
+    const g = Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
+      class: 'wdk-graph'
+    });
+    const seen = new Set();
+    parts().forEach(p => {
+      const pct = Math.max(1, p.size / disk.size * 100);
+      const fs = (p.fstype || '').toLowerCase();
+      seen.add(fs || '?');
+      g.appendChild(Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
+        class: 'wdk-seg' + (sel === p ? ' sel' : ''),
+        style: {
+          width: pct + '%',
+          background: fsColor(fs)
+        },
+        title: `${p.path} — ${p.fstype || 'desconhecido'} — ${Object(_shared_api_js__WEBPACK_IMPORTED_MODULE_2__["formatBytes"])(p.size)}`,
+        onclick: () => {
+          sel = p;
+          renderDisk();
+        }
+      }, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {}, `${p.name} ${p.fstype || ''}`), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {
+        class: 'sz'
+      }, Object(_shared_api_js__WEBPACK_IMPORTED_MODULE_2__["formatBytes"])(p.size))));
+    });
+    const fb = freeBytes();
+
+    if (fb > 1024 * 1024) {
+      g.appendChild(Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
+        class: 'wdk-seg wdk-free' + (sel && sel.free ? ' sel' : ''),
+        style: {
+          flex: 1
+        },
+        title: `não alocado — ${Object(_shared_api_js__WEBPACK_IMPORTED_MODULE_2__["formatBytes"])(fb)}`,
+        onclick: () => {
+          sel = {
+            free: true
+          };
+          renderDisk();
+        }
+      }, `não alocado — ${Object(_shared_api_js__WEBPACK_IMPORTED_MODULE_2__["formatBytes"])(fb)}`));
     }
 
-    _shared_api_js__WEBPACK_IMPORTED_MODULE_2__["api"].post(`disks/${ep}`, {
-      device: selected.path,
-      ...extra
-    }).then(r => {
-      sb.set(r.output || 'ok');
-      refresh();
-    }).catch(e => sb.error(e.message));
+    graph.appendChild(g);
+    seen.forEach(fs => legend.appendChild(Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {}, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('i', {
+      style: {
+        background: fsColor(fs)
+      }
+    }), fs === '?' ? 'desconhecido' : fs)));
+    if (fb > 1024 * 1024) legend.appendChild(Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {}, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('i', {
+      style: {
+        background: 'repeating-linear-gradient(45deg,#2a2f3a,#2a2f3a 4px,#242834 4px,#242834 8px)'
+      }
+    }), 'não alocado')); // tabela
+
+    const rows = parts().map(p => ({
+      node: p,
+      cells: [p.name, p.fstype || '—', p.label || '', Object(_shared_api_js__WEBPACK_IMPORTED_MODULE_2__["formatBytes"])(p.size), p['fsuse%'] != null ? `${p['fsuse%']}%` : '', mounts(p).join(', ') || '—']
+    }));
+    if (fb > 1024 * 1024) rows.push({
+      node: {
+        free: true
+      },
+      cells: ['não alocado', '', '', Object(_shared_api_js__WEBPACK_IMPORTED_MODULE_2__["formatBytes"])(fb), '', '']
+    });
+
+    if (!rows.length) {
+      tableWrap.appendChild(Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
+        class: 'wdk-empty'
+      }, 'sem partições — crie uma tabela (Nova tabela) ou uma partição'));
+    } else {
+      tableWrap.appendChild(Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["table"])(['Partição', 'Sistema de arquivos', 'Rótulo', 'Tamanho', 'Usado', 'Montado em'], rows.map(r => r.cells), tr => {
+        sel = rows[Array.from(tr.parentNode.children).indexOf(tr)].node;
+        renderDisk();
+      }));
+      tableWrap.querySelectorAll('tbody tr').forEach((tr, i) => {
+        const r = rows[i];
+        if (r.node.free) tr.style.color = '#9aa4b8';
+        if (sel === r.node || sel && sel.free && r.node.free) tr.classList.add('selected');
+      });
+    }
   };
 
+  const call = (ep, extra = {}) => _shared_api_js__WEBPACK_IMPORTED_MODULE_2__["api"].post(`disks/${ep}`, {
+    device: extra.device || sel && sel.path || disk.path,
+    ...extra
+  }).then(r => {
+    sb.set(r.output || 'ok');
+    refresh();
+  }).catch(e => sb.error(e.message));
+
   const needDisk = () => {
-    if (!selected || selected.type !== 'disk') {
-      sb.set('select a whole disk (type=disk)');
+    if (!disk) {
+      sb.set('selecione um disco');
       return false;
     }
 
@@ -1638,81 +1798,100 @@ const register = (core, args, options, metadata) => {
   };
 
   const needPart = () => {
-    if (!selected || selected.type !== 'part') {
-      sb.set('select a partition (type=part)');
+    if (!sel || !sel.path) {
+      sb.set('selecione uma partição na lista');
       return false;
     }
 
     return true;
   };
 
-  const newLabel = () => needDisk() && Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["formWindow"])(proc, {
-    title: `New partition table on ${selected.path}`,
+  const newTable = () => needDisk() && Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["formWindow"])(proc, {
+    title: `Nova tabela de partições em ${disk.path}`,
     fields: [{
       name: 'label',
-      label: 'Type (gpt or msdos)',
-      placeholder: 'gpt'
+      label: 'Tipo',
+      options: [{
+        value: 'gpt',
+        label: 'GPT (recomendado)'
+      }, {
+        value: 'msdos',
+        label: 'MSDOS/MBR (legado)'
+      }],
+      value: 'gpt'
     }]
-  }, v => v && v.label && Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["confirmDialog"])(core, 'Wipe partition table', `Create a ${v.label} table on ${selected.path}? All partitions are lost.`).then(ok => ok && call('mklabel', {
+  }, v => v && Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["confirmDialog"])(core, 'Apagar tudo', `Criar tabela ${v.label} em ${disk.path}? TODAS as partições e dados serão perdidos.`).then(ok => ok && call('mklabel', {
+    device: disk.path,
     label: v.label
   })));
 
   const newPart = () => needDisk() && Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["formWindow"])(proc, {
-    title: `New partition on ${selected.path}`,
+    title: `Nova partição em ${disk.path}`,
     fields: [{
+      name: 'fs',
+      label: 'Sistema de arquivos',
+      options: FS_OPTS,
+      value: 'ext4'
+    }, {
       name: 'start',
-      label: 'Start %',
-      placeholder: '0%'
+      label: 'Início (%)',
+      value: String(Math.round(100 * (disk.size - freeBytes()) / disk.size)) + '%'
     }, {
       name: 'end',
-      label: 'End %',
-      placeholder: '100%'
-    }, {
-      name: 'fs',
-      label: 'FS hint (ext4, xfs, btrfs, vfat, ntfs, swap)',
-      placeholder: 'ext4'
+      label: 'Fim (%)',
+      value: '100%'
     }]
   }, v => v && call('mkpart', {
-    start: v.start || '0%',
-    end: v.end || '100%',
-    fs: v.fs || 'ext4'
+    device: disk.path,
+    start: v.start,
+    end: v.end,
+    fs: v.fs
   }));
 
-  const delPart = () => needPart() && Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["confirmDialog"])(core, 'Delete partition', `Delete ${selected.path} via parted? Its data is lost.`).then(ok => ok && call('rmpart'));
-
   const format = () => needPart() && Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["formWindow"])(proc, {
-    title: `Format ${selected.path}`,
+    title: `Formatar ${sel.path}`,
     fields: [{
       name: 'fs',
-      label: 'Filesystem (ext4, xfs, btrfs, vfat, exfat, ntfs, swap)',
-      placeholder: 'ext4'
+      label: 'Sistema de arquivos',
+      options: FS_OPTS,
+      value: 'ext4'
     }, {
       name: 'label',
-      label: 'Label (optional)'
+      label: 'Rótulo (opcional)'
     }]
-  }, v => v && v.fs && Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["confirmDialog"])(core, 'Format', `mkfs.${v.fs} on ${selected.path}? All data is lost.`).then(ok => ok && call('mkfs', {
+  }, v => v && v.fs && Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["confirmDialog"])(core, 'Formatar', `Formatar ${sel.path} como ${v.fs}? Todos os dados serão perdidos.`).then(ok => ok && call('mkfs', {
     fs: v.fs,
     label: v.label
   })));
 
-  const mountAt = () => Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["promptText"])(core, 'Mount', `Mountpoint for ${selected ? selected.path : ''} (empty = udisks)`).then(target => target !== null && call('mount', {
-    target
+  const delPart = () => needPart() && Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["confirmDialog"])(core, 'Excluir partição', `Excluir ${sel.path}? Seus dados serão perdidos.`).then(ok => ok && call('rmpart'));
+
+  const mountAt = () => needPart() && Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["promptText"])(core, 'Montar', `Ponto de montagem para ${sel.path} (vazio = automático/udisks)`).then(t => t !== null && call('mount', {
+    target: t
   }));
 
   const tb = Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
     class: 'webos-toolbar'
-  }, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["button"])('Mount', mountAt), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["button"])('Unmount', () => call('unmount')), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["button"])('New table', newLabel), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["button"])('New partition', newPart), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["button"])('Format', format), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["button"])('Delete part', delPart, 'danger'), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["button"])('WipeFS', () => Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["confirmDialog"])(core, 'Wipe signatures', `wipefs -a on ${selected ? selected.path : ''}?`).then(ok => ok && call('wipefs')), 'danger'), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["button"])('Power off', () => call('power-off')), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["button"])('Refresh', refresh));
+  }, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["button"])('Nova partição', newPart), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["button"])('Formatar', format), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["button"])('Excluir', delPart, 'danger'), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["button"])('Montar', mountAt), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["button"])('Desmontar', () => needPart() && call('unmount')), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["button"])('Nova tabela', newTable, 'danger'), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["button"])('Ejetar', () => needDisk() && call('power-off', {
+    device: disk.path
+  })), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["button"])('Atualizar', refresh));
   proc.createWindow({
     id: 'WebOSDisksWindow',
     title: metadata.title.en_EN,
     dimension: {
       width: 900,
-      height: 480
+      height: 500
     }
   }).on('destroy', () => proc.destroy()).render($content => {
-    $content.appendChild(Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["layout"])(tb, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
-      class: 'wdisks-split'
-    }, left, right), sb));
+    $content.appendChild(Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["layout"])(Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {}, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
+      class: 'wdk-diskbar'
+    }, diskSel, diskInfo), tb), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
+      style: {
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%'
+      }
+    }, graph, legend, tableWrap), sb));
     refresh();
   });
   return proc;

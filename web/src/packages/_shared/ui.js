@@ -140,9 +140,14 @@ export const formWindow = (proc, {title, fields}, cb) => {
     const inputs = {};
     const form = el('div', {style: {padding: '12px', display: 'grid', gap: '8px'}},
       ...fields.map(f => {
-        inputs[f.name] = el('input', {
-          class: 'webos-input', type: f.type || 'text', placeholder: f.placeholder || ''
-        });
+        inputs[f.name] = f.options
+          ? el('select', {class: 'webos-input'},
+              f.options.map(o => el('option', {value: o.value ?? o}, o.label ?? o)))
+          : el('input', {
+              class: 'webos-input', type: f.type || 'text',
+              placeholder: f.placeholder || '', value: f.value || ''
+            });
+        if (f.value) inputs[f.name].value = f.value;
         return el('label', {style: {display: 'grid', gap: '3px'}}, f.label, inputs[f.name]);
       }),
       el('div', {style: {display: 'flex', gap: '8px', justifyContent: 'flex-end'}},
