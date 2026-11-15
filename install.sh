@@ -191,8 +191,12 @@ install_host() {
     warn "node >= 20.6 ausente — baixando runtime próprio para $PREFIX/node"
     local arch; arch="$(uname -m)"
     case "$arch" in
-      x86_64) arch=x64 ;; aarch64|arm64) arch=arm64 ;;
-      *) die "arquitetura $arch sem build node oficial" ;;
+      x86_64|amd64) arch=x64 ;;
+      aarch64|arm64) arch=arm64 ;;
+      armv7l|armhf) arch=armv7l ;;
+      ppc64le) arch=ppc64le ;;
+      s390x) arch=s390x ;;
+      *) die "arquitetura $arch sem build node oficial (tente node da distro >= 20.6)" ;;
     esac
     local base="https://nodejs.org/dist/latest-v22.x"
     local fname
