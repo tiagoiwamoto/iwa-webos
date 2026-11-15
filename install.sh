@@ -256,6 +256,7 @@ install_host() {
   $SUDO rsync -a --delete \
     --exclude '.git' --exclude 'web/node_modules' --exclude 'web/dist' \
     --exclude 'agent/.venv' --exclude '.env' --exclude 'web/vfs' \
+    --exclude 'node' \
     ./ "$PREFIX/" 2>/dev/null \
     || { $SUDO cp -a agent web deploy docker install.sh uninstall.sh \
          docker-compose.yml Dockerfile README.md "$PREFIX/"; }
