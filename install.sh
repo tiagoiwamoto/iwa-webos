@@ -79,6 +79,13 @@ pkg_for() { # $1 = dep lógico → nomes por distro
       elif need zypper;  then echo "curl ca-certificates xz"
       elif need apk;     then echo "curl ca-certificates xz"
       else echo "curl xz"; fi ;;
+    build) # pip compila psutil do source em arquiteturas sem wheel (armv7l…)
+      if   need apt-get; then echo "gcc python3-dev"
+      elif need dnf;     then echo "gcc python3-devel"
+      elif need pacman;  then echo "base-devel"
+      elif need zypper;  then echo "gcc python3-devel"
+      elif need apk;     then echo "gcc musl-dev python3-dev"
+      else echo "gcc"; fi ;;
   esac
 }
 
@@ -181,6 +188,9 @@ install_host() {
   ensure python python3 -c 'import venv'
   ensure tools curl --version
   need xz || { warn "xz faltando"; install_pkg $(pkg_for tools) || true; }
+  # gcc + headers Python: pip compila psutil do source onde não há wheel (armv7l)
+  { need gcc && python3 -c 'import sysconfig,os,sys; sys.exit(0 if os.path.isfile(sysconfig.get_path("include")+"/Python.h") else 1)'; } \
+    || ensure build false
 
   # --- node >= 20.6 (em /opt/webos/node para não conflitar com o da distro) ---
   NODE_BIN=""
