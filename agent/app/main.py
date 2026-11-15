@@ -38,12 +38,12 @@ def run(cmd: list[str], timeout: int = 30, input_text: str | None = None) -> sub
     )
 
 
-from app.routers import auth, cron, disks, docker_api, files, logs, processes, remote, services, store, system, terminal, users  # noqa: E402
+from app.routers import auth, backup, cron, disks, docker_api, files, logs, processes, remote, services, store, system, terminal, users  # noqa: E402
 
 for router in (system.router, files.router, disks.router, users.router,
                docker_api.router, services.router, auth.router,
                processes.router, store.router, logs.router, cron.router,
-               remote.router):
+               remote.router, backup.router):
     app.include_router(router, prefix="/api", dependencies=[Depends(require_token)])
 
 app.include_router(terminal.router)

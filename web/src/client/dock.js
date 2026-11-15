@@ -18,6 +18,7 @@ const ITEMS = [
   {name: 'WebOSLogs', glyph: '\u{1F4DC}', icon: 'text-x-generic', label: 'Logs'},
   {name: 'WebOSCron', glyph: '\u23F0', icon: 'x-office-calendar', label: 'Cron'},
   {name: 'WebOSRemote', glyph: '\u{1F310}', icon: 'network-server', label: 'Remote'},
+  {name: 'WebOSBackup', glyph: '\u{2601}\u{FE0F}', icon: 'folder-remote', label: 'Backup'},
   {name: 'Settings', glyph: '\u{1F527}', icon: 'preferences-system', label: 'Settings'}
 ];
 

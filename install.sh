@@ -87,13 +87,13 @@ pkg_for() { # $1 = dep lógico → nomes por distro
       elif need apk;     then echo "gcc musl-dev python3-dev"
       else echo "gcc"; fi ;;
     npm) echo "npm" ;;
-    remote) # app de acesso remoto: ssh/scp + sshpass + git + ftp-via-curl
-      if   need apt-get; then echo "openssh-client sshpass git curl"
-      elif need dnf;     then echo "openssh-clients sshpass git curl"
-      elif need pacman;  then echo "openssh sshpass git curl"
-      elif need zypper;  then echo "openssh sshpass git curl"
-      elif need apk;     then echo "openssh-client sshpass git curl"
-      else echo "openssh sshpass git curl"; fi ;;
+    remote) # acesso remoto (ssh/scp/ftp/git) + backup gdrive (rclone)
+      if   need apt-get; then echo "openssh-client sshpass git curl rclone"
+      elif need dnf;     then echo "openssh-clients sshpass git curl rclone"
+      elif need pacman;  then echo "openssh sshpass git curl rclone"
+      elif need zypper;  then echo "openssh sshpass git curl rclone"
+      elif need apk;     then echo "openssh-client sshpass git curl rclone"
+      else echo "openssh sshpass git curl rclone"; fi ;;
   esac
 }
 

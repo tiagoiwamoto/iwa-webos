@@ -1,0 +1,8 @@
+{
+  "type": "application",
+  "name": "WebOSBackup",
+  "category": "utilities",
+  "title": {"en_EN": "Backup (Google Drive)", "pt_BR": "Backup (Google Drive)"},
+  "description": {"en_EN": "sync folders to Google Drive via rclone", "pt_BR": "sincroniza pastas com o Google Drive via rclone"},
+  "files": ["main.js"]
+}

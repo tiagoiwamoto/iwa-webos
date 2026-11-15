@@ -20,7 +20,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       passwd util-linux procps fdisk parted udisks2 \
       e2fsprogs dosfstools xfsprogs btrfs-progs ntfs-3g exfatprogs \
       docker.io docker-compose-v2 cron \
-      openssh-client sshpass git curl \
+      openssh-client sshpass git curl rclone \
       ca-certificates \
     && rm -rf /var/lib/apt/lists/* \
     # host's dockerd is used via the mounted socket; mask in-container ones

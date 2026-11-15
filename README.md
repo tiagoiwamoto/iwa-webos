@@ -26,8 +26,8 @@ alternativa à UI tradicional de Cockpit/CasaOS/Webmin.
 | ![Docker](docs/screenshots/15-docker.png) | ![Users](docs/screenshots/16-users.png) | ![Cron](docs/screenshots/17-cron.png) |
 | **App Store** | **Terminal** | **File Manager** |
 | ![Store](docs/screenshots/18-store.png) | ![Terminal](docs/screenshots/19-terminal.png) | ![FileManager](docs/screenshots/20-filemanager.png) |
-| **Settings** | **Remote Access** | |
-| ![Settings](docs/screenshots/21-settings.png) | ![Remote](docs/screenshots/22-remote.png) | |
+| **Settings** | **Remote Access** | **Backup** |
+| ![Settings](docs/screenshots/21-settings.png) | ![Remote](docs/screenshots/22-remote.png) | ![Backup](docs/screenshots/24-backup.png) |
 
 ## Plataformas testadas
 
@@ -123,6 +123,7 @@ PID 1 (`privileged`, `tmpfs /run`) sobe as mesmas unidades mais
 | Cron | Crontab visual: presets, toggle, por usuário | `crontab` |
 | Logs | Journald com filtros (unit/prio/tempo/texto), live tail, export | `journalctl` |
 | Remote Access | Conexões salvas SSH/SFTP/SCP/FTP + navegador remoto, exec de comandos e Git (clone/pull/push/log) | `ssh`/`scp`/`curl`/`git` |
+| Backup | Sync de pastas locais para Google Drive (OAuth via rclone, jobs com toggle + sync sob demanda) | `rclone` |
 | SysInfo | Gauges CPU/RAM/disco/rede, modelo, uptime, hostname | agente `/api/system` |
 | Editor | Monaco para arquivos do host | agente `/api/files` |
 | Settings | Temas, window style (Win11/macOS/KDE/GNOME), wallpapers | OS.js settings |
@@ -247,6 +248,8 @@ deploy/*.service           # unidades systemd (produção E container)
   terminal (spawn com `setuid`/`initgroups` do usuário logado)
 - [requests](https://github.com/psf/requests),
   [python-dotenv](https://github.com/theskumar/python-dotenv)
+- [rclone](https://rclone.org/) — backup para Google Drive (OAuth
+  headless + `rclone sync`)
 
 **Loja de aplicativos**
 
