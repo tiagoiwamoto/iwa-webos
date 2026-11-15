@@ -1,0 +1,8 @@
+{
+  "type": "application",
+  "name": "WebOSUpdate",
+  "category": "utilities",
+  "title": {"en_EN": "System Update", "pt_BR": "Atualização do Sistema"},
+  "description": {"en_EN": "Update Malta OS preserving data", "pt_BR": "Atualiza o Malta OS preservando dados"},
+  "files": ["main.js"]
+}

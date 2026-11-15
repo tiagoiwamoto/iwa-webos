@@ -154,6 +154,7 @@ PID 1 (`privileged`, `tmpfs /run`) sobe as mesmas unidades mais
 | Remote Access | Conexões salvas SSH/SFTP/SCP/FTP + navegador remoto, exec de comandos e Git (clone/pull/push/log) | `ssh`/`scp`/`curl`/`git` |
 | Backup | Sync de pastas locais para Google Drive (OAuth via rclone, jobs com toggle + sync sob demanda) | `rclone` |
 | Navigator | Navegador web estilo Netscape clássico — back/forward/reload/stop, Location bar, home retrô e proxy same-origin para sites que bloqueiam iframe | iframe + proxy (`requests`) |
+| System Update | Atualização do Malta OS pelo launcher — roda update.sh via systemd-run (sobrevive ao restart dos serviços) com log ao vivo; preserva todo o estado | `update.sh`/`systemd-run` |
 | SysInfo | Gauges CPU/RAM/disco/rede, modelo, uptime, hostname | agente `/api/system` |
 | Editor | Monaco para arquivos do host | agente `/api/files` |
 | Settings | Temas, window style (Win11/macOS/KDE/GNOME), wallpapers | OS.js settings |

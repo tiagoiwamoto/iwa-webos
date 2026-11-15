@@ -305,6 +305,7 @@ WEBOS_AUTH=pam
 WEBOS_REQUIRED_GROUPS=webos
 WEBOS_VFS_ROOT=/home
 WEBOS_TOKEN=$token
+WEBOS_SOURCE_DIR=$(pwd)
 EOF
   fi
   $SUDO tee /etc/pam.d/webos >/dev/null <<'EOF'
