@@ -193,21 +193,37 @@ install_host() {
   { need gcc && python3 -c 'import sysconfig,os,sys; sys.exit(0 if os.path.isfile(sysconfig.get_path("include")+"/Python.h") else 1)'; } \
     || ensure build false
 
-  # --- node >= 20.6 (em /opt/webos/node para não conflitar com o da distro) ---
+  # --- node >= 20.6 + npm ---
+  NODEDIR_PKG="$PREFIX/node"   # runtime próprio, quando baixado
   NODE_BIN=""
   node_ok() {
     need node && [ "$(node -e 'const v=process.version.slice(1).split(".");console.log(+v[0]>20||(+v[0]==20&&+v[1]>=6)?1:0)' 2>/dev/null)" = "1" ]
   }
-  # node da distro pode vir sem npm (apt separa os pacotes) — tenta instalar
-  if node_ok && ! need npm; then
-    warn "node OK mas 'npm' ausente — instalando da distro"
-    install_pkg $(pkg_for npm) || true
-  fi
+  bundled_ok() { # runtime próprio já instalado e íntegro?
+    [ -x "$NODEDIR_PKG/bin/node" ] && [ -x "$NODEDIR_PKG/bin/npm" ] \
+      && [ "$("$NODEDIR_PKG/bin/node" -e 'const v=process.version.slice(1).split(".");console.log(+v[0]>20||(+v[0]==20&&+v[1]>=6)?1:0)' 2>/dev/null)" = "1" ]
+  }
+
   if node_ok && need npm; then
     NODE_BIN="$(command -v node)"
     ok "node $(node -v) + npm do sistema"
+  elif bundled_ok; then
+    NODE_BIN="$NODEDIR_PKG/bin/node"
+    ok "node $($NODE_BIN -v) próprio já em $NODEDIR_PKG"
   else
-    warn "node >= 20.6 com npm ausente — baixando runtime próprio para $PREFIX/node"
+    # node da distro pode vir sem npm (apt separa os pacotes) — tenta instalar
+    if node_ok && ! need npm; then
+      warn "node OK mas 'npm' ausente — instalando da distro"
+      install_pkg $(pkg_for npm) || true
+      if node_ok && need npm; then
+        NODE_BIN="$(command -v node)"
+        ok "node $(node -v) + npm (instalado) do sistema"
+      fi
+    fi
+  fi
+
+  if [ -z "$NODE_BIN" ]; then
+    warn "baixando runtime node próprio para $NODEDIR_PKG"
     local arch; arch="$(uname -m)"
     case "$arch" in
       x86_64|amd64) arch=x64 ;;
@@ -225,11 +241,13 @@ install_host() {
     $SUDO mkdir -p "$PREFIX"
     log "Baixando $fname"
     curl -fsSL "$base/$fname" -o /tmp/node.tar.xz
-    $SUDO tar -xJf /tmp/node.tar.xz -C "$PREFIX" \
-      && $SUDO mv "$PREFIX"/node-v*-linux-"$arch" "$PREFIX/node" \
-      || die "falha extraindo node"
-    NODE_BIN="$PREFIX/node/bin/node"
-    ok "node $($NODE_BIN -v) em $PREFIX/node"
+    $SUDO tar -xJf /tmp/node.tar.xz -C "$PREFIX" || die "falha extraindo node"
+    $SUDO rm -rf "$NODEDIR_PKG"   # substituição limpa — nunca aninha
+    $SUDO mv "$PREFIX"/node-v*-linux-"$arch" "$NODEDIR_PKG" \
+      || die "falha movendo node para $NODEDIR_PKG"
+    NODE_BIN="$NODEDIR_PKG/bin/node"
+    [ -x "$NODEDIR_PKG/bin/npm" ] || die "runtime node incompleto (npm ausente em $NODEDIR_PKG/bin)"
+    ok "node $($NODE_BIN -v) em $NODEDIR_PKG"
   fi
 
   # --- copia fontes ---
@@ -256,9 +274,13 @@ install_host() {
 
   # --- web (build) ---
   log "Instalando deps web + build (demora na primeira vez)"
-  PATH="$(dirname "$NODE_BIN"):$PATH" $SUDO env "PATH=$(dirname "$NODE_BIN"):$PATH" \
-    sh -c "cd $PREFIX/web && npm ci && node scripts/patch-settings.js \
-           && npm run build && npm run package:discover"
+  NODEDIR="$(dirname "$NODE_BIN")"
+  NPMCLI="$NODEDIR/../lib/node_modules/npm/bin/npm-cli.js"
+  if [ -f "$NPMCLI" ]; then NPM="'$NODE_BIN' '$NPMCLI'"; else NPM="npm"; fi
+  $SUDO env "PATH=$NODEDIR:$PATH" sh -c \
+    "cd '$PREFIX/web' && $NPM ci && '$NODE_BIN' scripts/patch-settings.js \
+     && $NPM run build && $NPM run package:discover" \
+    || die "build do web falhou"
   ok "web buildado"
 
   # --- config ---
