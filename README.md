@@ -203,3 +203,62 @@ docker/images/             # wallpapers em /home/images
 docker/webos-bootstrap*    # bootstrap do container
 deploy/*.service           # unidades systemd (produção E container)
 ```
+
+## Referências e créditos
+
+**Framework e UI**
+
+- [OS.js](https://github.com/os-js/OS.js) — desktop windowed environment no
+  browser, por [Anders Evenrud](https://github.com/andersevenrud). Base de
+  todo o cliente: janelas, VFS, settings, apps e autenticação
+  (`@osjs/client`, `@osjs/server`, `@osjs/gui`, `@osjs/dialogs`,
+  `@osjs/panels`, `@osjs/standard-theme`, `@osjs/gnome-icons`,
+  `@osjs/filemanager-application`, `@osjs/settings-application`,
+  `@osjs/htmlviewer-application`, `@osjs/preview-application`)
+- [Hyperapp](https://github.com/jorgebucaran/hyperapp) — micro-framework de
+  UI usado internamente pelo `@osjs/gui`
+- [xterm.js](https://github.com/xtermjs/xterm.js) — emulador de terminal do
+  app Terminal
+- [Monaco Editor](https://github.com/microsoft/monaco-editor) — editor de
+  código do app Code Editor
+- [Node.js](https://nodejs.org) — runtime do servidor (builds oficiais
+  usados no instalador para x64/arm64/armv7l/ppc64le/s390x)
+
+**Agente privilegiado (Python)**
+
+- [FastAPI](https://github.com/fastapi/fastapi) +
+  [uvicorn](https://github.com/encode/uvicorn) — API REST + proxy
+- [psutil](https://github.com/giampaolo/psutil) — CPU, RAM, disco, rede,
+  processos
+- [python-pam](https://pypi.org/project/python-pam/) — autenticação PAM
+  real (`pam_unix`)
+- [docker-py](https://github.com/docker/docker-py) — app Docker e loja
+- [websockets](https://github.com/python-websockets/websockets) — PTY do
+  terminal (spawn com `setuid`/`initgroups` do usuário logado)
+- [requests](https://github.com/psf/requests),
+  [python-dotenv](https://github.com/theskumar/python-dotenv)
+
+**Loja de aplicativos**
+
+- [CasaOS AppStore](https://github.com/IceWhaleTech/CasaOS-AppStore) —
+  índice de apps (docker-compose + metadados `x-casaos`), consumido via
+  [jsDelivr](https://www.jsdelivr.com/)
+- [Docker](https://www.docker.com/) +
+  [Docker Compose](https://docs.docker.com/compose/) — execução dos apps
+  instalados
+
+**Ferramentas de sistema administradas**
+
+- [systemd](https://systemd.io/) / `journalctl` — serviços e logs
+- [util-linux](https://github.com/util-linux/util-linux) (`lsblk`,
+  `fdisk`, `mount`) + [GNU parted](https://www.gnu.org/software/parted/) +
+  `mkfs`/`wipefs` — discos
+- [shadow](https://github.com/shadow-maint/shadow) (`useradd`, `usermod`,
+  `chpasswd`) — usuários
+- `crontab` ([cron](https://github.com/cronie-crond/cronie)) — agendador
+- [PAM](https://github.com/linux-pam/linux-pam) (`pam_unix`) — autenticação
+
+**Assets**
+
+- Ícone e wallpapers do maltês: gerados em SVG para este projeto
+  (`docker/images/`), mais JPEGs cedidos pelo autor
