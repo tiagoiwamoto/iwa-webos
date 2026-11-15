@@ -5,4 +5,5 @@ psutil>=6.1
 python-dotenv>=1.0
 websockets>=14
 python-pam>=2.0
+six>=1.16
 requests>=2.32
