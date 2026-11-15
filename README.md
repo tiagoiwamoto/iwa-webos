@@ -28,8 +28,8 @@ alternativa à UI tradicional de Cockpit/CasaOS/Webmin.
 | ![Store](docs/screenshots/18-store.png) | ![Terminal](docs/screenshots/19-terminal.png) | ![FileManager](docs/screenshots/20-filemanager.png) |
 | **Settings** | **Remote Access** | **Backup** |
 | ![Settings](docs/screenshots/21-settings.png) | ![Remote](docs/screenshots/22-remote.png) | ![Backup](docs/screenshots/24-backup.png) |
-| **Navigator** | | |
-| ![Navigator](docs/screenshots/25-navigator.png) | | |
+| **Navigator** | **Seletor de pastas (Backup)** | |
+| ![Navigator](docs/screenshots/25-navigator.png) | ![Picker](docs/screenshots/26-backup-picker.png) | |
 
 ## Plataformas testadas
 
