@@ -1,23 +1,26 @@
 #!/usr/bin/env bash
 #
-# IwaWebOs uninstaller — para e remove container, imagem e volumes.
+# IwaWebOs uninstaller.
 #
-# Uso:
-#   ./uninstall.sh            # remove container + imagem, pergunta sobre volumes
-#   ./uninstall.sh --all -y   # remove tudo incluindo dados (webos-apps) sem perguntar
-#   ./uninstall.sh --keep-img # remove container, mantém a imagem
+#   ./uninstall.sh              # desinstala do MODO usado na instalação:
+#                               # nativo (units/PAM//opt/webos) se detectado,
+#                               # senão container docker.
+#   ./uninstall.sh --docker     # força modo container
+#   ./uninstall.sh --all -y     # remove tudo (inclui /opt/webos) sem perguntar
+#   ./uninstall.sh --keep-img   # modo docker: mantém a imagem
 #
 set -euo pipefail
 
+MODE=""
 KEEP_IMG=0
-PURGE=0
 YES=0
 for arg in "$@"; do
   case "$arg" in
+    --docker) MODE=docker ;;
+    --host) MODE=host ;;
     --keep-img) KEEP_IMG=1 ;;
-    --all|--purge) PURGE=1 ;;
-    -y|--yes) YES=1 ;;
-    -h|--help) sed -n '2,10p' "$0"; exit 0 ;;
+    --all|-y|--yes|--purge) YES=1 ;;
+    -h|--help) sed -n '2,12p' "$0"; exit 0 ;;
     *) echo "opção desconhecida: $arg" >&2; exit 2 ;;
   esac
 done
@@ -29,36 +32,45 @@ confirm() {
   [ "$a" = "y" ] || [ "$a" = "Y" ]
 }
 
-cd "$(dirname "$(readlink -f "$0")")"
+cd "$(dirname "$(readlink -f "$0")")" 2>/dev/null || true
+SUDO=""; [ "$(id -u)" -ne 0 ] && command -v sudo >/dev/null 2>&1 && SUDO="sudo"
 
-DOCKER="docker"
-docker info >/dev/null 2>&1 || DOCKER="sudo docker"
-if $DOCKER compose version >/dev/null 2>&1; then
-  COMPOSE="$DOCKER compose"
+[ -z "$MODE" ] && {
+  if [ -f /etc/systemd/system/webos-web.service ]; then MODE=host; else MODE=docker; fi
+}
+log "Modo detectado: $MODE"
+
+if [ "$MODE" = host ]; then
+  log "Parando e desabilitando unidades"
+  $SUDO systemctl disable --now webos-web webos-agent 2>/dev/null || true
+  $SUDO rm -f /etc/systemd/system/webos-web.service \
+             /etc/systemd/system/webos-agent.service \
+             /etc/systemd/system/webos-bootstrap.service \
+             /etc/pam.d/webos
+  $SUDO systemctl daemon-reload
+
+  if confirm "Remover /opt/webos (código, venv, node, build)?"; then
+    $SUDO rm -rf /opt/webos
+  fi
+  echo "  nota: grupo 'webos' mantido; remova com: sudo groupdel webos"
+  echo "  nota: apps instalados pela loja são containers docker do host —"
+  echo "        liste com: docker ps -a"
+  log "Desinstalação concluída"
 else
-  COMPOSE="$DOCKER-compose"
-fi
+  DOCKER="docker"; docker info >/dev/null 2>&1 || DOCKER="sudo docker"
+  if $DOCKER compose version >/dev/null 2>&1; then
+    COMPOSE="$DOCKER compose"; else COMPOSE="${DOCKER/docker/docker-compose}"; fi
 
-log "Parando e removendo container"
-if [ "$PURGE" -eq 1 ] || confirm "Remover também os dados (volume webos-apps / apps instalados pela loja)?"; then
-  $COMPOSE down -v --remove-orphans
-  echo "  volumes removidos"
-else
-  $COMPOSE down --remove-orphans
-  echo "  volume webos-apps preservado"
-fi
+  log "Parando e removendo container"
+  if confirm "Remover também os dados (volume webos-apps / apps da loja)?"; then
+    $COMPOSE down -v --remove-orphans
+  else
+    $COMPOSE down --remove-orphans
+  fi
 
-if [ "$KEEP_IMG" -eq 0 ]; then
-  log "Removendo imagem"
-  $DOCKER rmi linux-webos-webos 2>/dev/null \
-    || $DOCKER images --format '{{.Repository}}:{{.Tag}}' \
-       | grep -i webos | xargs -r $DOCKER rmi || true
+  [ "$KEEP_IMG" -eq 0 ] && {
+    log "Removendo imagem"
+    $DOCKER rmi linux-webos-webos 2>/dev/null || true
+  }
+  log "Desinstalação concluída"
 fi
-
-# nada é instalado no host além do container/imagem — arquivos do repo ficam
-if [ -d .git ] && confirm "Apagar também este diretório ($(pwd))?"; then
-  cd .. && rm -rf "${OLDPWD##*/}"
-  echo "diretório removido"
-fi
-
-log "Desinstalação concluída. Nada foi alterado no host além do docker."

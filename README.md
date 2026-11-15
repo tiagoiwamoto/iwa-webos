@@ -19,45 +19,67 @@ cd iwa-webos
 ./install.sh
 ```
 
-O `install.sh` detecta e resolve automaticamente:
+Por padrão o `install.sh` faz **instalação nativa no host** — o painel
+gerencia o sistema onde foi instalado: usuários reais, systemd, discos,
+docker, crontab e logs **desta máquina**.
 
-- git, docker, plugin `docker compose` (oferece instalação via
-  apt/dnf/pacman/zypper/apk se faltar — `-y` pula as perguntas)
-- daemon docker ativo (tenta `systemctl start docker`; usa `sudo docker`
-  se seu usuário não está no grupo docker)
-- porta `8000` livre (mude com `WEBOS_PORT=8080 ./install.sh`)
+Ele detecta e resolve automaticamente:
 
-Depois ele faz `docker compose up -d --build` e espera o desktop responder.
+- python3 + venv/pip, curl, ca-certificates, xz (via
+  apt/dnf/pacman/zypper/apk — `-y` pula as perguntas)
+- node >= 20.6 — usa o do sistema se existir, senão baixa um runtime
+  próprio para `/opt/webos/node` (sem conflitar com o node da distro)
+- copia fontes para `/opt/webos`, cria a venv do agente, builda o web
+- escreve `/opt/webos/.env` (token aleatório) e `/etc/pam.d/webos`
+- cria o grupo `webos` e adiciona **seu usuário** a ele
+- instala e ativa as unidades `webos-agent` + `webos-web` (systemd)
 
 ```
-URL:    http://localhost:8000
-Login:  webos / webos   (usuário Linux real criado no boot — troque a senha!)
+URL:    http://<seu-ip>:8000
+Login:  seu usuário Linux + senha  (precisa estar no grupo 'webos')
+
+Dar acesso a outro usuário:  sudo usermod -aG webos <usuario>
 ```
+
+### Modo demo em container
+
+```bash
+./install.sh --docker
+```
+
+Sobe o container Ubuntu com systemd como PID 1 — usuário `webos/webos`
+criado no boot. Útil para testar a UI sem tocar o sistema real; tudo o que
+o painel fizer acontece **dentro do container**.
 
 ## Desinstalação
 
 ```bash
-./uninstall.sh            # para/remove container, pergunta sobre volumes
+./uninstall.sh            # detecta o modo usado (nativo ou docker)
 ./uninstall.sh --all -y   # remove tudo sem perguntar
-./uninstall.sh --keep-img # mantém a imagem docker
 ```
 
-Nada é instalado no host além do container e da imagem — remover os dois
-(+- o diretório clonado) desfaz a instalação por completo.
+- **Nativo**: para/desabilita as units, remove `/etc/systemd/system/webos-*`,
+  `/etc/pam.d/webos` e `/opt/webos` (pergunta). O grupo `webos` fica —
+  remova com `sudo groupdel webos`.
+- **Docker**: `compose down` (+ volumes/apps da loja com `--all`) e remove
+  a imagem.
 
-## O que o container roda
+## O que roda no sistema
 
-Um único container Ubuntu 24.04 com **systemd como PID 1** (`privileged`,
-`tmpfs /run`) sobe as mesmas unidades de `deploy/`:
+Instalado nativamente, duas unidades systemd (`deploy/`):
 
-- `webos-bootstrap` — oneshot: gera `.env` do env do PID1, escreve
-  `/etc/pam.d/webos`, cria grupo `webos` e usuário demo
-- `webos-agent` — FastAPI em `127.0.0.1:8765`
+- `webos-agent` — FastAPI em `127.0.0.1:8765` (root — useradd, udisksctl,
+  docker socket)
 - `webos-web` — servidor OS.js em `:8000`
 
 ```bash
-docker exec linux-webos systemctl status webos-agent webos-web
+systemctl status webos-agent webos-web   # nativo
+docker exec linux-webos systemctl status webos-agent webos-web   # demo
 ```
+
+No modo `--docker`, um único container Ubuntu 24.04 com systemd como
+PID 1 (`privileged`, `tmpfs /run`) sobe as mesmas unidades mais
+`webos-bootstrap` (oneshot que gera `.env`, PAM, grupo e usuário demo).
 
 ## Apps incluídos
 
