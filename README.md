@@ -175,6 +175,17 @@ do container via `pam_unix` (serviço `/etc/pam.d/webos`):
 Sem `WEBOS_AUTH=pam` vale o modo dev: qualquer credencial entra
 (null-adapter) e o terminal roda como root.
 
+### Mudar a porta
+
+```bash
+# Docker — porta do host E do container via env var:
+WEBOS_PORT=9090 docker compose up -d
+
+# Nativo — adicione ao /opt/webos/.env e reinicie:
+echo 'WEBOS_PORT=9090' | sudo tee -a /opt/webos/.env
+sudo systemctl restart webos-web
+```
+
 ## Configuração (docker-compose.yml `environment:`)
 
 | Var | Default | Efeito |

@@ -51,7 +51,7 @@ const csv = name => (process.env[name] || '')
 
 module.exports = {
   root,
-  port: 8000,
+  port: Number(process.env.WEBOS_PORT || process.env.PORT || 8000),
   public: path.resolve(root, 'dist'),
 
   // With authMode=pam, login requires a real Linux account; requiredGroups

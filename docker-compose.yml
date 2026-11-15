@@ -9,9 +9,10 @@ services:
       - /run/lock
       - /tmp
     ports:
-      - "8000:8000"
+      - "${WEBOS_PORT:-8000}:${WEBOS_PORT:-8000}"
     environment:
       # auth mode: 'pam' = real Linux users; anything else = dev null adapter
+      WEBOS_PORT: ${WEBOS_PORT:-8000}
       WEBOS_AUTH: pam
       # only members of this unix group may log in (empty = any valid user)
       WEBOS_REQUIRED_GROUPS: webos
