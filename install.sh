@@ -220,6 +220,11 @@ install_host() {
          docker-compose.yml Dockerfile README.md "$PREFIX/"; }
   ok "fontes em $PREFIX"
 
+  # --- wallpapers (/home/images, mesmo caminho do modo docker) ---
+  $SUDO mkdir -p /home/images
+  $SUDO cp -a docker/images/. /home/images/
+  ok "wallpapers em /home/images"
+
   # --- agente python ---
   log "Criando venv do agente"
   $SUDO python3 -m venv "$PREFIX/agent/.venv"
