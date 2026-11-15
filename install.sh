@@ -86,6 +86,7 @@ pkg_for() { # $1 = dep lógico → nomes por distro
       elif need zypper;  then echo "gcc python3-devel"
       elif need apk;     then echo "gcc musl-dev python3-dev"
       else echo "gcc"; fi ;;
+    npm) echo "npm" ;;
   esac
 }
 
@@ -194,11 +195,19 @@ install_host() {
 
   # --- node >= 20.6 (em /opt/webos/node para não conflitar com o da distro) ---
   NODE_BIN=""
-  if need node && [ "$(node -e 'const v=process.version.slice(1).split(".");console.log(+v[0]>20||(+v[0]==20&&+v[1]>=6)?1:0)')" = "1" ]; then
+  node_ok() {
+    need node && [ "$(node -e 'const v=process.version.slice(1).split(".");console.log(+v[0]>20||(+v[0]==20&&+v[1]>=6)?1:0)' 2>/dev/null)" = "1" ]
+  }
+  # node da distro pode vir sem npm (apt separa os pacotes) — tenta instalar
+  if node_ok && ! need npm; then
+    warn "node OK mas 'npm' ausente — instalando da distro"
+    install_pkg $(pkg_for npm) || true
+  fi
+  if node_ok && need npm; then
     NODE_BIN="$(command -v node)"
-    ok "node $(node -v) do sistema"
+    ok "node $(node -v) + npm do sistema"
   else
-    warn "node >= 20.6 ausente — baixando runtime próprio para $PREFIX/node"
+    warn "node >= 20.6 com npm ausente — baixando runtime próprio para $PREFIX/node"
     local arch; arch="$(uname -m)"
     case "$arch" in
       x86_64|amd64) arch=x64 ;;
