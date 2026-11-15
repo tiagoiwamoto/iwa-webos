@@ -22,10 +22,14 @@ const register = (core, args, options, metadata) => {
   const sb = statusbar();
   const log = el('div', {class: 'wup-log'}, 'sem atualização em andamento');
   const statusTxt = el('div', {class: 'd'}, 'Verifique e instale a versão mais recente.');
+  const verTxt = el('div', {class: 'd', style: {marginTop: '4px', fontFamily: 'monospace'}}, '');
   const btn = button('Atualizar agora', null);
   let timer = null;
 
   const paint = st => {
+    const v = `local: ${st.local || '?'}  ·  main: ${st.remote || '?'}`;
+    verTxt.textContent = st.update_available ? v + '  —  atualização disponível ⬆' : v;
+    verTxt.style.color = st.update_available ? '#7ddc8f' : '#9ab';
     if (st.running) {
       btn.disabled = true;
       statusTxt.textContent = 'Atualizando… os serviços vão reiniciar (a sessão pode cair).';
@@ -37,7 +41,7 @@ const register = (core, args, options, metadata) => {
       sb.set(ok ? 'concluído ✓' : 'falhou — veja o log');
     } else {
       btn.disabled = false;
-      sb.set('pronto');
+      sb.set(st.update_available ? 'nova versão disponível' : 'pronto');
     }
     if (st.log) {
       log.textContent = st.log;
@@ -75,7 +79,7 @@ const register = (core, args, options, metadata) => {
           el('span', {class: 'big'}, '⬆'),
           el('div', {},
             el('div', {class: 't'}, 'Malta OS'),
-            statusTxt),
+            statusTxt, verTxt),
           el('span', {class: 'wup-btn'}, btn)),
         log), sb));
       poll();

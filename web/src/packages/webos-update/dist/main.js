@@ -1578,10 +1578,21 @@ const register = (core, args, options, metadata) => {
   const statusTxt = Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
     class: 'd'
   }, 'Verifique e instale a versão mais recente.');
+  const verTxt = Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
+    class: 'd',
+    style: {
+      marginTop: '4px',
+      fontFamily: 'monospace'
+    }
+  }, '');
   const btn = Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["button"])('Atualizar agora', null);
   let timer = null;
 
   const paint = st => {
+    const v = `local: ${st.local || '?'}  ·  main: ${st.remote || '?'}`;
+    verTxt.textContent = st.update_available ? v + '  —  atualização disponível ⬆' : v;
+    verTxt.style.color = st.update_available ? '#7ddc8f' : '#9ab';
+
     if (st.running) {
       btn.disabled = true;
       statusTxt.textContent = 'Atualizando… os serviços vão reiniciar (a sessão pode cair).';
@@ -1593,7 +1604,7 @@ const register = (core, args, options, metadata) => {
       sb.set(ok ? 'concluído ✓' : 'falhou — veja o log');
     } else {
       btn.disabled = false;
-      sb.set('pronto');
+      sb.set(st.update_available ? 'nova versão disponível' : 'pronto');
     }
 
     if (st.log) {
@@ -1642,7 +1653,7 @@ const register = (core, args, options, metadata) => {
       class: 'big'
     }, '⬆'), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {}, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
       class: 't'
-    }, 'Malta OS'), statusTxt), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {
+    }, 'Malta OS'), statusTxt, verTxt), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {
       class: 'wup-btn'
     }, btn)), log), sb));
     poll();
