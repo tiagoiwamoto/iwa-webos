@@ -29,6 +29,15 @@ alternativa à UI tradicional de Cockpit/CasaOS/Webmin.
 | **Settings** | | |
 | ![Settings](docs/screenshots/21-settings.png) | | |
 
+## Plataformas testadas
+
+| Plataforma | Arquitetura | Modo |
+|---|---|---|
+| Docker (Ubuntu 24.04) | x86_64 | container (`--docker`) |
+| Raspberry Pi 2 | armv7l | instalação nativa |
+| Orange Pi | armv7l/arm64 | instalação nativa |
+| Walnut Pi | armv7l/arm64 | instalação nativa |
+
 ## Instalação rápida
 
 ```bash
