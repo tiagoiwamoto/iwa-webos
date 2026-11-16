@@ -1278,6 +1278,1440 @@ var formatBytes = function formatBytes(n) {
 
 /***/ }),
 
+/***/ "./src/packages/_shared/i18n.js":
+/*!**************************************!*\
+  !*** ./src/packages/_shared/i18n.js ***!
+  \**************************************/
+/*! exports provided: LOCALES, intlLocale, getLocale, setLocale, useI18n, metaTitle */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "LOCALES", function() { return LOCALES; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "intlLocale", function() { return intlLocale; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getLocale", function() { return getLocale; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "setLocale", function() { return setLocale; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "useI18n", function() { return useI18n; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "metaTitle", function() { return metaTitle; });
+/*
+ * Local i18n — user-chosen language stored in osjs/settings ('webos.locale'),
+ * independent of the browser language. Dictionaries are namespaced per app
+ * ('files', 'shell', ...) plus a shared 'common' pack.
+ *
+ * const {t, onLocale} = useI18n(core);
+ * t('newFolder')           -> common.newFolder lookup? no — app keys are
+ * t('files.newFolder')      namespaced; bare keys hit 'common'.
+ * t('files.deleteMsg', {name: 'x'})  -> '{name}' interpolation.
+ */
+var DICTS = {};
+
+var registerDict = function registerDict(ns, dict) {
+  DICTS[ns] = dict;
+};
+
+var LOCALES = [{
+  id: 'en',
+  label: 'English'
+}, {
+  id: 'pt_BR',
+  label: 'Português (BR)'
+}, {
+  id: 'pt_PT',
+  label: 'Português (PT)'
+}, {
+  id: 'es',
+  label: 'Español'
+}, {
+  id: 'ja',
+  label: '日本語'
+}, {
+  id: 'zh',
+  label: '中文'
+}]; // BCP-47 for Intl APIs (clock etc.)
+
+var intlLocale = function intlLocale(id) {
+  return {
+    en: 'en',
+    pt_BR: 'pt-BR',
+    pt_PT: 'pt-PT',
+    es: 'es',
+    ja: 'ja',
+    zh: 'zh'
+  }[id] || 'en';
+};
+var getLocale = function getLocale(core) {
+  try {
+    return core.make('osjs/settings').get('webos', 'locale') || 'en';
+  } catch (e) {
+    return 'en';
+  }
+}; // OS.js core only ships these translations — dialogs fall back to en_EN
+
+var OSJS_LOCALE = {
+  en: 'en_EN',
+  pt_BR: 'pt_BR',
+  zh: 'zh_CN'
+};
+var setLocale = function setLocale(core, id) {
+  var s = core.make('osjs/settings');
+  s.set('webos', 'locale', id);
+  s.set('osjs/locale', 'language', OSJS_LOCALE[id] || 'en_EN');
+  return s.save().then(function () {
+    return document.dispatchEvent(new CustomEvent('webos:locale'));
+  });
+};
+var useI18n = function useI18n(core) {
+  var t = function t(key, vars) {
+    var dot = key.indexOf('.');
+    var ns = dot > 0 ? key.slice(0, dot) : 'common';
+    var k = dot > 0 ? key.slice(dot + 1) : key;
+    var loc = getLocale(core);
+    var dict = DICTS[ns] || {};
+    var s = dict[loc] && dict[loc][k] || dict.en && dict.en[k] || key;
+
+    if (vars) {
+      s = s.replace(/\{(\w+)\}/g, function (m, v) {
+        return vars[v] !== undefined ? vars[v] : m;
+      });
+    }
+
+    return s;
+  };
+
+  var onLocale = function onLocale(fn) {
+    var h = function h() {
+      return fn();
+    };
+
+    document.addEventListener('webos:locale', h);
+    return function () {
+      return document.removeEventListener('webos:locale', h);
+    };
+  };
+
+  return {
+    t: t,
+    onLocale: onLocale,
+    locale: function locale() {
+      return getLocale(core);
+    }
+  };
+}; // package metadata titles use OS.js locale ids (en_EN, pt_BR, ...)
+
+var META_LOCALE = {
+  en: 'en_EN',
+  pt_BR: 'pt_BR',
+  pt_PT: 'pt_PT',
+  es: 'es_ES',
+  ja: 'ja_JP',
+  zh: 'zh_CN'
+};
+var metaTitle = function metaTitle(core, m) {
+  var title = m && m.title || {};
+  return title[META_LOCALE[getLocale(core)]] || title.en_EN || m && m.name || '';
+}; // ---------------------------------------------------------------------------
+
+registerDict('common', {
+  en: {
+    ok: 'OK',
+    cancel: 'Cancel',
+    save: 'Save',
+    del: 'Delete',
+    refresh: 'Refresh',
+    loading: 'loading…',
+    error: 'Error',
+    name: 'Name',
+    size: 'Size',
+    type: 'Type',
+    modified: 'Modified',
+    add: 'Add',
+    close: 'Close',
+    select: 'Select',
+    go: 'Go'
+  },
+  pt_BR: {
+    ok: 'OK',
+    cancel: 'Cancelar',
+    save: 'Salvar',
+    del: 'Excluir',
+    refresh: 'Atualizar',
+    loading: 'carregando…',
+    error: 'Erro',
+    name: 'Nome',
+    size: 'Tamanho',
+    type: 'Tipo',
+    modified: 'Modificado',
+    add: 'Adicionar',
+    close: 'Fechar',
+    select: 'Selecionar',
+    go: 'Ir'
+  },
+  pt_PT: {
+    ok: 'OK',
+    cancel: 'Cancelar',
+    save: 'Guardar',
+    del: 'Eliminar',
+    refresh: 'Atualizar',
+    loading: 'a carregar…',
+    error: 'Erro',
+    name: 'Nome',
+    size: 'Tamanho',
+    type: 'Tipo',
+    modified: 'Modificado',
+    add: 'Adicionar',
+    close: 'Fechar',
+    select: 'Selecionar',
+    go: 'Ir'
+  },
+  es: {
+    ok: 'OK',
+    cancel: 'Cancelar',
+    save: 'Guardar',
+    del: 'Eliminar',
+    refresh: 'Actualizar',
+    loading: 'cargando…',
+    error: 'Error',
+    name: 'Nombre',
+    size: 'Tamaño',
+    type: 'Tipo',
+    modified: 'Modificado',
+    add: 'Añadir',
+    close: 'Cerrar',
+    select: 'Seleccionar',
+    go: 'Ir'
+  },
+  ja: {
+    ok: 'OK',
+    cancel: 'キャンセル',
+    save: '保存',
+    del: '削除',
+    refresh: '更新',
+    loading: '読み込み中…',
+    error: 'エラー',
+    name: '名前',
+    size: 'サイズ',
+    type: '種類',
+    modified: '更新日時',
+    add: '追加',
+    close: '閉じる',
+    select: '選択',
+    go: '移動'
+  },
+  zh: {
+    ok: '确定',
+    cancel: '取消',
+    save: '保存',
+    del: '删除',
+    refresh: '刷新',
+    loading: '加载中…',
+    error: '错误',
+    name: '名称',
+    size: '大小',
+    type: '类型',
+    modified: '修改时间',
+    add: '添加',
+    close: '关闭',
+    select: '选择',
+    go: '前往'
+  }
+});
+registerDict('shell', {
+  en: {
+    search: 'Type to search…',
+    saveSession: 'Save session',
+    logout: 'Log out',
+    language: 'Language',
+    session: 'Session',
+    'app.Terminal': 'Terminal',
+    'app.Tasks': 'Tasks',
+    'app.Services': 'Services',
+    'app.Docker': 'Docker',
+    'app.App Store': 'App Store',
+    'app.Disks': 'Disks',
+    'app.Users': 'Users',
+    'app.Files': 'Files',
+    'app.Editor': 'Editor',
+    'app.System': 'System',
+    'app.Logs': 'Logs',
+    'app.Cron': 'Cron',
+    'app.Remote': 'Remote',
+    'app.Navigator': 'Navigator',
+    'app.Backup': 'Backup',
+    'app.Settings': 'Settings'
+  },
+  pt_BR: {
+    search: 'Digite para buscar…',
+    saveSession: 'Salvar sessão',
+    logout: 'Sair',
+    language: 'Idioma',
+    session: 'Sessão',
+    'app.Terminal': 'Terminal',
+    'app.Tasks': 'Tarefas',
+    'app.Services': 'Serviços',
+    'app.Docker': 'Docker',
+    'app.App Store': 'Loja de Apps',
+    'app.Disks': 'Discos',
+    'app.Users': 'Usuários',
+    'app.Files': 'Arquivos',
+    'app.Editor': 'Editor',
+    'app.System': 'Sistema',
+    'app.Logs': 'Logs',
+    'app.Cron': 'Cron',
+    'app.Remote': 'Remoto',
+    'app.Navigator': 'Navegador',
+    'app.Backup': 'Backup',
+    'app.Settings': 'Configurações'
+  },
+  pt_PT: {
+    search: 'Escreva para procurar…',
+    saveSession: 'Guardar sessão',
+    logout: 'Terminar sessão',
+    language: 'Idioma',
+    session: 'Sessão',
+    'app.Terminal': 'Terminal',
+    'app.Tasks': 'Tarefas',
+    'app.Services': 'Serviços',
+    'app.Docker': 'Docker',
+    'app.App Store': 'Loja de Apps',
+    'app.Disks': 'Discos',
+    'app.Users': 'Utilizadores',
+    'app.Files': 'Ficheiros',
+    'app.Editor': 'Editor',
+    'app.System': 'Sistema',
+    'app.Logs': 'Registos',
+    'app.Cron': 'Cron',
+    'app.Remote': 'Remoto',
+    'app.Navigator': 'Navegador',
+    'app.Backup': 'Cópia de segurança',
+    'app.Settings': 'Definições'
+  },
+  es: {
+    search: 'Escribe para buscar…',
+    saveSession: 'Guardar sesión',
+    logout: 'Cerrar sesión',
+    language: 'Idioma',
+    session: 'Sesión',
+    'app.Terminal': 'Terminal',
+    'app.Tasks': 'Tareas',
+    'app.Services': 'Servicios',
+    'app.Docker': 'Docker',
+    'app.App Store': 'Tienda de Apps',
+    'app.Disks': 'Discos',
+    'app.Users': 'Usuarios',
+    'app.Files': 'Archivos',
+    'app.Editor': 'Editor',
+    'app.System': 'Sistema',
+    'app.Logs': 'Registros',
+    'app.Cron': 'Cron',
+    'app.Remote': 'Remoto',
+    'app.Navigator': 'Navegador',
+    'app.Backup': 'Copia de seguridad',
+    'app.Settings': 'Configuración'
+  },
+  ja: {
+    search: '入力して検索…',
+    saveSession: 'セッションを保存',
+    logout: 'ログアウト',
+    language: '言語',
+    session: 'セッション',
+    'app.Terminal': 'ターミナル',
+    'app.Tasks': 'タスク',
+    'app.Services': 'サービス',
+    'app.Docker': 'Docker',
+    'app.App Store': 'アプリストア',
+    'app.Disks': 'ディスク',
+    'app.Users': 'ユーザー',
+    'app.Files': 'ファイル',
+    'app.Editor': 'エディタ',
+    'app.System': 'システム',
+    'app.Logs': 'ログ',
+    'app.Cron': 'Cron',
+    'app.Remote': 'リモート',
+    'app.Navigator': 'ナビゲーター',
+    'app.Backup': 'バックアップ',
+    'app.Settings': '設定'
+  },
+  zh: {
+    search: '输入以搜索…',
+    saveSession: '保存会话',
+    logout: '注销',
+    language: '语言',
+    session: '会话',
+    'app.Terminal': '终端',
+    'app.Tasks': '任务',
+    'app.Services': '服务',
+    'app.Docker': 'Docker',
+    'app.App Store': '应用商店',
+    'app.Disks': '磁盘',
+    'app.Users': '用户',
+    'app.Files': '文件',
+    'app.Editor': '编辑器',
+    'app.System': '系统',
+    'app.Logs': '日志',
+    'app.Cron': 'Cron',
+    'app.Remote': '远程',
+    'app.Navigator': '导航器',
+    'app.Backup': '备份',
+    'app.Settings': '设置'
+  }
+});
+registerDict('files', {
+  en: {
+    newFolder: 'New folder',
+    newFolderMsg: 'Folder name in {dir}',
+    newFile: 'New file',
+    newFileMsg: 'File name in {dir}',
+    rename: 'Rename',
+    renameMsg: 'New name for {name}',
+    deleteTitle: 'Delete',
+    deleteMsg: 'Permanently delete {name}?',
+    open: 'Open',
+    openWith: 'Open with…',
+    favorite: '★ Favorite',
+    unfavPlace: '★ Remove favorite',
+    favPlace: '★ Favorite folder',
+    paste: 'Paste',
+    cut: 'Cut',
+    copy: 'Copy',
+    download: 'Download',
+    upload: 'Upload file…',
+    refresh: 'Refresh',
+    places: 'Places',
+    devices: 'Devices',
+    favorites: 'Favorites',
+    noVolumes: 'no volumes',
+    noFavorites: 'no favorites — use ★ in the toolbar',
+    emptyFolder: 'empty folder',
+    items: '{n} item(s)',
+    folders: '{n} folder(s)',
+    clip: '{n} in clipboard',
+    clipCut: ' (cut)',
+    mounting: 'mounting {dev}…',
+    unmount: 'Unmount {dev}',
+    notMounted: 'not mounted',
+    editPath: 'Edit path (Ctrl+L)',
+    favTitle: 'Add/remove favorite',
+    viewToggle: 'Toggle list/icons',
+    showHidden: 'Show hidden files',
+    selInfo: '{name} — {info}',
+    folder: 'folder',
+    file: 'file',
+    removeFav: 'Remove favorite',
+    selItem: 'select an item',
+    back: 'Back',
+    forward: 'Forward',
+    up: 'Up',
+    uploading: 'uploading {name}…',
+    uploaded: '{name} sent'
+  },
+  pt_BR: {
+    newFolder: 'Nova pasta',
+    newFolderMsg: 'Nome da pasta em {dir}',
+    newFile: 'Novo arquivo',
+    newFileMsg: 'Nome do arquivo em {dir}',
+    rename: 'Renomear',
+    renameMsg: 'Novo nome para {name}',
+    deleteTitle: 'Excluir',
+    deleteMsg: 'Excluir {name} definitivamente?',
+    open: 'Abrir',
+    openWith: 'Abrir com…',
+    favorite: '★ Favoritar',
+    unfavPlace: '★ Remover favorito',
+    favPlace: '★ Favoritar pasta',
+    paste: 'Colar',
+    cut: 'Recortar',
+    copy: 'Copiar',
+    download: 'Download',
+    upload: 'Enviar arquivo…',
+    refresh: 'Atualizar',
+    places: 'Locais',
+    devices: 'Dispositivos',
+    favorites: 'Favoritos',
+    noVolumes: 'nenhum volume',
+    noFavorites: 'nenhum favorito — use ★ na barra',
+    emptyFolder: 'pasta vazia',
+    items: '{n} item(s)',
+    folders: '{n} pasta(s)',
+    clip: '{n} na área de transferência',
+    clipCut: ' (recortar)',
+    mounting: 'montando {dev}…',
+    unmount: 'Desmontar {dev}',
+    notMounted: 'não montado',
+    editPath: 'Editar caminho (Ctrl+L)',
+    favTitle: 'Adicionar/remover favorito',
+    viewToggle: 'Alternar lista/ícones',
+    showHidden: 'Mostrar arquivos ocultos',
+    selInfo: '{name} — {info}',
+    folder: 'pasta',
+    file: 'arquivo',
+    removeFav: 'Remover favorito',
+    selItem: 'selecione um item',
+    back: 'Voltar',
+    forward: 'Avançar',
+    up: 'Subir',
+    uploading: 'enviando {name}…',
+    uploaded: '{name} enviado'
+  },
+  pt_PT: {
+    newFolder: 'Nova pasta',
+    newFolderMsg: 'Nome da pasta em {dir}',
+    newFile: 'Novo ficheiro',
+    newFileMsg: 'Nome do ficheiro em {dir}',
+    rename: 'Mudar o nome',
+    renameMsg: 'Novo nome para {name}',
+    deleteTitle: 'Eliminar',
+    deleteMsg: 'Eliminar {name} definitivamente?',
+    open: 'Abrir',
+    openWith: 'Abrir com…',
+    favorite: '★ Favorito',
+    unfavPlace: '★ Remover favorito',
+    favPlace: '★ Marcador de pasta',
+    paste: 'Colar',
+    cut: 'Cortar',
+    copy: 'Copiar',
+    download: 'Descarregar',
+    upload: 'Enviar ficheiro…',
+    refresh: 'Atualizar',
+    places: 'Locais',
+    devices: 'Dispositivos',
+    favorites: 'Favoritos',
+    noVolumes: 'sem volumes',
+    noFavorites: 'sem favoritos — use ★ na barra',
+    emptyFolder: 'pasta vazia',
+    items: '{n} item(s)',
+    folders: '{n} pasta(s)',
+    clip: '{n} na área de transferência',
+    clipCut: ' (cortar)',
+    mounting: 'a montar {dev}…',
+    unmount: 'Desmontar {dev}',
+    notMounted: 'não montado',
+    editPath: 'Editar caminho (Ctrl+L)',
+    favTitle: 'Adicionar/remover favorito',
+    viewToggle: 'Alternar lista/ícones',
+    showHidden: 'Mostrar ficheiros ocultos',
+    selInfo: '{name} — {info}',
+    folder: 'pasta',
+    file: 'ficheiro',
+    removeFav: 'Remover favorito',
+    selItem: 'selecione um item',
+    back: 'Voltar',
+    forward: 'Avançar',
+    up: 'Subir',
+    uploading: 'a enviar {name}…',
+    uploaded: '{name} enviado'
+  },
+  es: {
+    newFolder: 'Nueva carpeta',
+    newFolderMsg: 'Nombre de la carpeta en {dir}',
+    newFile: 'Nuevo archivo',
+    newFileMsg: 'Nombre del archivo en {dir}',
+    rename: 'Renombrar',
+    renameMsg: 'Nuevo nombre para {name}',
+    deleteTitle: 'Eliminar',
+    deleteMsg: '¿Eliminar {name} definitivamente?',
+    open: 'Abrir',
+    openWith: 'Abrir con…',
+    favorite: '★ Favorito',
+    unfavPlace: '★ Quitar favorito',
+    favPlace: '★ Carpeta favorita',
+    paste: 'Pegar',
+    cut: 'Cortar',
+    copy: 'Copiar',
+    download: 'Descargar',
+    upload: 'Subir archivo…',
+    refresh: 'Actualizar',
+    places: 'Lugares',
+    devices: 'Dispositivos',
+    favorites: 'Favoritos',
+    noVolumes: 'sin volúmenes',
+    noFavorites: 'sin favoritos — usa ★ en la barra',
+    emptyFolder: 'carpeta vacía',
+    items: '{n} elemento(s)',
+    folders: '{n} carpeta(s)',
+    clip: '{n} en el portapapeles',
+    clipCut: ' (cortar)',
+    mounting: 'montando {dev}…',
+    unmount: 'Desmontar {dev}',
+    notMounted: 'sin montar',
+    editPath: 'Editar ruta (Ctrl+L)',
+    favTitle: 'Añadir/quitar favorito',
+    viewToggle: 'Alternar lista/iconos',
+    showHidden: 'Mostrar archivos ocultos',
+    selInfo: '{name} — {info}',
+    folder: 'carpeta',
+    file: 'archivo',
+    removeFav: 'Quitar favorito',
+    selItem: 'seleccione un elemento',
+    back: 'Atrás',
+    forward: 'Adelante',
+    up: 'Subir',
+    uploading: 'subiendo {name}…',
+    uploaded: '{name} enviado'
+  },
+  ja: {
+    newFolder: '新しいフォルダ',
+    newFolderMsg: '{dir} のフォルダ名',
+    newFile: '新しいファイル',
+    newFileMsg: '{dir} のファイル名',
+    rename: '名前を変更',
+    renameMsg: '{name} の新しい名前',
+    deleteTitle: '削除',
+    deleteMsg: '{name} を完全に削除しますか?',
+    open: '開く',
+    openWith: 'アプリで開く…',
+    favorite: '★ お気に入り',
+    unfavPlace: '★ お気に入り解除',
+    favPlace: '★ フォルダをお気に入りに',
+    paste: '貼り付け',
+    cut: '切り取り',
+    copy: 'コピー',
+    download: 'ダウンロード',
+    upload: 'ファイルをアップロード…',
+    refresh: '更新',
+    places: '場所',
+    devices: 'デバイス',
+    favorites: 'お気に入り',
+    noVolumes: 'ボリュームなし',
+    noFavorites: 'お気に入りなし — ツールバーの ★ を使用',
+    emptyFolder: '空のフォルダ',
+    items: '{n} 個のアイテム',
+    folders: '{n} 個のフォルダ',
+    clip: '{n} 個をコピー中',
+    clipCut: ' (切り取り)',
+    mounting: '{dev} をマウント中…',
+    unmount: '{dev} をアンマウント',
+    notMounted: '未マウント',
+    editPath: 'パスを編集 (Ctrl+L)',
+    favTitle: 'お気に入りの追加/削除',
+    viewToggle: 'リスト/アイコン切替',
+    showHidden: '隠しファイルを表示',
+    selInfo: '{name} — {info}',
+    folder: 'フォルダ',
+    file: 'ファイル',
+    removeFav: 'お気に入りを削除',
+    selItem: '項目を選択',
+    back: '戻る',
+    forward: '進む',
+    up: '上へ',
+    uploading: '{name} をアップロード中…',
+    uploaded: '{name} を送信しました'
+  },
+  zh: {
+    newFolder: '新建文件夹',
+    newFolderMsg: '{dir} 中的文件夹名',
+    newFile: '新建文件',
+    newFileMsg: '{dir} 中的文件名',
+    rename: '重命名',
+    renameMsg: '{name} 的新名称',
+    deleteTitle: '删除',
+    deleteMsg: '永久删除 {name}？',
+    open: '打开',
+    openWith: '打开方式…',
+    favorite: '★ 收藏',
+    unfavPlace: '★ 移除收藏',
+    favPlace: '★ 收藏此文件夹',
+    paste: '粘贴',
+    cut: '剪切',
+    copy: '复制',
+    download: '下载',
+    upload: '上传文件…',
+    refresh: '刷新',
+    places: '位置',
+    devices: '设备',
+    favorites: '收藏',
+    noVolumes: '无卷',
+    noFavorites: '无收藏 — 使用工具栏 ★',
+    emptyFolder: '空文件夹',
+    items: '{n} 个项目',
+    folders: '{n} 个文件夹',
+    clip: '剪贴板中 {n} 项',
+    clipCut: ' (剪切)',
+    mounting: '正在挂载 {dev}…',
+    unmount: '卸载 {dev}',
+    notMounted: '未挂载',
+    editPath: '编辑路径 (Ctrl+L)',
+    favTitle: '添加/移除收藏',
+    viewToggle: '切换列表/图标',
+    showHidden: '显示隐藏文件',
+    selInfo: '{name} — {info}',
+    folder: '文件夹',
+    file: '文件',
+    removeFav: '移除收藏',
+    selItem: '请选择项目',
+    back: '后退',
+    forward: '前进',
+    up: '向上',
+    uploading: '正在上传 {name}…',
+    uploaded: '{name} 已上传'
+  }
+});
+registerDict('disks', {
+  en: {
+    noDisk: 'no disk found',
+    selDisk: 'select a disk',
+    selPart: 'select a partition in the list',
+    noParts: 'no partitions — create a table (New table) or a partition',
+    free: 'unallocated',
+    unknown: 'unknown',
+    usb: 'USB/removable',
+    part: 'Partition',
+    fs: 'Filesystem',
+    label: 'Label',
+    used: 'Used',
+    mountedAt: 'Mounted at',
+    newPart: 'New partition',
+    format: 'Format',
+    "delete": 'Delete',
+    mount: 'Mount',
+    unmount: 'Unmount',
+    newTable: 'New table',
+    eject: 'Eject',
+    refresh: 'Refresh',
+    newPartTitle: 'New partition on {dev}',
+    formatTitle: 'Format {dev}',
+    newTableTitle: 'New partition table on {dev}',
+    type: 'Type',
+    start: 'Start (%)',
+    end: 'End (%)',
+    labelOpt: 'Label (optional)',
+    confirmTable: 'Create {label} table on {dev}? ALL partitions and data will be lost.',
+    confirmFormat: 'Format {dev} as {fs}? All data will be lost.',
+    confirmDelete: 'Delete {dev}? Your data will be lost.',
+    wipeAll: 'Wipe all',
+    mountMsg: 'Mountpoint for {dev} (empty = auto/udisks)',
+    disk: 'disk',
+    delPart: 'Delete partition',
+    diskTag: '{n} disk(s)',
+    gpt: 'GPT (recommended)',
+    msdos: 'MSDOS/MBR (legacy)'
+  },
+  pt_BR: {
+    noDisk: 'nenhum disco encontrado',
+    selDisk: 'selecione um disco',
+    selPart: 'selecione uma partição na lista',
+    noParts: 'sem partições — crie uma tabela (Nova tabela) ou uma partição',
+    free: 'não alocado',
+    unknown: 'desconhecido',
+    usb: 'USB/removível',
+    part: 'Partição',
+    fs: 'Sistema de arquivos',
+    label: 'Rótulo',
+    used: 'Usado',
+    mountedAt: 'Montado em',
+    newPart: 'Nova partição',
+    format: 'Formatar',
+    "delete": 'Excluir',
+    mount: 'Montar',
+    unmount: 'Desmontar',
+    newTable: 'Nova tabela',
+    eject: 'Ejetar',
+    refresh: 'Atualizar',
+    newPartTitle: 'Nova partição em {dev}',
+    formatTitle: 'Formatar {dev}',
+    newTableTitle: 'Nova tabela de partições em {dev}',
+    type: 'Tipo',
+    start: 'Início (%)',
+    end: 'Fim (%)',
+    labelOpt: 'Rótulo (opcional)',
+    confirmTable: 'Criar tabela {label} em {dev}? TODAS as partições e dados serão perdidos.',
+    confirmFormat: 'Formatar {dev} como {fs}? Todos os dados serão perdidos.',
+    confirmDelete: 'Excluir {dev}? Seus dados serão perdidos.',
+    wipeAll: 'Apagar tudo',
+    mountMsg: 'Ponto de montagem para {dev} (vazio = automático/udisks)',
+    disk: 'disco',
+    delPart: 'Excluir partição',
+    diskTag: '{n} disco(s)',
+    gpt: 'GPT (recomendado)',
+    msdos: 'MSDOS/MBR (legado)'
+  },
+  pt_PT: {
+    noDisk: 'nenhum disco encontrado',
+    selDisk: 'selecione um disco',
+    selPart: 'selecione uma partição na lista',
+    noParts: 'sem partições — crie uma tabela (Nova tabela) ou uma partição',
+    free: 'não alocado',
+    unknown: 'desconhecido',
+    usb: 'USB/amovível',
+    part: 'Partição',
+    fs: 'Sistema de ficheiros',
+    label: 'Etiqueta',
+    used: 'Usado',
+    mountedAt: 'Montado em',
+    newPart: 'Nova partição',
+    format: 'Formatar',
+    "delete": 'Eliminar',
+    mount: 'Montar',
+    unmount: 'Desmontar',
+    newTable: 'Nova tabela',
+    eject: 'Ejetar',
+    refresh: 'Atualizar',
+    newPartTitle: 'Nova partição em {dev}',
+    formatTitle: 'Formatar {dev}',
+    newTableTitle: 'Nova tabela de partições em {dev}',
+    type: 'Tipo',
+    start: 'Início (%)',
+    end: 'Fim (%)',
+    labelOpt: 'Etiqueta (opcional)',
+    confirmTable: 'Criar tabela {label} em {dev}? TODAS as partições e dados serão perdidos.',
+    confirmFormat: 'Formatar {dev} como {fs}? Todos os dados serão perdidos.',
+    confirmDelete: 'Eliminar {dev}? Os seus dados serão perdidos.',
+    wipeAll: 'Apagar tudo',
+    mountMsg: 'Ponto de montagem para {dev} (vazio = automático/udisks)',
+    disk: 'disco',
+    delPart: 'Eliminar partição',
+    diskTag: '{n} disco(s)',
+    gpt: 'GPT (recomendado)',
+    msdos: 'MSDOS/MBR (legado)'
+  },
+  es: {
+    noDisk: 'ningún disco encontrado',
+    selDisk: 'seleccione un disco',
+    selPart: 'seleccione una partición de la lista',
+    noParts: 'sin particiones — cree una tabla (Nueva tabla) o una partición',
+    free: 'sin asignar',
+    unknown: 'desconocido',
+    usb: 'USB/extraíble',
+    part: 'Partición',
+    fs: 'Sistema de archivos',
+    label: 'Etiqueta',
+    used: 'Usado',
+    mountedAt: 'Montado en',
+    newPart: 'Nueva partición',
+    format: 'Formatear',
+    "delete": 'Eliminar',
+    mount: 'Montar',
+    unmount: 'Desmontar',
+    newTable: 'Nueva tabla',
+    eject: 'Expulsar',
+    refresh: 'Actualizar',
+    newPartTitle: 'Nueva partición en {dev}',
+    formatTitle: 'Formatear {dev}',
+    newTableTitle: 'Nueva tabla de particiones en {dev}',
+    type: 'Tipo',
+    start: 'Inicio (%)',
+    end: 'Fin (%)',
+    labelOpt: 'Etiqueta (opcional)',
+    confirmTable: '¿Crear tabla {label} en {dev}? TODAS las particiones y datos se perderán.',
+    confirmFormat: '¿Formatear {dev} como {fs}? Todos los datos se perderán.',
+    confirmDelete: '¿Eliminar {dev}? Sus datos se perderán.',
+    wipeAll: 'Borrar todo',
+    mountMsg: 'Punto de montaje para {dev} (vacío = automático/udisks)',
+    disk: 'disco',
+    delPart: 'Eliminar partición',
+    diskTag: '{n} disco(s)',
+    gpt: 'GPT (recomendado)',
+    msdos: 'MSDOS/MBR (heredado)'
+  },
+  ja: {
+    noDisk: 'ディスクが見つかりません',
+    selDisk: 'ディスクを選択',
+    selPart: 'リストからパーティションを選択',
+    noParts: 'パーティションなし — テーブル (新しいテーブル) またはパーティションを作成',
+    free: '未割り当て',
+    unknown: '不明',
+    usb: 'USB/リムーバブル',
+    part: 'パーティション',
+    fs: 'ファイルシステム',
+    label: 'ラベル',
+    used: '使用済み',
+    mountedAt: 'マウント先',
+    newPart: '新しいパーティション',
+    format: 'フォーマット',
+    "delete": '削除',
+    mount: 'マウント',
+    unmount: 'アンマウント',
+    newTable: '新しいテーブル',
+    eject: '取り出し',
+    refresh: '更新',
+    newPartTitle: '{dev} に新しいパーティション',
+    formatTitle: '{dev} をフォーマット',
+    newTableTitle: '{dev} に新しいパーティションテーブル',
+    type: 'タイプ',
+    start: '開始 (%)',
+    end: '終了 (%)',
+    labelOpt: 'ラベル (省略可)',
+    confirmTable: '{dev} に {label} テーブルを作成しますか？すべてのパーティションとデータが失われます。',
+    confirmFormat: '{dev} を {fs} でフォーマットしますか？すべてのデータが失われます。',
+    confirmDelete: '{dev} を削除しますか？データが失われます。',
+    wipeAll: 'すべて消去',
+    mountMsg: '{dev} のマウントポイント (空 = 自動/udisks)',
+    disk: 'ディスク',
+    delPart: 'パーティションを削除',
+    diskTag: '{n} 個のディスク',
+    gpt: 'GPT (推奨)',
+    msdos: 'MSDOS/MBR (レガシー)'
+  },
+  zh: {
+    noDisk: '未找到磁盘',
+    selDisk: '请选择磁盘',
+    selPart: '请在列表中选择分区',
+    noParts: '无分区 — 请创建分区表（新建分区表）或分区',
+    free: '未分配',
+    unknown: '未知',
+    usb: 'USB/可移动',
+    part: '分区',
+    fs: '文件系统',
+    label: '标签',
+    used: '已用',
+    mountedAt: '挂载于',
+    newPart: '新建分区',
+    format: '格式化',
+    "delete": '删除',
+    mount: '挂载',
+    unmount: '卸载',
+    newTable: '新建分区表',
+    eject: '弹出',
+    refresh: '刷新',
+    newPartTitle: '在 {dev} 上新建分区',
+    formatTitle: '格式化 {dev}',
+    newTableTitle: '在 {dev} 上新建分区表',
+    type: '类型',
+    start: '起始 (%)',
+    end: '结束 (%)',
+    labelOpt: '标签（可选）',
+    confirmTable: '在 {dev} 上创建 {label} 分区表？所有分区和数据将丢失。',
+    confirmFormat: '将 {dev} 格式化为 {fs}？所有数据将丢失。',
+    confirmDelete: '删除 {dev}？数据将丢失。',
+    wipeAll: '全部擦除',
+    mountMsg: '{dev} 的挂载点（空 = 自动/udisks）',
+    disk: '磁盘',
+    delPart: '删除分区',
+    diskTag: '{n} 个磁盘',
+    gpt: 'GPT（推荐）',
+    msdos: 'MSDOS/MBR（旧式）'
+  }
+});
+registerDict('update', {
+  en: {
+    idle: 'no update in progress',
+    hint: 'Check and install the latest version.',
+    btn: 'Update now',
+    title: 'Update Malta OS',
+    confirm: 'Downloads the latest version and reinstalls preserving settings, ' + 'backup jobs and connections. Services restart at the end.',
+    running: 'Updating… services will restart (session may drop).',
+    runningSb: 'updating…',
+    done: 'Update finished.',
+    failed: 'Failed (rc={rc}).',
+    doneSb: 'done ✓',
+    failedSb: 'failed — see the log',
+    restarting: 'Services restarting… waiting for it to come back.',
+    avail: 'new version available',
+    availTag: '  —  update available ⬆',
+    ready: 'ready',
+    started: 'update started from {src}'
+  },
+  pt_BR: {
+    idle: 'sem atualização em andamento',
+    hint: 'Verifique e instale a versão mais recente.',
+    btn: 'Atualizar agora',
+    title: 'Atualizar Malta OS',
+    confirm: 'Baixa a versão mais recente e reinstala preservando configurações, ' + 'jobs de backup e conexões. Os serviços reiniciam no final.',
+    running: 'Atualizando… os serviços vão reiniciar (a sessão pode cair).',
+    runningSb: 'atualizando…',
+    done: 'Atualização concluída.',
+    failed: 'Falhou (rc={rc}).',
+    doneSb: 'concluído ✓',
+    failedSb: 'falhou — veja o log',
+    restarting: 'Serviços reiniciando… aguardando retorno.',
+    avail: 'nova versão disponível',
+    availTag: '  —  atualização disponível ⬆',
+    ready: 'pronto',
+    started: 'update iniciado em {src}'
+  },
+  pt_PT: {
+    idle: 'sem atualização em curso',
+    hint: 'Verifique e instale a versão mais recente.',
+    btn: 'Atualizar agora',
+    title: 'Atualizar Malta OS',
+    confirm: 'Transfere a versão mais recente e reinstala preservando configurações, ' + 'tarefas de backup e ligações. Os serviços reiniciam no final.',
+    running: 'A atualizar… os serviços vão reiniciar (a sessão pode cair).',
+    runningSb: 'a atualizar…',
+    done: 'Atualização concluída.',
+    failed: 'Falhou (rc={rc}).',
+    doneSb: 'concluído ✓',
+    failedSb: 'falhou — veja o registo',
+    restarting: 'Serviços a reiniciar… a aguardar retorno.',
+    avail: 'nova versão disponível',
+    availTag: '  —  atualização disponível ⬆',
+    ready: 'pronto',
+    started: 'atualização iniciada em {src}'
+  },
+  es: {
+    idle: 'sin actualización en curso',
+    hint: 'Compruebe e instale la última versión.',
+    btn: 'Actualizar ahora',
+    title: 'Actualizar Malta OS',
+    confirm: 'Descarga la última versión y reinstala preservando configuración, ' + 'tareas de copia y conexiones. Los servicios reinician al final.',
+    running: 'Actualizando… los servicios reiniciarán (la sesión puede caer).',
+    runningSb: 'actualizando…',
+    done: 'Actualización completada.',
+    failed: 'Falló (rc={rc}).',
+    doneSb: 'completado ✓',
+    failedSb: 'falló — vea el registro',
+    restarting: 'Servicios reiniciando… esperando respuesta.',
+    avail: 'nueva versión disponible',
+    availTag: '  —  actualización disponible ⬆',
+    ready: 'listo',
+    started: 'actualización iniciada desde {src}'
+  },
+  ja: {
+    idle: 'アップデートは実行されていません',
+    hint: '最新バージョンを確認してインストールします。',
+    btn: '今すぐアップデート',
+    title: 'Malta OS をアップデート',
+    confirm: '最新バージョンをダウンロードし、設定・バックアップジョブ・接続を保持して再インストールします。' + '最後にサービスが再起動します。',
+    running: 'アップデート中… サービスが再起動します（セッションが切れる場合があります）。',
+    runningSb: 'アップデート中…',
+    done: 'アップデートが完了しました。',
+    failed: '失敗しました (rc={rc})。',
+    doneSb: '完了 ✓',
+    failedSb: '失敗 — ログを確認',
+    restarting: 'サービス再起動中… 復帰を待っています。',
+    avail: '新しいバージョンがあります',
+    availTag: '  —  アップデートあり ⬆',
+    ready: '準備完了',
+    started: '{src} からアップデートを開始'
+  },
+  zh: {
+    idle: '当前没有更新进行中',
+    hint: '检查并安装最新版本。',
+    btn: '立即更新',
+    title: '更新 Malta OS',
+    confirm: '下载最新版本并重新安装，保留设置、备份任务和连接。服务将在最后重启。',
+    running: '正在更新… 服务将重启（会话可能中断）。',
+    runningSb: '更新中…',
+    done: '更新完成。',
+    failed: '失败 (rc={rc})。',
+    doneSb: '完成 ✓',
+    failedSb: '失败 — 查看日志',
+    restarting: '服务重启中… 等待恢复。',
+    avail: '有新版本可用',
+    availTag: '  —  有可用更新 ⬆',
+    ready: '就绪',
+    started: '已从 {src} 开始更新'
+  }
+});
+registerDict('backup', {
+  en: {
+    rcloneMissing: 'rclone not installed — install the rclone package',
+    connected: 'connected',
+    usedOf: ' — used {used} of {total}',
+    disconnectTitle: 'Disconnect',
+    disconnectMsg: 'Remove the Google Drive connection?',
+    notConnected: 'not connected — authorize access to your Google account',
+    connectDrive: 'Connect Google Drive',
+    manualToken: 'Paste manual token',
+    startingOAuth: 'starting OAuth…',
+    step1: '1. Open the link and authorize access:',
+    step2: '2. The browser will fail at http://127.0.0.1:53682/... — ' + 'copy the full address-bar URL and paste below:',
+    finish: 'Finish',
+    cancel: 'Cancel',
+    connectedMsg: 'connected!',
+    manualStep: 'Alternative: run `rclone authorize "drive"` on any machine ' + 'with a browser and paste the generated JSON:',
+    saveToken: 'Save token',
+    noSubdirs: '(no subfolders)',
+    errPrefix: 'error: ',
+    pickLocal: 'Select local folder',
+    pickRemote: 'Select Google Drive folder',
+    selThis: 'Select this folder',
+    syncDone: 'sync done',
+    syncFinished: 'sync finished',
+    syncStarted: 'sync started',
+    syncAll: 'Sync all',
+    localPh: 'local folder (e.g. /home/user/photos)',
+    remotePh: 'Drive folder (e.g. backup/photos)',
+    noJobs: 'no folders configured — add below',
+    hLocal: 'local',
+    hRemote: '→ drive',
+    hStatus: 'status',
+    hLast: 'last sync',
+    pending: 'pending',
+    disabled: 'disabled',
+    syncedFolders: 'Synced folders',
+    hint: 'Select the folders — the system syncs with Google Drive'
+  },
+  pt_BR: {
+    rcloneMissing: 'rclone não instalado — instale o pacote rclone',
+    connected: 'conectado',
+    usedOf: ' — usado {used} de {total}',
+    disconnectTitle: 'Disconnect',
+    disconnectMsg: 'Remover a conexão com o Google Drive?',
+    notConnected: 'não conectado — autorize o acesso à sua conta Google',
+    connectDrive: 'Conectar Google Drive',
+    manualToken: 'Colar token manual',
+    startingOAuth: 'iniciando OAuth…',
+    step1: '1. Abra o link e autorize o acesso:',
+    step2: '2. O navegador vai falhar em http://127.0.0.1:53682/... — ' + 'copie a URL completa da barra de endereços e cole abaixo:',
+    finish: 'Concluir',
+    cancel: 'Cancelar',
+    connectedMsg: 'conectado!',
+    manualStep: 'Alternativa: rode `rclone authorize "drive"` em qualquer máquina com ' + 'navegador e cole o JSON gerado:',
+    saveToken: 'Salvar token',
+    noSubdirs: '(sem subpastas)',
+    errPrefix: 'erro: ',
+    pickLocal: 'Selecionar pasta local',
+    pickRemote: 'Selecionar pasta no Google Drive',
+    selThis: 'Selecionar esta pasta',
+    syncDone: 'sync concluído',
+    syncFinished: 'sync finalizado',
+    syncStarted: 'sync iniciado',
+    syncAll: 'Sync tudo',
+    localPh: 'pasta local (ex: /home/usuario/fotos)',
+    remotePh: 'pasta no Drive (ex: backup/fotos)',
+    noJobs: 'nenhuma pasta configurada — adicione abaixo',
+    hLocal: 'local',
+    hRemote: '→ drive',
+    hStatus: 'status',
+    hLast: 'último sync',
+    pending: 'pendente',
+    disabled: 'desativado',
+    syncedFolders: 'Pastas sincronizadas',
+    hint: 'Selecione as pastas — o sistema sincroniza com o Google Drive'
+  },
+  pt_PT: {
+    rcloneMissing: 'rclone não instalado — instale o pacote rclone',
+    connected: 'ligado',
+    usedOf: ' — {used} de {total} utilizados',
+    disconnectTitle: 'Desligar',
+    disconnectMsg: 'Remover a ligação ao Google Drive?',
+    notConnected: 'não ligado — autorize o acesso à sua conta Google',
+    connectDrive: 'Ligar Google Drive',
+    manualToken: 'Colar token manual',
+    startingOAuth: 'a iniciar OAuth…',
+    step1: '1. Abra o link e autorize o acesso:',
+    step2: '2. O navegador vai falhar em http://127.0.0.1:53682/... — ' + 'copie o URL completo da barra de endereços e cole abaixo:',
+    finish: 'Concluir',
+    cancel: 'Cancelar',
+    connectedMsg: 'ligado!',
+    manualStep: 'Alternativa: execute `rclone authorize "drive"` em qualquer máquina com ' + 'navegador e cole o JSON gerado:',
+    saveToken: 'Guardar token',
+    noSubdirs: '(sem subpastas)',
+    errPrefix: 'erro: ',
+    pickLocal: 'Selecionar pasta local',
+    pickRemote: 'Selecionar pasta no Google Drive',
+    selThis: 'Selecionar esta pasta',
+    syncDone: 'sincronização concluída',
+    syncFinished: 'sincronização finalizada',
+    syncStarted: 'sincronização iniciada',
+    syncAll: 'Sincronizar tudo',
+    localPh: 'pasta local (ex: /home/utilizador/fotos)',
+    remotePh: 'pasta no Drive (ex: backup/fotos)',
+    noJobs: 'nenhuma pasta configurada — adicione abaixo',
+    hLocal: 'local',
+    hRemote: '→ drive',
+    hStatus: 'estado',
+    hLast: 'última sincronização',
+    pending: 'pendente',
+    disabled: 'desativado',
+    syncedFolders: 'Pastas sincronizadas',
+    hint: 'Selecione as pastas — o sistema sincroniza com o Google Drive'
+  },
+  es: {
+    rcloneMissing: 'rclone no instalado — instale el paquete rclone',
+    connected: 'conectado',
+    usedOf: ' — usado {used} de {total}',
+    disconnectTitle: 'Desconectar',
+    disconnectMsg: '¿Quitar la conexión con Google Drive?',
+    notConnected: 'no conectado — autorice el acceso a su cuenta de Google',
+    connectDrive: 'Conectar Google Drive',
+    manualToken: 'Pegar token manual',
+    startingOAuth: 'iniciando OAuth…',
+    step1: '1. Abra el enlace y autorice el acceso:',
+    step2: '2. El navegador fallará en http://127.0.0.1:53682/... — ' + 'copie la URL completa de la barra de direcciones y péguela abajo:',
+    finish: 'Finalizar',
+    cancel: 'Cancelar',
+    connectedMsg: '¡conectado!',
+    manualStep: 'Alternativa: ejecute `rclone authorize "drive"` en cualquier máquina ' + 'con navegador y pegue el JSON generado:',
+    saveToken: 'Guardar token',
+    noSubdirs: '(sin subcarpetas)',
+    errPrefix: 'error: ',
+    pickLocal: 'Seleccionar carpeta local',
+    pickRemote: 'Seleccionar carpeta de Google Drive',
+    selThis: 'Seleccionar esta carpeta',
+    syncDone: 'sincronización completada',
+    syncFinished: 'sincronización finalizada',
+    syncStarted: 'sincronización iniciada',
+    syncAll: 'Sincronizar todo',
+    localPh: 'carpeta local (ej: /home/usuario/fotos)',
+    remotePh: 'carpeta en Drive (ej: backup/fotos)',
+    noJobs: 'ninguna carpeta configurada — añada abajo',
+    hLocal: 'local',
+    hRemote: '→ drive',
+    hStatus: 'estado',
+    hLast: 'última sync',
+    pending: 'pendiente',
+    disabled: 'desactivado',
+    syncedFolders: 'Carpetas sincronizadas',
+    hint: 'Seleccione las carpetas — el sistema sincroniza con Google Drive'
+  },
+  ja: {
+    rcloneMissing: 'rclone が未インストール — rclone パッケージをインストールしてください',
+    connected: '接続済み',
+    usedOf: ' — {total} 中 {used} 使用',
+    disconnectTitle: '切断',
+    disconnectMsg: 'Google Drive との接続を解除しますか?',
+    notConnected: '未接続 — Google アカウントへのアクセスを承認してください',
+    connectDrive: 'Google Drive に接続',
+    manualToken: '手動トークンを貼り付け',
+    startingOAuth: 'OAuth を開始中…',
+    step1: '1. リンクを開いてアクセスを承認:',
+    step2: '2. ブラウザは http://127.0.0.1:53682/... で失敗します — ' + 'アドレスバーの URL をすべてコピーして下に貼り付け:',
+    finish: '完了',
+    cancel: 'キャンセル',
+    connectedMsg: '接続しました!',
+    manualStep: '代替方法: ブラウザのある任意のマシンで `rclone authorize "drive"` を実行し、' + '生成された JSON を貼り付け:',
+    saveToken: 'トークンを保存',
+    noSubdirs: '(サブフォルダなし)',
+    errPrefix: 'エラー: ',
+    pickLocal: 'ローカルフォルダを選択',
+    pickRemote: 'Google Drive フォルダを選択',
+    selThis: 'このフォルダを選択',
+    syncDone: '同期完了',
+    syncFinished: '同期終了',
+    syncStarted: '同期開始',
+    syncAll: 'すべて同期',
+    localPh: 'ローカルフォルダ (例: /home/user/photos)',
+    remotePh: 'Drive フォルダ (例: backup/photos)',
+    noJobs: 'フォルダ未設定 — 下から追加',
+    hLocal: 'ローカル',
+    hRemote: '→ drive',
+    hStatus: '状態',
+    hLast: '最終同期',
+    pending: '保留中',
+    disabled: '無効',
+    syncedFolders: '同期フォルダ',
+    hint: 'フォルダを選択 — システムが Google Drive と同期します'
+  },
+  zh: {
+    rcloneMissing: '未安装 rclone — 请安装 rclone 软件包',
+    connected: '已连接',
+    usedOf: ' — 已用 {used} / {total}',
+    disconnectTitle: '断开连接',
+    disconnectMsg: '移除 Google Drive 连接？',
+    notConnected: '未连接 — 请授权访问您的 Google 帐户',
+    connectDrive: '连接 Google Drive',
+    manualToken: '粘贴手动令牌',
+    startingOAuth: '正在启动 OAuth…',
+    step1: '1. 打开链接并授权访问：',
+    step2: '2. 浏览器会在 http://127.0.0.1:53682/... 失败 — ' + '请复制地址栏完整 URL 并粘贴到下方：',
+    finish: '完成',
+    cancel: '取消',
+    connectedMsg: '已连接！',
+    manualStep: '替代方法：在任意有浏览器的机器上运行 `rclone authorize "drive"`，' + '然后粘贴生成的 JSON：',
+    saveToken: '保存令牌',
+    noSubdirs: '（无子文件夹）',
+    errPrefix: '错误：',
+    pickLocal: '选择本地文件夹',
+    pickRemote: '选择 Google Drive 文件夹',
+    selThis: '选择此文件夹',
+    syncDone: '同步完成',
+    syncFinished: '同步已结束',
+    syncStarted: '同步已开始',
+    syncAll: '全部同步',
+    localPh: '本地文件夹（例：/home/user/photos）',
+    remotePh: 'Drive 文件夹（例：backup/photos）',
+    noJobs: '未配置文件夹 — 请在下方添加',
+    hLocal: '本地',
+    hRemote: '→ drive',
+    hStatus: '状态',
+    hLast: '上次同步',
+    pending: '待处理',
+    disabled: '已禁用',
+    syncedFolders: '同步文件夹',
+    hint: '选择文件夹 — 系统将与 Google Drive 同步'
+  }
+});
+registerDict('remote', {
+  en: {
+    aliasPh: 'alias',
+    secretPh: 'password or key path',
+    dirPh: 'initial dir (optional)',
+    savedConn: '— saved connection —',
+    emptyDir: 'empty directory',
+    connectFirst: 'connect to a server first',
+    downloading: 'downloading {name}…',
+    savedTo: 'saved to {path}',
+    itemsIn: '{n} items in {dir}',
+    listing: 'listing {dir}…',
+    newDir: 'New dir',
+    newDirMsg: 'Directory name:',
+    localPathMsg: 'Local path (on this server):',
+    sending: 'sending…',
+    uploadOk: 'upload ok',
+    destLocal: 'Local destination:',
+    newNameMsg: 'New name:',
+    deleteTitle: 'Delete',
+    deleteMsg: 'Remove {path}?',
+    cmdPh: 'remote command… (e.g. systemctl status nginx)',
+    running: 'running…',
+    gitNoCred: 'no credential (public https/agent key)',
+    repoUrlPh: 'repo url (git@host:repo.git / https://…/repo.git)',
+    localDirPh: 'local directory',
+    selConn: 'select a connection',
+    fillAliasHost: 'fill in alias + host',
+    connSaved: "connection '{name}' saved",
+    delConnMsg: "Remove connection '{name}'?",
+    connectedTo: 'connected: {name}'
+  },
+  pt_BR: {
+    aliasPh: 'alias',
+    secretPh: 'senha ou caminho da chave',
+    dirPh: 'diretório inicial (opcional)',
+    savedConn: '— conexão salva —',
+    emptyDir: 'diretório vazio',
+    connectFirst: 'conecte-se a um servidor',
+    downloading: 'baixando {name}…',
+    savedTo: 'salvo em {path}',
+    itemsIn: '{n} itens em {dir}',
+    listing: 'listando {dir}…',
+    newDir: 'Nova pasta',
+    newDirMsg: 'Nome do diretório:',
+    localPathMsg: 'Caminho local (neste servidor):',
+    sending: 'enviando…',
+    uploadOk: 'upload ok',
+    destLocal: 'Destino local:',
+    newNameMsg: 'Novo nome:',
+    deleteTitle: 'Excluir',
+    deleteMsg: 'Remover {path}?',
+    cmdPh: 'comando remoto… (ex: systemctl status nginx)',
+    running: 'executando…',
+    gitNoCred: 'sem credencial (https público/chave do agente)',
+    repoUrlPh: 'url do repo (git@host:repo.git / https://…/repo.git)',
+    localDirPh: 'diretório local',
+    selConn: 'selecione uma conexão',
+    fillAliasHost: 'preencha alias + host',
+    connSaved: "conexão '{name}' salva",
+    delConnMsg: "Remover conexão '{name}'?",
+    connectedTo: 'conectado: {name}'
+  },
+  pt_PT: {
+    aliasPh: 'alias',
+    secretPh: 'palavra-passe ou caminho da chave',
+    dirPh: 'diretório inicial (opcional)',
+    savedConn: '— ligação guardada —',
+    emptyDir: 'diretório vazio',
+    connectFirst: 'ligue-se a um servidor',
+    downloading: 'a descarregar {name}…',
+    savedTo: 'guardado em {path}',
+    itemsIn: '{n} itens em {dir}',
+    listing: 'a listar {dir}…',
+    newDir: 'Nova pasta',
+    newDirMsg: 'Nome do diretório:',
+    localPathMsg: 'Caminho local (neste servidor):',
+    sending: 'a enviar…',
+    uploadOk: 'upload ok',
+    destLocal: 'Destino local:',
+    newNameMsg: 'Novo nome:',
+    deleteTitle: 'Eliminar',
+    deleteMsg: 'Remover {path}?',
+    cmdPh: 'comando remoto… (ex: systemctl status nginx)',
+    running: 'a executar…',
+    gitNoCred: 'sem credencial (https público/chave do agente)',
+    repoUrlPh: 'url do repo (git@host:repo.git / https://…/repo.git)',
+    localDirPh: 'diretório local',
+    selConn: 'selecione uma ligação',
+    fillAliasHost: 'preencha alias + host',
+    connSaved: "ligação '{name}' guardada",
+    delConnMsg: "Remover ligação '{name}'?",
+    connectedTo: 'ligado: {name}'
+  },
+  es: {
+    aliasPh: 'alias',
+    secretPh: 'contraseña o ruta de la clave',
+    dirPh: 'directorio inicial (opcional)',
+    savedConn: '— conexión guardada —',
+    emptyDir: 'directorio vacío',
+    connectFirst: 'conéctese a un servidor',
+    downloading: 'descargando {name}…',
+    savedTo: 'guardado en {path}',
+    itemsIn: '{n} elementos en {dir}',
+    listing: 'listando {dir}…',
+    newDir: 'Nueva carpeta',
+    newDirMsg: 'Nombre del directorio:',
+    localPathMsg: 'Ruta local (en este servidor):',
+    sending: 'enviando…',
+    uploadOk: 'subida ok',
+    destLocal: 'Destino local:',
+    newNameMsg: 'Nuevo nombre:',
+    deleteTitle: 'Eliminar',
+    deleteMsg: '¿Eliminar {path}?',
+    cmdPh: 'comando remoto… (ej: systemctl status nginx)',
+    running: 'ejecutando…',
+    gitNoCred: 'sin credencial (https público/clave del agente)',
+    repoUrlPh: 'url del repo (git@host:repo.git / https://…/repo.git)',
+    localDirPh: 'directorio local',
+    selConn: 'seleccione una conexión',
+    fillAliasHost: 'complete alias + host',
+    connSaved: "conexión '{name}' guardada",
+    delConnMsg: "¿Eliminar conexión '{name}'?",
+    connectedTo: 'conectado: {name}'
+  },
+  ja: {
+    aliasPh: 'エイリアス',
+    secretPh: 'パスワードまたは鍵のパス',
+    dirPh: '初期ディレクトリ (省略可)',
+    savedConn: '— 保存済み接続 —',
+    emptyDir: '空のディレクトリ',
+    connectFirst: '先にサーバーへ接続してください',
+    downloading: '{name} をダウンロード中…',
+    savedTo: '{path} に保存しました',
+    itemsIn: '{dir} に {n} 件',
+    listing: '{dir} を一覧中…',
+    newDir: '新規ディレクトリ',
+    newDirMsg: 'ディレクトリ名:',
+    localPathMsg: 'ローカルパス (このサーバー上):',
+    sending: '送信中…',
+    uploadOk: 'アップロード完了',
+    destLocal: 'ローカルの保存先:',
+    newNameMsg: '新しい名前:',
+    deleteTitle: '削除',
+    deleteMsg: '{path} を削除しますか?',
+    cmdPh: 'リモートコマンド… (例: systemctl status nginx)',
+    running: '実行中…',
+    gitNoCred: '認証情報なし (公開https/エージェント鍵)',
+    repoUrlPh: 'リポジトリURL (git@host:repo.git / https://…/repo.git)',
+    localDirPh: 'ローカルディレクトリ',
+    selConn: '接続を選択',
+    fillAliasHost: 'エイリアスとホストを入力',
+    connSaved: "接続 '{name}' を保存しました",
+    delConnMsg: "接続 '{name}' を削除しますか?",
+    connectedTo: '接続中: {name}'
+  },
+  zh: {
+    aliasPh: '别名',
+    secretPh: '密码或密钥路径',
+    dirPh: '初始目录（可选）',
+    savedConn: '— 已保存的连接 —',
+    emptyDir: '空目录',
+    connectFirst: '请先连接服务器',
+    downloading: '正在下载 {name}…',
+    savedTo: '已保存到 {path}',
+    itemsIn: '{dir} 中 {n} 项',
+    listing: '正在列出 {dir}…',
+    newDir: '新建目录',
+    newDirMsg: '目录名：',
+    localPathMsg: '本地路径（此服务器上）：',
+    sending: '发送中…',
+    uploadOk: '上传完成',
+    destLocal: '本地目标：',
+    newNameMsg: '新名称：',
+    deleteTitle: '删除',
+    deleteMsg: '删除 {path}？',
+    cmdPh: '远程命令…（例：systemctl status nginx）',
+    running: '执行中…',
+    gitNoCred: '无凭据（公开 https/代理密钥）',
+    repoUrlPh: '仓库地址（git@host:repo.git / https://…/repo.git）',
+    localDirPh: '本地目录',
+    selConn: '请选择连接',
+    fillAliasHost: '请填写别名 + 主机',
+    connSaved: "连接 '{name}' 已保存",
+    delConnMsg: "删除连接 '{name}'？",
+    connectedTo: '已连接：{name}'
+  }
+});
+
+/***/ }),
+
 /***/ "./src/packages/_shared/ui.js":
 /*!************************************!*\
   !*** ./src/packages/_shared/ui.js ***!
@@ -1304,6 +2738,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _babel_runtime_helpers_typeof__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_babel_runtime_helpers_typeof__WEBPACK_IMPORTED_MODULE_1__);
 /* harmony import */ var _babel_runtime_helpers_slicedToArray__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @babel/runtime/helpers/slicedToArray */ "./node_modules/@babel/runtime/helpers/slicedToArray.js");
 /* harmony import */ var _babel_runtime_helpers_slicedToArray__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(_babel_runtime_helpers_slicedToArray__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var _i18n_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./i18n.js */ "./src/packages/_shared/i18n.js");
 
 
 
@@ -1311,6 +2746,7 @@ __webpack_require__.r(__webpack_exports__);
 /*
  * Minimal DOM helpers so apps don't need a framework.
  */
+
 var el = function el(tag) {
   var attrs = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
   var node = document.createElement(tag);
@@ -1456,6 +2892,10 @@ var promptText = function promptText(core, title, message) {
 var formWindow = function formWindow(proc, _ref3, cb) {
   var title = _ref3.title,
       fields = _ref3.fields;
+
+  var _useI18n = Object(_i18n_js__WEBPACK_IMPORTED_MODULE_3__["useI18n"])(proc.core),
+      t = _useI18n.t;
+
   var win = proc.createWindow({
     title: title,
     dimension: {
@@ -1509,11 +2949,11 @@ var formWindow = function formWindow(proc, _ref3, cb) {
         gap: '8px',
         justifyContent: 'flex-end'
       }
-    }, button('Cancel', function () {
+    }, button(t('cancel'), function () {
       cb = function cb() {};
 
       win.close();
-    }), button('OK', function () {
+    }), button(t('ok'), function () {
       var values = {};
       Object.keys(inputs).forEach(function (k) {
         values[k] = inputs[k].value;
@@ -1547,11 +2987,13 @@ __webpack_require__.r(__webpack_exports__);
 var _metadata_json__WEBPACK_IMPORTED_MODULE_1___namespace = /*#__PURE__*/__webpack_require__.t(/*! ./metadata.json */ "./src/packages/webos-files/metadata.json", 1);
 /* harmony import */ var _shared_api_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../_shared/api.js */ "./src/packages/_shared/api.js");
 /* harmony import */ var _shared_ui_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../_shared/ui.js */ "./src/packages/_shared/ui.js");
+/* harmony import */ var _shared_i18n_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../_shared/i18n.js */ "./src/packages/_shared/i18n.js");
 /*
  * WebOS Files — Dolphin-like file manager: places sidebar with block
  * devices and favorites, breadcrumb navigation, list/icon views,
  * clipboard and context menu. Uses the OS.js VFS (host:/ = real fs).
  */
+
 
 
 
@@ -1622,12 +3064,12 @@ const mountOf = path => path.slice(0, path.indexOf(':') + 1);
 
 const innerOf = path => path.slice(path.indexOf(':') + 1);
 
-const fmtDate = it => {
+const fmtDate = (it, core) => {
   const d = it.stat && (it.stat.mtime || it.stat.ctime);
   if (!d) return '';
 
   try {
-    return new Date(d).toLocaleString();
+    return new Date(d).toLocaleString(Object(_shared_i18n_js__WEBPACK_IMPORTED_MODULE_4__["intlLocale"])(Object(_shared_i18n_js__WEBPACK_IMPORTED_MODULE_4__["getLocale"])(core)));
   } catch (e) {
     return '';
   }
@@ -1651,6 +3093,9 @@ const register = (core, args, options, metadata) => {
     metadata
   });
   const vfs = core.make('osjs/vfs');
+  const {
+    t
+  } = Object(_shared_i18n_js__WEBPACK_IMPORTED_MODULE_4__["useI18n"])(core);
   const sb = Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["statusbar"])();
   const sideBox = Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
     class: 'wf-side'
@@ -1725,7 +3170,7 @@ const register = (core, args, options, metadata) => {
   };
 
   const load = () => {
-    sb.set('loading ' + cwd);
+    sb.set(t('loading') + ' ' + cwd);
     vfs.readdir(cwd, {
       showHiddenFiles: showHidden
     }).then(list => {
@@ -1733,7 +3178,11 @@ const register = (core, args, options, metadata) => {
       sortItems();
       renderAll();
       const dirs = items.filter(i => i.isDirectory).length;
-      sb.set(`${items.length} item(s) · ${dirs} pasta(s) — ${cwd}`);
+      sb.set(t('files.items', {
+        n: items.length
+      }) + ' · ' + t('files.folders', {
+        n: dirs
+      }) + ' — ' + cwd);
     }).catch(e => {
       items = [];
       renderAll();
@@ -1774,19 +3223,27 @@ const register = (core, args, options, metadata) => {
     }).catch(e => sb.error(e.message));
   };
 
-  const doMkdir = () => Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["promptText"])(core, 'Nova pasta', 'Nome da pasta em ' + innerOf(cwd)).then(n => n && vfs.mkdir({
+  const doMkdir = () => Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["promptText"])(core, t('files.newFolder'), t('files.newFolderMsg', {
+    dir: innerOf(cwd)
+  })).then(n => n && vfs.mkdir({
     path: join(cwd, n)
   }).then(load).catch(e => sb.error(e.message)));
 
-  const doTouch = () => Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["promptText"])(core, 'Novo arquivo', 'Nome do arquivo em ' + innerOf(cwd)).then(n => n && vfs.touch({
+  const doTouch = () => Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["promptText"])(core, t('files.newFile'), t('files.newFileMsg', {
+    dir: innerOf(cwd)
+  })).then(n => n && vfs.touch({
     path: join(cwd, n)
   }).then(load).catch(e => sb.error(e.message)));
 
-  const doRename = it => Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["promptText"])(core, 'Renomear', 'Novo nome para ' + it.filename, it.filename).then(n => n && n !== it.filename && vfs.rename(it, {
+  const doRename = it => Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["promptText"])(core, t('files.rename'), t('files.renameMsg', {
+    name: it.filename
+  }), it.filename).then(n => n && n !== it.filename && vfs.rename(it, {
     path: join(parent(it.path), n)
   }).then(load).catch(e => sb.error(e.message)));
 
-  const doDelete = it => Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["confirmDialog"])(core, 'Excluir', `Excluir ${it.filename} definitivamente?`).then(ok => ok && vfs.unlink(it).then(load).catch(e => sb.error(e.message)));
+  const doDelete = it => Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["confirmDialog"])(core, t('files.deleteTitle'), t('files.deleteMsg', {
+    name: it.filename
+  })).then(ok => ok && vfs.unlink(it).then(load).catch(e => sb.error(e.message)));
 
   const doCopy = (it, cut) => {
     clipboard = {
@@ -1818,13 +3275,42 @@ const register = (core, args, options, metadata) => {
 
   const doDownload = it => vfs.download(it).catch(e => sb.error(e.message));
 
+  const openWith = (pos, it) => {
+    const run = name => core.run(name, {
+      file: it
+    }).catch(e => sb.error(e.message));
+
+    const pkgs = core.make('osjs/packages').getCompatiblePackages(it.mime || 'application/octet-stream').filter(m => m.type === 'application' && m.name !== _metadata_json__WEBPACK_IMPORTED_MODULE_1__["name"]);
+    const entries = pkgs.map(m => ({
+      label: Object(_shared_i18n_js__WEBPACK_IMPORTED_MODULE_4__["metaTitle"])(core, m),
+      onclick: () => run(m.name)
+    }));
+
+    if (!pkgs.some(m => m.name === 'WebOSEditor')) {
+      entries.push({
+        label: 'Code Editor',
+        onclick: () => run('WebOSEditor')
+      });
+    } // defer: the click that opened this menu would close a menu shown now
+
+
+    setTimeout(() => core.make('osjs/contextmenu').show({
+      position: pos,
+      menu: entries
+    }), 0);
+  };
+
   const doUpload = files => {
     [...files].forEach(f => {
-      sb.set(`enviando ${f.name}...`);
+      sb.set(t('files.uploading', {
+        name: f.name
+      }));
       vfs.writefile({
         path: join(cwd, f.name)
       }, f).then(() => {
-        sb.set(`${f.name} enviado`);
+        sb.set(t('files.uploaded', {
+          name: f.name
+        }));
         load();
       }).catch(e => sb.error(`${f.name}: ${e.message}`));
     });
@@ -1851,49 +3337,52 @@ const register = (core, args, options, metadata) => {
 
   const menu = (pos, it) => {
     const entries = it ? [{
-      label: 'Abrir',
+      label: t('files.open'),
       onclick: () => open(it)
-    }, it.isDirectory ? {
-      label: '★ Favoritar',
+    }, !it.isDirectory ? {
+      label: t('files.openWith'),
+      onclick: () => openWith(pos, it)
+    } : null, it.isDirectory ? {
+      label: t('files.favorite'),
       onclick: () => toggleFav(it.path, it.filename)
     } : null, !it.isDirectory ? {
-      label: 'Download',
+      label: t('files.download'),
       onclick: () => doDownload(it)
     } : null, {
-      label: 'Recortar',
+      label: t('files.cut'),
       onclick: () => doCopy(it, true)
     }, {
-      label: 'Copiar',
+      label: t('files.copy'),
       onclick: () => doCopy(it, false)
     }, {
-      label: 'Renomear…',
+      label: t('files.rename') + '…',
       onclick: () => doRename(it)
     }, {
-      label: 'Excluir',
+      label: t('del'),
       onclick: () => doDelete(it)
     }] : [{
-      label: 'Nova pasta…',
+      label: t('files.newFolder') + '…',
       onclick: doMkdir
     }, {
-      label: 'Novo arquivo…',
+      label: t('files.newFile') + '…',
       onclick: doTouch
     }, {
-      label: 'Enviar arquivo…',
+      label: t('files.upload'),
       onclick: () => fileInput.click()
     }, {
-      label: 'Colar',
+      label: t('files.paste'),
       disabled: !clipboard.items.length,
       onclick: doPaste
     }, {
-      label: isFav(cwd) ? '★ Remover favorito' : '★ Favoritar pasta',
+      label: isFav(cwd) ? t('files.unfavPlace') : t('files.favPlace'),
       onclick: () => toggleFav(cwd)
     }, {
-      label: 'Atualizar',
+      label: t('files.refresh'),
       onclick: load
-    }].filter(Boolean);
+    }];
     core.make('osjs/contextmenu').show({
       position: pos,
-      menu: entries
+      menu: entries.filter(Boolean)
     });
   }; // ---------- rendering ----------
 
@@ -1911,7 +3400,7 @@ const register = (core, args, options, metadata) => {
       class: 'sub'
     }, sub) : null, extra.x ? Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {
       class: 'x',
-      title: 'Remover favorito',
+      title: t('files.removeFav'),
       onclick: ev => {
         ev.stopPropagation();
         extra.x();
@@ -1931,30 +3420,32 @@ const register = (core, args, options, metadata) => {
   const renderSidebar = () => {
     sideBox.innerHTML = '';
 
-    const sec = t => sideBox.appendChild(Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('h4', {}, t));
+    const sec = s => sideBox.appendChild(Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('h4', {}, s));
 
-    sec('Locais');
+    sec(t('files.places'));
     const mounts = core.make('osjs/fs').mountpoints() || [];
     const order = {
       home: 0,
       host: 1
     };
     mounts.filter(m => m.attributes && m.attributes.visibility !== 'hidden').sort((a, b) => (a.name in order ? order[a.name] : 9) - (b.name in order ? order[b.name] : 9)).forEach(m => sideBox.appendChild(place(m.name === 'home' ? '🏠' : m.name === 'host' ? '💻' : '💾', m.label || m.name, '', m.name + ':/')));
-    sec('Dispositivos');
+    sec(t('files.devices'));
 
     if (!devices.length) {
       sideBox.appendChild(Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
         class: 'wf-place'
-      }, '  nenhum volume'));
+      }, '  ' + t('files.noVolumes')));
     }
 
     devices.forEach(p => {
       const mp = (p.mountpoints || []).filter(Boolean)[0];
       const label = p.label || p.name || p.path;
-      sideBox.appendChild(place(mp ? '💽' : '⏏', label, `${p.fstype || '?'} · ${Object(_shared_api_js__WEBPACK_IMPORTED_MODULE_2__["formatBytes"])(p.size)}${mp ? ' · ' + mp : ' · não montado'}`, mp ? 'host:' + mp : null, {
+      sideBox.appendChild(place(mp ? '💽' : '⏏', label, `${p.fstype || '?'} · ${Object(_shared_api_js__WEBPACK_IMPORTED_MODULE_2__["formatBytes"])(p.size)}` + (mp ? ' · ' + mp : ' · ' + t('files.notMounted')), mp ? 'host:' + mp : null, {
         dim: !mp,
         onclick: mp ? null : () => {
-          sb.set(`montando ${p.path}...`);
+          sb.set(t('files.mounting', {
+            dev: p.path
+          }));
           _shared_api_js__WEBPACK_IMPORTED_MODULE_2__["api"].post('disks/mount', {
             device: p.path
           }).then(r => {
@@ -1965,7 +3456,9 @@ const register = (core, args, options, metadata) => {
         menu: mp ? ev => core.make('osjs/contextmenu').show({
           position: ev,
           menu: [{
-            label: `Desmontar ${p.path}`,
+            label: t('files.unmount', {
+              dev: p.path
+            }),
             onclick: () => _shared_api_js__WEBPACK_IMPORTED_MODULE_2__["api"].post('disks/unmount', {
               device: p.path
             }).then(() => loadDevices()).catch(e => sb.error(e.message))
@@ -1973,13 +3466,13 @@ const register = (core, args, options, metadata) => {
         }) : null
       }));
     });
-    sec('Favoritos');
+    sec(t('files.favorites'));
 
     if (!favorites().length) {
       sideBox.appendChild(Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
         class: 'wf-place',
-        title: 'Use ★ na barra'
-      }, '  nenhum favorito'));
+        title: t('files.favTitle')
+      }, '  ' + t('files.noFavorites')));
     }
 
     favorites().forEach(f => sideBox.appendChild(place('⭐', f.name, f.path, f.path, {
@@ -1987,7 +3480,7 @@ const register = (core, args, options, metadata) => {
       menu: ev => core.make('osjs/contextmenu').show({
         position: ev,
         menu: [{
-          label: 'Remover favorito',
+          label: t('files.removeFav'),
           onclick: () => toggleFav(f.path)
         }]
       })
@@ -2054,7 +3547,7 @@ const register = (core, args, options, metadata) => {
     if (!items.length) {
       listBox.appendChild(Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
         class: 'wf-empty'
-      }, 'pasta vazia'));
+      }, t('files.emptyFolder')));
       return;
     }
 
@@ -2093,11 +3586,11 @@ const register = (core, args, options, metadata) => {
       onclick: () => sortBy(key)
     }, label + (sort.key === key ? sort.dir > 0 ? ' ▲' : ' ▼' : ''));
 
-    const head = Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('tr', {}, th('Nome', 'name'), th('Tamanho', 'size'), th('Modificado', 'mtime'), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('th', {}, 'Tipo'));
+    const head = Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('tr', {}, th(t('name'), 'name'), th(t('size'), 'size'), th(t('modified'), 'mtime'), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('th', {}, t('type')));
     const tbody = Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('tbody', {}, items.map(it => {
       const tr = Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('tr', {
         class: 'wf-row' + (sel === it ? ' selected' : '')
-      }, nameCell(it), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('td', {}, it.isDirectory ? '' : Object(_shared_api_js__WEBPACK_IMPORTED_MODULE_2__["formatBytes"])(it.size)), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('td', {}, fmtDate(it)), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('td', {}, it.isDirectory ? 'pasta' : it.mime || 'arquivo'));
+      }, nameCell(it), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('td', {}, it.isDirectory ? '' : Object(_shared_api_js__WEBPACK_IMPORTED_MODULE_2__["formatBytes"])(it.size)), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('td', {}, fmtDate(it, core)), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('td', {}, it.isDirectory ? t('files.folder') : it.mime || t('files.file')));
       tr.addEventListener('click', () => {
         sel = it;
         renderList();
@@ -2117,11 +3610,18 @@ const register = (core, args, options, metadata) => {
   };
 
   const renderStatus = () => {
-    const clip = clipboard.items.length ? ` · ${clipboard.items.length} na área de transferência${clipboard.cut ? ' (recortar)' : ''}` : '';
-    sb.set(sel ? `${sel.filename} — ${sel.isDirectory ? 'pasta' : Object(_shared_api_js__WEBPACK_IMPORTED_MODULE_2__["formatBytes"])(sel.size) + ' · ' + (sel.mime || '')}${clip}` : `${items.length} item(s) — ${cwd}${clip}`);
+    const clip = clipboard.items.length ? ' · ' + t('files.clip', {
+      n: clipboard.items.length
+    }) + (clipboard.cut ? t('files.clipCut') : '') : '';
+    sb.set(sel ? t('files.selInfo', {
+      name: sel.filename,
+      info: sel.isDirectory ? t('files.folder') : Object(_shared_api_js__WEBPACK_IMPORTED_MODULE_2__["formatBytes"])(sel.size) + ' · ' + (sel.mime || '')
+    }) + clip : t('files.items', {
+      n: items.length
+    }) + ' — ' + cwd + clip);
   };
 
-  const favBtn = tbtn('☆', () => toggleFav(cwd), 'Adicionar/remover favorito');
+  const favBtn = tbtn('☆', () => toggleFav(cwd), t('files.favTitle'));
 
   const renderFavBtn = () => {
     favBtn.textContent = isFav(cwd) ? '★' : '☆';
@@ -2135,12 +3635,12 @@ const register = (core, args, options, metadata) => {
     proc.saveSettings();
     viewBtn.textContent = view === 'grid' ? '☰' : '⊞';
     renderList();
-  }, 'Alternar lista/ícones');
+  }, t('files.viewToggle'));
   const hiddenBtn = tbtn('.', () => {
     showHidden = !showHidden;
     hiddenBtn.classList.toggle('on', showHidden);
     load();
-  }, 'Mostrar arquivos ocultos');
+  }, t('files.showHidden'));
   hiddenBtn.classList.toggle('on', showHidden);
 
   const renderAll = () => {
@@ -2149,7 +3649,7 @@ const register = (core, args, options, metadata) => {
     renderList();
     renderStatus();
     renderFavBtn();
-    win && win.setTitle(`${innerOf(cwd) || '/'} — ${metadata.title.en_EN}`);
+    win && win.setTitle(`${innerOf(cwd) || '/'} — ${Object(_shared_i18n_js__WEBPACK_IMPORTED_MODULE_4__["metaTitle"])(core, metadata)}`);
   }; // ---------- toolbar & window ----------
 
 
@@ -2183,13 +3683,13 @@ const register = (core, args, options, metadata) => {
   const editBtn = tbtn('✎', () => {
     crumbsEdit = true;
     renderCrumbs();
-  }, 'Editar caminho (Ctrl+L)');
+  }, t('files.editPath'));
   const toolbar = Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
     class: 'webos-toolbar'
-  }, tbtn('←', goBack, 'Voltar'), tbtn('→', goFwd, 'Avançar'), tbtn('↑', () => nav(parent(cwd)), 'Subir'), tbtn('⟳', load, 'Atualizar'), crumbsBox, editBtn, tbtn('📁+', doMkdir, 'Nova pasta'), tbtn('⬆', () => fileInput.click(), 'Enviar arquivo'), favBtn, hiddenBtn, viewBtn);
+  }, tbtn('←', goBack, t('files.back')), tbtn('→', goFwd, t('files.forward')), tbtn('↑', () => nav(parent(cwd)), t('files.up')), tbtn('⟳', load, t('files.refresh')), crumbsBox, editBtn, tbtn('📁+', doMkdir, t('files.newFolder')), tbtn('⬆', () => fileInput.click(), t('files.upload')), favBtn, hiddenBtn, viewBtn);
   const win = proc.createWindow({
     id: 'WebOSFilesWindow',
-    title: metadata.title.en_EN,
+    title: Object(_shared_i18n_js__WEBPACK_IMPORTED_MODULE_4__["metaTitle"])(core, metadata),
     dimension: {
       width: 860,
       height: 520

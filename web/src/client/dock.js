@@ -3,6 +3,8 @@
  * cursor-proximity magnification. Appended to <body> after login so it
  * never blocks the auth screen; removed on logout.
  */
+import {useI18n, LOCALES, setLocale, getLocale, intlLocale, metaTitle}
+  from '../packages/_shared/i18n.js';
 
 const ITEMS = [
   {name: 'WebOSTerminal', glyph: '\u{1F4BB}', icon: 'utilities-terminal', label: 'Terminal'},
@@ -52,6 +54,7 @@ export const createDock = core => {
   let dock = null;
   let popover = null;
   const running = new Map(); // app name -> instance count
+  const {t, onLocale} = useI18n(core);
 
   const themeIcon = name => {
     try {
@@ -133,7 +136,7 @@ export const createDock = core => {
 
     const search = document.createElement('input');
     search.className = 'webos-launcher-search';
-    search.placeholder = 'Type to search...';
+    search.placeholder = t('shell.search');
 
     const grid = document.createElement('div');
     grid.className = 'webos-launcher-grid';
@@ -141,7 +144,7 @@ export const createDock = core => {
       const q = search.value.toLowerCase();
       grid.innerHTML = '';
       core.make('osjs/packages').getPackages(m => m.type === 'application')
-        .filter(m => !q || (m.name + (m.title && m.title.en_EN || ''))
+        .filter(m => !q || (m.name + metaTitle(core, m))
           .toLowerCase().includes(q))
         .forEach(m => {
           const item = ITEMS.find(i => i.name === m.name);
@@ -152,7 +155,7 @@ export const createDock = core => {
               {className: 'glyph', textContent: '\u{1F4E6}'}));
           const label = document.createElement('div');
           label.className = 'lbl';
-          label.textContent = (m.title && m.title.en_EN) || m.name;
+          label.textContent = metaTitle(core, m);
           node.appendChild(label);
           node.addEventListener('click', () => {
             close();
@@ -191,7 +194,7 @@ export const createDock = core => {
       const node = document.createElement('div');
       node.className = 'webos-dock-item';
       node.dataset.app = item.name;
-      node.title = item.label;
+      node.title = t('shell.app.' + item.label);
       node.appendChild(itemIcon(item));
       node.addEventListener('click', () => {
         node.classList.remove('bounce');
@@ -209,9 +212,10 @@ export const createDock = core => {
     const clock = document.createElement('div');
     clock.className = 'webos-dock-clock';
     const tick = () => {
+      const loc = intlLocale(getLocale(core));
       const d = new Date();
-      clock.textContent = d.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
-      clock.title = d.toLocaleDateString([], {weekday: 'long', day: 'numeric',
+      clock.textContent = d.toLocaleTimeString(loc, {hour: '2-digit', minute: '2-digit'});
+      clock.title = d.toLocaleDateString(loc, {weekday: 'long', day: 'numeric',
         month: 'long', year: 'numeric'});
     };
     tick();
@@ -219,7 +223,7 @@ export const createDock = core => {
 
     const power = document.createElement('div');
     power.className = 'webos-dock-item';
-    power.title = 'Session';
+    power.title = t('shell.session');
     power.innerHTML = '<svg viewBox="0 0 24 24" fill="none" ' +
       'stroke="#fff" stroke-width="2.4" stroke-linecap="round" ' +
       'style="width:52%;height:52%"><path d="M12 3v8"/>' +
@@ -258,10 +262,26 @@ export const createDock = core => {
       });
       return b;
     };
+    const langRow = document.createElement('div');
+    langRow.className = 'row';
+    const langLabel = document.createElement('label');
+    langLabel.textContent = '\u{1F310} ' + t('shell.language');
+    const langSel = document.createElement('select');
+    LOCALES.forEach(l => {
+      const o = document.createElement('option');
+      o.value = l.id;
+      o.textContent = l.label;
+      langSel.appendChild(o);
+    });
+    langSel.value = getLocale(core);
+    langSel.addEventListener('click', ev => ev.stopPropagation());
+    langSel.addEventListener('change', () => setLocale(core, langSel.value));
+    langRow.append(langLabel, langSel);
     popover.append(
-      item('\u{1F4BE}  Save session', () =>
+      langRow,
+      item('\u{1F4BE}  ' + t('shell.saveSession'), () =>
         core.make('osjs/session').save()),
-      item('\u{1F511}  Log out', () =>
+      item('\u{1F511}  ' + t('shell.logout'), () =>
         core.make('osjs/auth').logout()));
     dock.appendChild(popover);
     document.addEventListener('click', function close(ev) {
@@ -295,6 +315,16 @@ export const createDock = core => {
       popover = null;
     }
     running.clear();
+  });
+
+  // language switch rebuilds the dock so labels/clock pick the new locale
+  onLocale(() => {
+    if (dock) {
+      popover = null;
+      dock.remove();
+      dock = null;
+      build();
+    }
   });
 
   const apply = () => applyAppearance(core);

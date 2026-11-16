@@ -2,6 +2,7 @@ import osjs from 'osjs';
 import {name as applicationName} from './metadata.json';
 import {api} from '../_shared/api.js';
 import {el, css, button, layout, statusbar, confirmDialog} from '../_shared/ui.js';
+import {useI18n, metaTitle} from '../_shared/i18n.js';
 
 css('webos-update', `
   .wup-box { padding: 14px; display: flex; flex-direction: column; gap: 10px;
@@ -19,29 +20,30 @@ css('webos-update', `
 
 const register = (core, args, options, metadata) => {
   const proc = core.make('osjs/application', {args, options, metadata});
+  const {t} = useI18n(core);
   const sb = statusbar();
-  const log = el('div', {class: 'wup-log'}, 'sem atualização em andamento');
-  const statusTxt = el('div', {class: 'd'}, 'Verifique e instale a versão mais recente.');
+  const log = el('div', {class: 'wup-log'}, t('update.idle'));
+  const statusTxt = el('div', {class: 'd'}, t('update.hint'));
   const verTxt = el('div', {class: 'd', style: {marginTop: '4px', fontFamily: 'monospace'}}, '');
-  const btn = button('Atualizar agora', null);
+  const btn = button(t('update.btn'), null);
   let timer = null;
 
   const paint = st => {
     const v = `local: ${st.local || '?'}  ·  main: ${st.remote || '?'}`;
-    verTxt.textContent = st.update_available ? v + '  —  atualização disponível ⬆' : v;
+    verTxt.textContent = st.update_available ? v + t('update.availTag') : v;
     verTxt.style.color = st.update_available ? '#7ddc8f' : '#9ab';
     if (st.running) {
       btn.disabled = true;
-      statusTxt.textContent = 'Atualizando… os serviços vão reiniciar (a sessão pode cair).';
-      sb.set('atualizando…');
+      statusTxt.textContent = t('update.running');
+      sb.set(t('update.runningSb'));
     } else if (st.rc !== null && st.rc !== undefined) {
       btn.disabled = false;
       const ok = st.rc === '0';
-      statusTxt.textContent = ok ? 'Atualização concluída.' : `Falhou (rc=${st.rc}).`;
-      sb.set(ok ? 'concluído ✓' : 'falhou — veja o log');
+      statusTxt.textContent = ok ? t('update.done') : t('update.failed', {rc: st.rc});
+      sb.set(ok ? t('update.doneSb') : t('update.failedSb'));
     } else {
       btn.disabled = false;
-      sb.set(st.update_available ? 'nova versão disponível' : 'pronto');
+      sb.set(st.update_available ? t('update.avail') : t('update.ready'));
     }
     if (st.log) {
       log.textContent = st.log;
@@ -52,24 +54,23 @@ const register = (core, args, options, metadata) => {
   const poll = () => {
     api.get('sysupdate').then(paint).catch(() => {
       // agente reiniciando durante o update — segue tentando
-      statusTxt.textContent = 'Serviços reiniciando… aguardando retorno.';
+      statusTxt.textContent = t('update.restarting');
     });
   };
 
-  btn.onclick = () => confirmDialog(core, 'Atualizar Malta OS',
-    'Baixa a versão mais recente e reinstala preservando configurações, ' +
-    'jobs de backup e conexões. Os serviços reiniciam no final.')
+  btn.onclick = () => confirmDialog(core, t('update.title'),
+    t('update.confirm'))
     .then(ok => {
       if (!ok) return;
       btn.disabled = true;
       api.post('sysupdate', {pull: true})
-        .then(r => { sb.set('update iniciado em ' + r.source); poll(); })
+        .then(r => { sb.set(t('update.started', {src: r.source})); poll(); })
         .catch(e => { btn.disabled = false; sb.error(e.message); });
     });
 
   proc.createWindow({
     id: 'WebOSUpdateWindow',
-    title: metadata.title.en_EN,
+    title: metaTitle(core, metadata),
     dimension: {width: 560, height: 480}
   })
     .on('destroy', () => { clearInterval(timer); proc.destroy(); })

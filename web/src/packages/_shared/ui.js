@@ -1,6 +1,7 @@
 /*
  * Minimal DOM helpers so apps don't need a framework.
  */
+import {useI18n} from './i18n.js';
 
 export const el = (tag, attrs = {}, ...children) => {
   const node = document.createElement(tag);
@@ -127,6 +128,7 @@ export const promptText = (core, title, message, value = '') => new Promise(reso
  * cb(values | null)
  */
 export const formWindow = (proc, {title, fields}, cb) => {
+  const {t} = useI18n(proc.core);
   const win = proc.createWindow({
     title,
     dimension: {width: 340, height: 110 + fields.length * 36},
@@ -151,8 +153,8 @@ export const formWindow = (proc, {title, fields}, cb) => {
         return el('label', {style: {display: 'grid', gap: '3px'}}, f.label, inputs[f.name]);
       }),
       el('div', {style: {display: 'flex', gap: '8px', justifyContent: 'flex-end'}},
-        button('Cancel', () => { cb = () => {}; win.close(); }),
-        button('OK', () => {
+        button(t('cancel'), () => { cb = () => {}; win.close(); }),
+        button(t('ok'), () => {
           const values = {};
           Object.keys(inputs).forEach(k => { values[k] = inputs[k].value; });
           const done = cb;

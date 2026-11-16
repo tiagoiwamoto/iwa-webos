@@ -2,6 +2,7 @@ import osjs from 'osjs';
 import {name as applicationName} from './metadata.json';
 import {api, formatBytes} from '../_shared/api.js';
 import {el, css, button, table, statusbar, layout, confirmDialog, formWindow, promptText} from '../_shared/ui.js';
+import {useI18n, metaTitle} from '../_shared/i18n.js';
 
 const FS_COLOR = {
   ext4: '#5b8dd9', ext3: '#5b8dd9', ext2: '#5b8dd9',
@@ -43,6 +44,7 @@ css('webos-disks', `
 
 const register = (core, args, options, metadata) => {
   const proc = core.make('osjs/application', {args, options, metadata});
+  const {t} = useI18n(core);
   const sb = statusbar();
   const diskSel = el('select', {onchange: () => {
     disk = disks.find(d => d.path === diskSel.value) || null;
@@ -64,7 +66,7 @@ const register = (core, args, options, metadata) => {
   const mounts = n => (n.mountpoints || []).filter(Boolean);
 
   const refresh = () => {
-    sb.set('carregando...');
+    sb.set(t('loading'));
     api.get('disks').then(data => {
       const keep = disk && disk.path;
       disks = (data.blockdevices || [])
@@ -73,13 +75,13 @@ const register = (core, args, options, metadata) => {
       disks.forEach(d => {
         const tag = (d.rm || d.hotplug || d.tran === 'usb') ? ' ⏏' : '';
         diskSel.appendChild(el('option', {value: d.path},
-          `${d.path} — ${(d.model || '').trim() || 'disco'} — ${formatBytes(d.size)}${tag}`));
+          `${d.path} — ${(d.model || '').trim() || t('disks.disk')} — ${formatBytes(d.size)}${tag}`));
       });
       disk = disks.find(d => d.path === keep) || disks[0] || null;
       if (disk) diskSel.value = disk.path;
       sel = null;
       renderDisk();
-      sb.set(`${disks.length} disco(s)`);
+      sb.set(t('disks.diskTag', {n: disks.length}));
     }).catch(e => sb.error(e.message));
   };
 
@@ -89,13 +91,13 @@ const register = (core, args, options, metadata) => {
     tableWrap.innerHTML = '';
     diskInfo.textContent = '';
     if (!disk) {
-      tableWrap.appendChild(el('div', {class: 'wdk-empty'}, 'nenhum disco encontrado'));
+      tableWrap.appendChild(el('div', {class: 'wdk-empty'}, t('disks.noDisk')));
       return;
     }
     const info = [formatBytes(disk.size), (disk.model || '').trim(), disk.tran].filter(Boolean).join(' · ');
     diskInfo.textContent = info;
     const isUsb = disk.rm || disk.hotplug || disk.tran === 'usb';
-    if (isUsb) diskInfo.appendChild(el('span', {class: 'wdk-usb', style: {marginLeft: '8px'}}, 'USB/removível'));
+    if (isUsb) diskInfo.appendChild(el('span', {class: 'wdk-usb', style: {marginLeft: '8px'}}, t('disks.usb')));
 
     // label da tabela de partições (via fdisk)
     api.get('disks/table', {device: disk.path}).then(r => {
@@ -116,7 +118,7 @@ const register = (core, args, options, metadata) => {
       g.appendChild(el('div', {
         class: 'wdk-seg' + (sel === p ? ' sel' : ''),
         style: {width: pct + '%', background: fsColor(fs)},
-        title: `${p.path} — ${p.fstype || 'desconhecido'} — ${formatBytes(p.size)}`,
+        title: `${p.path} — ${p.fstype || t('disks.unknown')} — ${formatBytes(p.size)}`,
         onclick: () => { sel = p; renderDisk(); }
       }, el('span', {}, `${p.name} ${p.fstype || ''}`), el('span', {class: 'sz'}, formatBytes(p.size))));
     });
@@ -125,16 +127,16 @@ const register = (core, args, options, metadata) => {
       g.appendChild(el('div', {
         class: 'wdk-seg wdk-free' + (sel && sel.free ? ' sel' : ''),
         style: {flex: 1},
-        title: `não alocado — ${formatBytes(fb)}`,
+        title: `${t('disks.free')} — ${formatBytes(fb)}`,
         onclick: () => { sel = {free: true}; renderDisk(); }
-      }, `não alocado — ${formatBytes(fb)}`));
+      }, `${t('disks.free')} — ${formatBytes(fb)}`));
     }
     graph.appendChild(g);
 
     seen.forEach(fs => legend.appendChild(
-      el('span', {}, el('i', {style: {background: fsColor(fs)}}), fs === '?' ? 'desconhecido' : fs)));
+      el('span', {}, el('i', {style: {background: fsColor(fs)}}), fs === '?' ? t('disks.unknown') : fs)));
     if (fb > 1024 * 1024) legend.appendChild(
-      el('span', {}, el('i', {style: {background: 'repeating-linear-gradient(45deg,#2a2f3a,#2a2f3a 4px,#242834 4px,#242834 8px)'}}), 'não alocado'));
+      el('span', {}, el('i', {style: {background: 'repeating-linear-gradient(45deg,#2a2f3a,#2a2f3a 4px,#242834 4px,#242834 8px)'}}), t('disks.free')));
 
     // tabela
     const rows = parts().map(p => ({node: p, cells: [
@@ -142,13 +144,13 @@ const register = (core, args, options, metadata) => {
       formatBytes(p.size), p['fsuse%'] != null ? `${p['fsuse%']}%` : '',
       mounts(p).join(', ') || '—'
     ]}));
-    if (fb > 1024 * 1024) rows.push({node: {free: true}, cells: ['não alocado', '', '', formatBytes(fb), '', '']});
+    if (fb > 1024 * 1024) rows.push({node: {free: true}, cells: [t('disks.free'), '', '', formatBytes(fb), '', '']});
     if (!rows.length) {
       tableWrap.appendChild(el('div', {class: 'wdk-empty'},
-        'sem partições — crie uma tabela (Nova tabela) ou uma partição'));
+        t('disks.noParts')));
     } else {
       tableWrap.appendChild(table(
-        ['Partição', 'Sistema de arquivos', 'Rótulo', 'Tamanho', 'Usado', 'Montado em'],
+        [t('disks.part'), t('disks.fs'), t('disks.label'), t('size'), t('disks.used'), t('disks.mountedAt')],
         rows.map(r => r.cells),
         tr => {
           sel = rows[Array.from(tr.parentNode.children).indexOf(tr)].node;
@@ -169,64 +171,64 @@ const register = (core, args, options, metadata) => {
       .catch(e => sb.error(e.message));
 
   const needDisk = () => {
-    if (!disk) { sb.set('selecione um disco'); return false; }
+    if (!disk) { sb.set(t('disks.selDisk')); return false; }
     return true;
   };
   const needPart = () => {
-    if (!sel || !sel.path) { sb.set('selecione uma partição na lista'); return false; }
+    if (!sel || !sel.path) { sb.set(t('disks.selPart')); return false; }
     return true;
   };
 
   const newTable = () => needDisk() && formWindow(proc, {
-    title: `Nova tabela de partições em ${disk.path}`,
-    fields: [{name: 'label', label: 'Tipo', options: [
-      {value: 'gpt', label: 'GPT (recomendado)'},
-      {value: 'msdos', label: 'MSDOS/MBR (legado)'}], value: 'gpt'}]
-  }, v => v && confirmDialog(core, 'Apagar tudo',
-    `Criar tabela ${v.label} em ${disk.path}? TODAS as partições e dados serão perdidos.`)
+    title: t('disks.newTableTitle', {dev: disk.path}),
+    fields: [{name: 'label', label: t('disks.type'), options: [
+      {value: 'gpt', label: t('disks.gpt')},
+      {value: 'msdos', label: t('disks.msdos')}], value: 'gpt'}]
+  }, v => v && confirmDialog(core, t('disks.wipeAll'),
+    t('disks.confirmTable', {label: v.label, dev: disk.path}))
     .then(ok => ok && call('mklabel', {device: disk.path, label: v.label})));
 
   const newPart = () => needDisk() && formWindow(proc, {
-    title: `Nova partição em ${disk.path}`,
+    title: t('disks.newPartTitle', {dev: disk.path}),
     fields: [
-      {name: 'fs', label: 'Sistema de arquivos', options: FS_OPTS, value: 'ext4'},
-      {name: 'start', label: 'Início (%)', value: String(Math.round(100 * (disk.size - freeBytes()) / disk.size)) + '%'},
-      {name: 'end', label: 'Fim (%)', value: '100%'}
+      {name: 'fs', label: t('disks.fs'), options: FS_OPTS, value: 'ext4'},
+      {name: 'start', label: t('disks.start'), value: String(Math.round(100 * (disk.size - freeBytes()) / disk.size)) + '%'},
+      {name: 'end', label: t('disks.end'), value: '100%'}
     ]
   }, v => v && call('mkpart', {device: disk.path, start: v.start, end: v.end, fs: v.fs}));
 
   const format = () => needPart() && formWindow(proc, {
-    title: `Formatar ${sel.path}`,
+    title: t('disks.formatTitle', {dev: sel.path}),
     fields: [
-      {name: 'fs', label: 'Sistema de arquivos', options: FS_OPTS, value: 'ext4'},
-      {name: 'label', label: 'Rótulo (opcional)'}
+      {name: 'fs', label: t('disks.fs'), options: FS_OPTS, value: 'ext4'},
+      {name: 'label', label: t('disks.labelOpt')}
     ]
-  }, v => v && v.fs && confirmDialog(core, 'Formatar',
-    `Formatar ${sel.path} como ${v.fs}? Todos os dados serão perdidos.`)
+  }, v => v && v.fs && confirmDialog(core, t('disks.format'),
+    t('disks.confirmFormat', {dev: sel.path, fs: v.fs}))
     .then(ok => ok && call('mkfs', {fs: v.fs, label: v.label})));
 
-  const delPart = () => needPart() && confirmDialog(core, 'Excluir partição',
-    `Excluir ${sel.path}? Seus dados serão perdidos.`)
+  const delPart = () => needPart() && confirmDialog(core, t('disks.delPart'),
+    t('disks.confirmDelete', {dev: sel.path}))
     .then(ok => ok && call('rmpart'));
 
-  const mountAt = () => needPart() && promptText(core, 'Montar',
-    `Ponto de montagem para ${sel.path} (vazio = automático/udisks)`)
+  const mountAt = () => needPart() && promptText(core, t('disks.mount'),
+    t('disks.mountMsg', {dev: sel.path}))
     .then(t => t !== null && call('mount', {target: t}));
 
   const tb = el('div', {class: 'webos-toolbar'},
-    button('Nova partição', newPart),
-    button('Formatar', format),
-    button('Excluir', delPart, 'danger'),
-    button('Montar', mountAt),
-    button('Desmontar', () => needPart() && call('unmount')),
-    button('Nova tabela', newTable, 'danger'),
-    button('Ejetar', () => needDisk() && call('power-off', {device: disk.path})),
-    button('Atualizar', refresh)
+    button(t('disks.newPart'), newPart),
+    button(t('disks.format'), format),
+    button(t('disks.delete'), delPart, 'danger'),
+    button(t('disks.mount'), mountAt),
+    button(t('disks.unmount'), () => needPart() && call('unmount')),
+    button(t('disks.newTable'), newTable, 'danger'),
+    button(t('disks.eject'), () => needDisk() && call('power-off', {device: disk.path})),
+    button(t('disks.refresh'), refresh)
   );
 
   proc.createWindow({
     id: 'WebOSDisksWindow',
-    title: metadata.title.en_EN,
+    title: metaTitle(core, metadata),
     dimension: {width: 900, height: 500}
   })
     .on('destroy', () => proc.destroy())

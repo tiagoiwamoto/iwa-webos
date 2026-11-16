@@ -7,6 +7,7 @@ import osjs from 'osjs';
 import {name as applicationName} from './metadata.json';
 import {api, formatBytes} from '../_shared/api.js';
 import {el, css, statusbar, confirmDialog, promptText, baseStyles} from '../_shared/ui.js';
+import {useI18n, metaTitle, getLocale, intlLocale} from '../_shared/i18n.js';
 
 css('webos-files', `
   .wf-wrap { display: flex; height: 100%; min-height: 0; }
@@ -67,10 +68,12 @@ const parent = path => {
 };
 const mountOf = path => path.slice(0, path.indexOf(':') + 1);
 const innerOf = path => path.slice(path.indexOf(':') + 1);
-const fmtDate = it => {
+const fmtDate = (it, core) => {
   const d = it.stat && (it.stat.mtime || it.stat.ctime);
   if (!d) return '';
-  try { return new Date(d).toLocaleString(); } catch (e) { return ''; }
+  try {
+    return new Date(d).toLocaleString(intlLocale(getLocale(core)));
+  } catch (e) { return ''; }
 };
 const glyph = it => {
   if (it.isDirectory) return '📁';
@@ -86,6 +89,7 @@ const glyph = it => {
 const register = (core, args, options, metadata) => {
   const proc = core.make('osjs/application', {args, options, metadata});
   const vfs = core.make('osjs/vfs');
+  const {t} = useI18n(core);
   const sb = statusbar();
   const sideBox = el('div', {class: 'wf-side'});
   const listBox = el('div', {class: 'wf-list'});
@@ -120,14 +124,15 @@ const register = (core, args, options, metadata) => {
   const goFwd = () => { if (fwdStack.length) { backStack.push(cwd); nav(fwdStack.pop(), false); } };
 
   const load = () => {
-    sb.set('loading ' + cwd);
+    sb.set(t('loading') + ' ' + cwd);
     vfs.readdir(cwd, {showHiddenFiles: showHidden})
       .then(list => {
         items = (list || []).filter(i => i.filename !== '.' && i.filename !== '..');
         sortItems();
         renderAll();
         const dirs = items.filter(i => i.isDirectory).length;
-        sb.set(`${items.length} item(s) · ${dirs} pasta(s) — ${cwd}`);
+        sb.set(t('files.items', {n: items.length}) + ' · ' +
+          t('files.folders', {n: dirs}) + ' — ' + cwd);
       })
       .catch(e => { items = []; renderAll(); sb.error(e.message || e); });
   };
@@ -161,18 +166,21 @@ const register = (core, args, options, metadata) => {
     core.run(app, {file: it}).catch(e => sb.error(e.message));
   };
 
-  const doMkdir = () => promptText(core, 'Nova pasta', 'Nome da pasta em ' + innerOf(cwd))
+  const doMkdir = () => promptText(core, t('files.newFolder'),
+    t('files.newFolderMsg', {dir: innerOf(cwd)}))
     .then(n => n && vfs.mkdir({path: join(cwd, n)}).then(load).catch(e => sb.error(e.message)));
 
-  const doTouch = () => promptText(core, 'Novo arquivo', 'Nome do arquivo em ' + innerOf(cwd))
+  const doTouch = () => promptText(core, t('files.newFile'),
+    t('files.newFileMsg', {dir: innerOf(cwd)}))
     .then(n => n && vfs.touch({path: join(cwd, n)}).then(load).catch(e => sb.error(e.message)));
 
-  const doRename = it => promptText(core, 'Renomear', 'Novo nome para ' + it.filename, it.filename)
+  const doRename = it => promptText(core, t('files.rename'),
+    t('files.renameMsg', {name: it.filename}), it.filename)
     .then(n => n && n !== it.filename &&
       vfs.rename(it, {path: join(parent(it.path), n)}).then(load).catch(e => sb.error(e.message)));
 
-  const doDelete = it => confirmDialog(core, 'Excluir',
-    `Excluir ${it.filename} definitivamente?`)
+  const doDelete = it => confirmDialog(core, t('files.deleteTitle'),
+    t('files.deleteMsg', {name: it.filename}))
     .then(ok => ok && vfs.unlink(it).then(load).catch(e => sb.error(e.message)));
 
   const doCopy = (it, cut) => { clipboard = {items: [it], cut}; renderStatus(); };
@@ -191,11 +199,28 @@ const register = (core, args, options, metadata) => {
 
   const doDownload = it => vfs.download(it).catch(e => sb.error(e.message));
 
+  const openWith = (pos, it) => {
+    const run = name => core.run(name, {file: it})
+      .catch(e => sb.error(e.message));
+    const pkgs = core.make('osjs/packages')
+      .getCompatiblePackages(it.mime || 'application/octet-stream')
+      .filter(m => m.type === 'application' && m.name !== applicationName);
+    const entries = pkgs.map(m => ({
+      label: metaTitle(core, m), onclick: () => run(m.name)
+    }));
+    if (!pkgs.some(m => m.name === 'WebOSEditor')) {
+      entries.push({label: 'Code Editor', onclick: () => run('WebOSEditor')});
+    }
+    // defer: the click that opened this menu would close a menu shown now
+    setTimeout(() => core.make('osjs/contextmenu')
+      .show({position: pos, menu: entries}), 0);
+  };
+
   const doUpload = files => {
     [...files].forEach(f => {
-      sb.set(`enviando ${f.name}...`);
+      sb.set(t('files.uploading', {name: f.name}));
       vfs.writefile({path: join(cwd, f.name)}, f)
-        .then(() => { sb.set(`${f.name} enviado`); load(); })
+        .then(() => { sb.set(t('files.uploaded', {name: f.name})); load(); })
         .catch(e => sb.error(`${f.name}: ${e.message}`));
     });
   };
@@ -217,22 +242,29 @@ const register = (core, args, options, metadata) => {
 
   const menu = (pos, it) => {
     const entries = it ? [
-      {label: 'Abrir', onclick: () => open(it)},
-      it.isDirectory ? {label: '★ Favoritar', onclick: () => toggleFav(it.path, it.filename)} : null,
-      !it.isDirectory ? {label: 'Download', onclick: () => doDownload(it)} : null,
-      {label: 'Recortar', onclick: () => doCopy(it, true)},
-      {label: 'Copiar', onclick: () => doCopy(it, false)},
-      {label: 'Renomear…', onclick: () => doRename(it)},
-      {label: 'Excluir', onclick: () => doDelete(it)}
+      {label: t('files.open'), onclick: () => open(it)},
+      !it.isDirectory ? {label: t('files.openWith'),
+        onclick: () => openWith(pos, it)} : null,
+      it.isDirectory ? {label: t('files.favorite'),
+        onclick: () => toggleFav(it.path, it.filename)} : null,
+      !it.isDirectory ? {label: t('files.download'),
+        onclick: () => doDownload(it)} : null,
+      {label: t('files.cut'), onclick: () => doCopy(it, true)},
+      {label: t('files.copy'), onclick: () => doCopy(it, false)},
+      {label: t('files.rename') + '…', onclick: () => doRename(it)},
+      {label: t('del'), onclick: () => doDelete(it)}
     ] : [
-      {label: 'Nova pasta…', onclick: doMkdir},
-      {label: 'Novo arquivo…', onclick: doTouch},
-      {label: 'Enviar arquivo…', onclick: () => fileInput.click()},
-      {label: 'Colar', disabled: !clipboard.items.length, onclick: doPaste},
-      {label: isFav(cwd) ? '★ Remover favorito' : '★ Favoritar pasta', onclick: () => toggleFav(cwd)},
-      {label: 'Atualizar', onclick: load}
-    ].filter(Boolean);
-    core.make('osjs/contextmenu').show({position: pos, menu: entries});
+      {label: t('files.newFolder') + '…', onclick: doMkdir},
+      {label: t('files.newFile') + '…', onclick: doTouch},
+      {label: t('files.upload'), onclick: () => fileInput.click()},
+      {label: t('files.paste'), disabled: !clipboard.items.length, onclick: doPaste},
+      {label: isFav(cwd) ? t('files.unfavPlace') : t('files.favPlace'),
+        onclick: () => toggleFav(cwd)},
+      {label: t('files.refresh'), onclick: load}
+    ];
+    core.make('osjs/contextmenu').show({
+      position: pos, menu: entries.filter(Boolean)
+    });
   };
 
   // ---------- rendering ----------
@@ -247,7 +279,7 @@ const register = (core, args, options, metadata) => {
       el('span', {class: 'nm'}, name),
       sub ? el('span', {class: 'sub'}, sub) : null,
       extra.x ? el('span', {
-        class: 'x', title: 'Remover favorito',
+        class: 'x', title: t('files.removeFav'),
         onclick: ev => { ev.stopPropagation(); extra.x(); }
       }, '✕') : null);
     if (extra.menu) {
@@ -258,9 +290,9 @@ const register = (core, args, options, metadata) => {
 
   const renderSidebar = () => {
     sideBox.innerHTML = '';
-    const sec = t => sideBox.appendChild(el('h4', {}, t));
+    const sec = s => sideBox.appendChild(el('h4', {}, s));
 
-    sec('Locais');
+    sec(t('files.places'));
     const mounts = core.make('osjs/fs').mountpoints() || [];
     const order = {home: 0, host: 1};
     mounts
@@ -271,21 +303,22 @@ const register = (core, args, options, metadata) => {
         m.name === 'home' ? '🏠' : m.name === 'host' ? '💻' : '💾',
         m.label || m.name, '', m.name + ':/')));
 
-    sec('Dispositivos');
+    sec(t('files.devices'));
     if (!devices.length) {
-      sideBox.appendChild(el('div', {class: 'wf-place'}, '  nenhum volume'));
+      sideBox.appendChild(el('div', {class: 'wf-place'}, '  ' + t('files.noVolumes')));
     }
     devices.forEach(p => {
       const mp = (p.mountpoints || []).filter(Boolean)[0];
       const label = p.label || p.name || p.path;
       sideBox.appendChild(place(
         mp ? '💽' : '⏏', label,
-        `${p.fstype || '?'} · ${formatBytes(p.size)}${mp ? ' · ' + mp : ' · não montado'}`,
+        `${p.fstype || '?'} · ${formatBytes(p.size)}` +
+          (mp ? ' · ' + mp : ' · ' + t('files.notMounted')),
         mp ? 'host:' + mp : null,
         {
           dim: !mp,
           onclick: mp ? null : () => {
-            sb.set(`montando ${p.path}...`);
+            sb.set(t('files.mounting', {dev: p.path}));
             api.post('disks/mount', {device: p.path})
               .then(r => {
                 const m = / at (\S+)/.exec(r.output || '');
@@ -295,7 +328,7 @@ const register = (core, args, options, metadata) => {
           },
           menu: mp ? ev => core.make('osjs/contextmenu').show({
             position: ev,
-            menu: [{label: `Desmontar ${p.path}`, onclick: () =>
+            menu: [{label: t('files.unmount', {dev: p.path}), onclick: () =>
               api.post('disks/unmount', {device: p.path})
                 .then(() => loadDevices())
                 .catch(e => sb.error(e.message))}]
@@ -303,17 +336,17 @@ const register = (core, args, options, metadata) => {
         }));
     });
 
-    sec('Favoritos');
+    sec(t('files.favorites'));
     if (!favorites().length) {
-      sideBox.appendChild(el('div', {class: 'wf-place', title: 'Use ★ na barra'},
-        '  nenhum favorito'));
+      sideBox.appendChild(el('div', {class: 'wf-place', title: t('files.favTitle')},
+        '  ' + t('files.noFavorites')));
     }
     favorites().forEach(f => sideBox.appendChild(
       place('⭐', f.name, f.path, f.path, {
         x: () => toggleFav(f.path),
         menu: ev => core.make('osjs/contextmenu').show({
           position: ev,
-          menu: [{label: 'Remover favorito', onclick: () => toggleFav(f.path)}]
+          menu: [{label: t('files.removeFav'), onclick: () => toggleFav(f.path)}]
         })
       })));
   };
@@ -359,7 +392,7 @@ const register = (core, args, options, metadata) => {
   const renderList = () => {
     listBox.innerHTML = '';
     if (!items.length) {
-      listBox.appendChild(el('div', {class: 'wf-empty'}, 'pasta vazia'));
+      listBox.appendChild(el('div', {class: 'wf-empty'}, t('files.emptyFolder')));
       return;
     }
     if (view === 'grid') {
@@ -379,14 +412,14 @@ const register = (core, args, options, metadata) => {
     }
     const th = (label, key) => el('th', {class: 'wf-th', onclick: () => sortBy(key)},
       label + (sort.key === key ? (sort.dir > 0 ? ' ▲' : ' ▼') : ''));
-    const head = el('tr', {}, th('Nome', 'name'), th('Tamanho', 'size'),
-      th('Modificado', 'mtime'), el('th', {}, 'Tipo'));
+    const head = el('tr', {}, th(t('name'), 'name'), th(t('size'), 'size'),
+      th(t('modified'), 'mtime'), el('th', {}, t('type')));
     const tbody = el('tbody', {}, items.map(it => {
       const tr = el('tr', {class: 'wf-row' + (sel === it ? ' selected' : '')},
         nameCell(it),
         el('td', {}, it.isDirectory ? '' : formatBytes(it.size)),
-        el('td', {}, fmtDate(it)),
-        el('td', {}, it.isDirectory ? 'pasta' : (it.mime || 'arquivo')));
+        el('td', {}, fmtDate(it, core)),
+        el('td', {}, it.isDirectory ? t('files.folder') : (it.mime || t('files.file'))));
       tr.addEventListener('click', () => { sel = it; renderList(); renderStatus(); });
       tr.addEventListener('dblclick', () => open(it));
       tr.addEventListener('contextmenu', ev => { ev.preventDefault(); sel = it; menu(ev, it); });
@@ -398,14 +431,17 @@ const register = (core, args, options, metadata) => {
 
   const renderStatus = () => {
     const clip = clipboard.items.length
-      ? ` · ${clipboard.items.length} na área de transferência${clipboard.cut ? ' (recortar)' : ''}`
+      ? ' · ' + t('files.clip', {n: clipboard.items.length}) +
+        (clipboard.cut ? t('files.clipCut') : '')
       : '';
     sb.set(sel
-      ? `${sel.filename} — ${sel.isDirectory ? 'pasta' : formatBytes(sel.size) + ' · ' + (sel.mime || '')}${clip}`
-      : `${items.length} item(s) — ${cwd}${clip}`);
+      ? t('files.selInfo', {name: sel.filename,
+          info: sel.isDirectory ? t('files.folder')
+            : formatBytes(sel.size) + ' · ' + (sel.mime || '')}) + clip
+      : t('files.items', {n: items.length}) + ' — ' + cwd + clip);
   };
 
-  const favBtn = tbtn('☆', () => toggleFav(cwd), 'Adicionar/remover favorito');
+  const favBtn = tbtn('☆', () => toggleFav(cwd), t('files.favTitle'));
   const renderFavBtn = () => {
     favBtn.textContent = isFav(cwd) ? '★' : '☆';
     favBtn.classList.toggle('faved', isFav(cwd));
@@ -418,13 +454,13 @@ const register = (core, args, options, metadata) => {
     proc.saveSettings();
     viewBtn.textContent = view === 'grid' ? '☰' : '⊞';
     renderList();
-  }, 'Alternar lista/ícones');
+  }, t('files.viewToggle'));
 
   const hiddenBtn = tbtn('.', () => {
     showHidden = !showHidden;
     hiddenBtn.classList.toggle('on', showHidden);
     load();
-  }, 'Mostrar arquivos ocultos');
+  }, t('files.showHidden'));
   hiddenBtn.classList.toggle('on', showHidden);
 
   const renderAll = () => {
@@ -433,7 +469,7 @@ const register = (core, args, options, metadata) => {
     renderList();
     renderStatus();
     renderFavBtn();
-    win && win.setTitle(`${innerOf(cwd) || '/'} — ${metadata.title.en_EN}`);
+    win && win.setTitle(`${innerOf(cwd) || '/'} — ${metaTitle(core, metadata)}`);
   };
 
   // ---------- toolbar & window ----------
@@ -457,18 +493,20 @@ const register = (core, args, options, metadata) => {
   });
 
   const editBtn = tbtn('✎', () => { crumbsEdit = true; renderCrumbs(); },
-    'Editar caminho (Ctrl+L)');
+    t('files.editPath'));
 
   const toolbar = el('div', {class: 'webos-toolbar'},
-    tbtn('←', goBack, 'Voltar'), tbtn('→', goFwd, 'Avançar'),
-    tbtn('↑', () => nav(parent(cwd)), 'Subir'), tbtn('⟳', load, 'Atualizar'),
+    tbtn('←', goBack, t('files.back')), tbtn('→', goFwd, t('files.forward')),
+    tbtn('↑', () => nav(parent(cwd)), t('files.up')),
+    tbtn('⟳', load, t('files.refresh')),
     crumbsBox, editBtn,
-    tbtn('📁+', doMkdir, 'Nova pasta'), tbtn('⬆', () => fileInput.click(), 'Enviar arquivo'),
+    tbtn('📁+', doMkdir, t('files.newFolder')),
+    tbtn('⬆', () => fileInput.click(), t('files.upload')),
     favBtn, hiddenBtn, viewBtn);
 
   const win = proc.createWindow({
     id: 'WebOSFilesWindow',
-    title: metadata.title.en_EN,
+    title: metaTitle(core, metadata),
     dimension: {width: 860, height: 520}
   });
 

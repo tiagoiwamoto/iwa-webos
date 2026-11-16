@@ -109,7 +109,8 @@ def start_update(body: dict | None = None):
                     f"local:  {local or 'desconhecido'}\nremoto: {remote or '?'}\n\n")
     sync = "true"
     if (body or {}).get("pull", True):
-        sync = ("git fetch origin main && git reset --hard FETCH_HEAD") \
+        sync = ("git -c safe.directory='*' fetch origin main && "
+                "git -c safe.directory='*' reset --hard FETCH_HEAD") \
             if Path(src, ".git").exists() else "echo 'fonte sem .git — usando fontes locais'"
     cmd = ("systemd-run --unit=webos-manual-update --collect --quiet sh -c "
            f"'cd {src} && {sync} && sh ./update.sh >> {_LOG} 2>&1; echo $? > {_RC}'")

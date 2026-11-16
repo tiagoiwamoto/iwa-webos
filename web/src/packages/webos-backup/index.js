@@ -2,6 +2,7 @@ import osjs from 'osjs';
 import {name as applicationName} from './metadata.json';
 import {api} from '../_shared/api.js';
 import {el, css, button, table, statusbar, layout, confirmDialog} from '../_shared/ui.js';
+import {useI18n, metaTitle} from '../_shared/i18n.js';
 
 css('webos-backup', `
   .wb-card { margin: 8px; padding: 12px; background: #1d212b;
@@ -42,6 +43,7 @@ css('webos-backup', `
 
 const register = (core, args, options, metadata) => {
   const proc = core.make('osjs/application', {args, options, metadata});
+  const {t} = useI18n(core);
   const sb = statusbar();
   let polling = null;
 
@@ -60,7 +62,8 @@ const register = (core, args, options, metadata) => {
           logBox.scrollTop = logBox.scrollHeight;
           if (!r.running) {
             clearInterval(polling); polling = null;
-            sb.set(`sync ${r.finished && r.finished.ok ? 'concluído' : 'finalizado'}`);
+            sb.set(t(r.finished && r.finished.ok
+              ? 'backup.syncDone' : 'backup.syncFinished'));
             refresh();
           }
         }).catch(() => {});
@@ -73,25 +76,25 @@ const register = (core, args, options, metadata) => {
     statusCard.appendChild(el('h3', {}, 'Google Drive'));
     if (!r.rclone) {
       statusCard.appendChild(el('div', {class: 'muted wb-bad'},
-        'rclone não instalado — instale o pacote rclone'));
+        t('backup.rcloneMissing')));
       return;
     }
     if (r.connected) {
       const about = r.about && r.about.Used
-        ? ` — usado ${r.about.Used} de ${r.about.Total || '?'}`
+        ? t('backup.usedOf', {used: r.about.Used, total: r.about.Total || '?'})
         : '';
       statusCard.appendChild(el('div', {class: 'wb-ok'},
-        `● conectado${about}`));
-      statusCard.appendChild(button('Disconnect', () => {
-        confirmDialog(core, 'Disconnect', 'Remover a conexão com o Google Drive?')
+        `● ${t('backup.connected')}${about}`));
+      statusCard.appendChild(button(t('backup.disconnectTitle'), () => {
+        confirmDialog(core, t('backup.disconnectTitle'), t('backup.disconnectMsg'))
           .then(ok => ok && api.post('backup/disconnect').then(refresh)
             .catch(e => sb.error(e.message)));
       }));
     } else {
       statusCard.appendChild(el('div', {class: 'muted'},
-        'não conectado — autorize o acesso à sua conta Google'));
-      statusCard.appendChild(button('Conectar Google Drive', startAuth));
-      statusCard.appendChild(button('Colar token manual',
+        t('backup.notConnected')));
+      statusCard.appendChild(button(t('backup.connectDrive'), startAuth));
+      statusCard.appendChild(button(t('backup.manualToken'),
         () => tokenBox.classList.toggle('open')));
     }
     if (r.running) { setRunning(true); }
@@ -105,27 +108,26 @@ const register = (core, args, options, metadata) => {
   let authSid = null;
 
   const startAuth = () => {
-    sb.set('iniciando OAuth…');
+    sb.set(t('backup.startingOAuth'));
     api.post('backup/auth/start').then(r => {
       authSid = r.sid;
       authBox.classList.add('open');
       authBox.textContent = '';
       authBox.appendChild(el('div', {class: 'step'},
-        '1. Abra o link e autorize o acesso:',
+        t('backup.step1'),
         el('div', {}, el('a', {href: r.google_url, target: '_blank'},
           r.google_url.slice(0, 90) + '…'))));
       authBox.appendChild(el('div', {class: 'step'},
-        '2. O navegador vai falhar em http://127.0.0.1:53682/... — ' +
-        'copie a URL completa da barra de endereços e cole abaixo:'));
+        t('backup.step2')));
       authBox.appendChild(urlIn);
       authBox.appendChild(el('div', {},
-        button('Concluir', () => {
+        button(t('backup.finish'), () => {
           api.post('backup/auth/finish', {sid: authSid, url: urlIn.value})
             .then(() => { authBox.classList.remove('open');
-              sb.set('conectado!'); refresh(); })
+              sb.set(t('backup.connectedMsg')); refresh(); })
             .catch(e => sb.error(e.message));
         }),
-        button('Cancelar', () => {
+        button(t('cancel'), () => {
           api.post('backup/auth/cancel', {sid: authSid});
           authBox.classList.remove('open');
         })));
@@ -134,10 +136,9 @@ const register = (core, args, options, metadata) => {
   };
 
   tokenBox.appendChild(el('div', {class: 'step'},
-    'Alternativa: rode `rclone authorize "drive"` em qualquer máquina com ' +
-    'navegador e cole o JSON gerado:'));
+    t('backup.manualStep')));
   tokenBox.appendChild(tokIn);
-  tokenBox.appendChild(button('Salvar token', () => {
+  tokenBox.appendChild(button(t('backup.saveToken'), () => {
     api.post('backup/auth/token', {token: tokIn.value})
       .then(() => { tokenBox.classList.remove('open'); refresh(); })
       .catch(e => sb.error(e.message));
@@ -158,7 +159,7 @@ const register = (core, args, options, metadata) => {
         listBox.textContent = '';
         if (!dirs.length) {
           listBox.appendChild(el('div', {class: 'wb-pick-empty'},
-            '(sem subpastas)'));
+            t('backup.noSubdirs')));
         }
         dirs.forEach(d => listBox.appendChild(
           el('div', {class: 'wb-pick-dir',
@@ -168,7 +169,7 @@ const register = (core, args, options, metadata) => {
       }).catch(e => {
         listBox.textContent = '';
         listBox.appendChild(el('div', {class: 'wb-pick-empty'},
-          'erro: ' + e.message));
+          t('backup.errPrefix') + e.message));
       });
     };
     win.render($c => {
@@ -181,11 +182,11 @@ const register = (core, args, options, metadata) => {
             go(cur.slice(0, cur.lastIndexOf('/')) || (remote ? '' : '/'));
           }),
           pathIn,
-          button('Ir', () => go(pathIn.value.trim()))),
+          button(t('go'), () => go(pathIn.value.trim()))),
         listBox,
         el('div', {class: 'wb-pick-foot'},
-          button('Cancelar', () => win.destroy()),
-          button('Selecionar esta pasta', () => { cb(cur); win.destroy(); }))));
+          button(t('cancel'), () => win.destroy()),
+          button(t('backup.selThis'), () => { cb(cur); win.destroy(); }))));
       go(cur);
     });
   };
@@ -199,30 +200,30 @@ const register = (core, args, options, metadata) => {
     .then(r => r.dirs);
 
   // ---------- jobs ----------
-  const localIn = el('input', {class: 'local', placeholder: 'pasta local (ex: /home/iwacham/fotos)'});
-  const remoteIn = el('input', {class: 'remote', placeholder: 'pasta no Drive (ex: backup/fotos)'});
+  const localIn = el('input', {class: 'local', placeholder: t('backup.localPh')});
+  const remoteIn = el('input', {class: 'remote', placeholder: t('backup.remotePh')});
   const jobsBody = el('div', {});
 
   const renderJobs = jobs => {
     jobsBody.textContent = '';
     if (!jobs.length) {
       jobsBody.appendChild(el('div', {class: 'muted'},
-        'nenhuma pasta configurada — adicione abaixo'));
+        t('backup.noJobs')));
       return;
     }
     jobsBody.appendChild(table(
-      ['local', '→ drive', 'status', 'último sync', ''],
+      [t('backup.hLocal'), t('backup.hRemote'), t('backup.hStatus'), t('backup.hLast'), ''],
       jobs.map(j => [
         j.local, j.remote,
-        j.enabled ? (j.status || 'pendente') : 'desativado',
+        j.enabled ? (j.status || t('backup.pending')) : t('backup.disabled'),
         j.last || '—',
         el('span', {},
           button(j.enabled ? 'Off' : 'On', () =>
             api.post(`backup/jobs/${j.id}/toggle`).then(loadJobs)),
           button('Sync', () => api.post('backup/sync', {id: j.id})
-            .then(() => { setRunning(true); sb.set('sync iniciado'); })
+            .then(() => { setRunning(true); sb.set(t('backup.syncStarted')); })
             .catch(e => sb.error(e.message))),
-          button('Del', () =>
+          button(t('del'), () =>
             api.del(`backup/jobs/${j.id}`).then(loadJobs)))
       ])));
   };
@@ -230,27 +231,27 @@ const register = (core, args, options, metadata) => {
   const loadJobs = () => api.get('backup/jobs')
     .then(r => renderJobs(r.jobs)).catch(e => sb.error(e.message));
 
-  jobsCard.appendChild(el('h3', {}, 'Pastas sincronizadas'));
+  jobsCard.appendChild(el('h3', {}, t('backup.syncedFolders')));
   jobsCard.appendChild(jobsBody);
   jobsCard.appendChild(el('div', {style: {marginTop: '8px'}},
     localIn,
-    button('📁', () => dirPicker('Selecionar pasta local', localDirs,
+    button('📁', () => dirPicker(t('backup.pickLocal'), localDirs,
       p => { localIn.value = p; }), false),
     remoteIn,
-    button('☁️', () => dirPicker('Selecionar pasta no Google Drive', remoteDirs,
+    button('☁️', () => dirPicker(t('backup.pickRemote'), remoteDirs,
       p => { remoteIn.value = p; }, true)),
-    button('Adicionar', () => {
+    button(t('add'), () => {
       api.post('backup/jobs', {local: localIn.value, remote: remoteIn.value})
         .then(() => { localIn.value = remoteIn.value = ''; loadJobs(); })
         .catch(e => sb.error(e.message));
     }),
-    button('Sync tudo', () => api.post('backup/sync', {})
-      .then(() => { setRunning(true); sb.set('sync iniciado'); })
+    button(t('backup.syncAll'), () => api.post('backup/sync', {})
+      .then(() => { setRunning(true); sb.set(t('backup.syncStarted')); })
       .catch(e => sb.error(e.message)))));
 
   proc.createWindow({
     id: 'WebOSBackupWindow',
-    title: metadata.title.en_EN,
+    title: metaTitle(core, metadata),
     dimension: {width: 760, height: 540}
   })
     .on('destroy', () => { if (polling) { clearInterval(polling); } proc.destroy(); })
@@ -258,7 +259,7 @@ const register = (core, args, options, metadata) => {
       $content.appendChild(layout(
         el('div', {class: 'webos-toolbar'},
           el('span', {style: {color: '#9ab', fontSize: '12px'}},
-            'Selecione as pastas — o sistema sincroniza com o Google Drive')),
+            t('backup.hint'))),
         el('div', {style: {overflow: 'auto'}},
           statusCard, authBox, tokenBox, jobsCard, logBox), sb));
       refresh(); loadJobs();

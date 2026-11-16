@@ -2,6 +2,7 @@ import osjs from 'osjs';
 import {name as applicationName} from './metadata.json';
 import {api, formatBytes} from '../_shared/api.js';
 import {el, css, button, table, statusbar, layout, confirmDialog} from '../_shared/ui.js';
+import {useI18n, metaTitle} from '../_shared/i18n.js';
 
 css('webos-remote', `
   .wr-form { margin: 8px; padding: 10px; background: #1d212b; display: none;
@@ -38,6 +39,7 @@ const fmtEntry = e => {
 
 const register = (core, args, options, metadata) => {
   const proc = core.make('osjs/application', {args, options, metadata});
+  const {t} = useI18n(core);
   const sb = statusbar();
   let conn = null;          // active connection (resolved dict or name)
   let cwd = '/';
@@ -47,7 +49,7 @@ const register = (core, args, options, metadata) => {
 
   // ---------- connection form ----------
   const f = {
-    name: el('input', {class: 'name', placeholder: 'alias'}),
+    name: el('input', {class: 'name', placeholder: t('remote.aliasPh')}),
     proto: el('select', {}, el('option', {value: 'ssh'}, 'SSH / SFTP / SCP'),
               el('option', {value: 'ftp'}, 'FTP')),
     host: el('input', {class: 'host', placeholder: 'host'}),
@@ -56,8 +58,8 @@ const register = (core, args, options, metadata) => {
     auth: el('select', {}, el('option', {value: 'password'}, 'password'),
              el('option', {value: 'key'}, 'ssh key')),
     secret: el('input', {class: 'secret', type: 'password',
-                         placeholder: 'senha ou caminho da chave'}),
-    dir: el('input', {class: 'dir', placeholder: 'diretório inicial (opcional)'})
+                         placeholder: t('remote.secretPh')}),
+    dir: el('input', {class: 'dir', placeholder: t('remote.dirPh')})
   };
   const form = el('div', {class: 'wr-form'},
     el('div', {class: 'row'}, f.name, f.proto, f.host, f.port),
@@ -68,7 +70,7 @@ const register = (core, args, options, metadata) => {
   const loadConns = () => api.get('remote/connections').then(r => {
     conns = r.connections || {};
     connSel.textContent = '';
-    connSel.appendChild(el('option', {value: ''}, '— conexão salva —'));
+    connSel.appendChild(el('option', {value: ''}, t('remote.savedConn')));
     Object.keys(conns).forEach(n =>
       connSel.appendChild(el('option', {value: n}, `${n} (${conns[n].proto}://${conns[n].host})`)));
   }).catch(e => sb.error(e.message));
@@ -106,33 +108,33 @@ const register = (core, args, options, metadata) => {
         if (e.type === 'dir') {
           refresh(join(cwd, e.name));
         } else {
-          sb.set(`baixando ${e.name}…`);
+          sb.set(t('remote.downloading', {name: e.name}));
           api.post('remote/download', {conn, remote: join(cwd, e.name),
             local: '/tmp/' + e.name})
-            .then(r => sb.set(`salvo em ${r.to}`))
+            .then(r => sb.set(t('remote.savedTo', {path: r.to})))
             .catch(err => sb.error(err.message));
         }
       });
       return tr.querySelector('tbody');
     });
-    const t = el('table', {class: 'webos-table'},
+    const tbl = el('table', {class: 'webos-table'},
       el('thead', {}, el('tr', {},
-        el('th', {}, 'name'), el('th', {}, 'size'), el('th', {}, 'modified'))),
+        el('th', {}, t('name')), el('th', {}, t('size')), el('th', {}, t('modified')))),
       el('tbody', {}, ...rows.map(tb => tb.children[0])));
     body.textContent = '';
-    body.appendChild(entries.length ? t : el('div',
+    body.appendChild(entries.length ? tbl : el('div',
       {style: {padding: '20px', color: '#9ab'}},
-      conn ? 'diretório vazio' : 'conecte-se a um servidor'));
+      conn ? t('remote.emptyDir') : t('remote.connectFirst')));
   };
 
   const refresh = (path) => {
-    if (!conn) { sb.error('conecte primeiro'); return; }
+    if (!conn) { sb.error(t('remote.connectFirst')); return; }
     cwd = path || cwd;
     pathIn.value = cwd;
-    sb.set(`listando ${cwd}…`);
+    sb.set(t('remote.listing', {dir: cwd}));
     api.post('remote/list', {conn, path: cwd}).then(r => {
       entries = r.entries; sel = null; render();
-      sb.set(`${entries.length} itens em ${cwd}`);
+      sb.set(t('remote.itemsIn', {n: entries.length, dir: cwd}));
     }).catch(e => sb.error(e.message));
   };
 
@@ -144,59 +146,60 @@ const register = (core, args, options, metadata) => {
   };
 
   const filesBar = el('div', {class: 'webos-toolbar'},
-    button('⬆', () => refresh(parent(cwd)), 'subir'),
+    button('⬆', () => refresh(parent(cwd)), t('files.up')),
     pathIn,
-    button('Ir', () => refresh(pathIn.value)),
-    button('New dir', () => {
-      const n = prompt('Nome do diretório:');
+    button(t('go'), () => refresh(pathIn.value)),
+    button(t('remote.newDir'), () => {
+      const n = prompt(t('remote.newDirMsg'));
       if (!n) { return; }
       api.post('remote/mkdir', {conn, path: join(cwd, n)})
         .then(() => refresh()).catch(e => sb.error(e.message));
     }),
     button('Upload', () => {
-      const l = prompt('Caminho local (neste servidor):');
+      const l = prompt(t('remote.localPathMsg'));
       if (!l) { return; }
-      sb.set('enviando…');
+      sb.set(t('remote.sending'));
       api.post('remote/upload', {conn, local: l, remote: cwd})
-        .then(() => { sb.set('upload ok'); refresh(); })
+        .then(() => { sb.set(t('remote.uploadOk')); refresh(); })
         .catch(e => sb.error(e.message));
     }),
     button('Download', () => {
       const e = selected();
-      if (!e) { sb.error('selecione um item'); return; }
-      const l = prompt('Destino local:', '/tmp/' + e.name);
+      if (!e) { sb.error(t('files.selItem')); return; }
+      const l = prompt(t('remote.destLocal'), '/tmp/' + e.name);
       if (!l) { return; }
-      sb.set('baixando…');
+      sb.set(t('remote.downloading', {name: e.name}));
       api.post('remote/download', {conn, remote: join(cwd, e.name), local: l})
-        .then(() => sb.set(`salvo em ${l}`))
+        .then(() => sb.set(t('remote.savedTo', {path: l})))
         .catch(err => sb.error(err.message));
     }),
     button('Rename', () => {
       const e = selected();
-      if (!e) { sb.error('selecione um item'); return; }
-      const n = prompt('Novo nome:', e.name);
+      if (!e) { sb.error(t('files.selItem')); return; }
+      const n = prompt(t('remote.newNameMsg'), e.name);
       if (!n) { return; }
       api.post('remote/rename', {conn, path: join(cwd, e.name), new: n})
         .then(() => refresh()).catch(err => sb.error(err.message));
     }),
     button('Delete', () => {
       const e = selected();
-      if (!e) { sb.error('selecione um item'); return; }
-      confirmDialog(core, 'Delete', `Remover ${join(cwd, e.name)}?`).then(ok => {
+      if (!e) { sb.error(t('files.selItem')); return; }
+      confirmDialog(core, t('remote.deleteTitle'),
+        t('remote.deleteMsg', {path: join(cwd, e.name)})).then(ok => {
         if (!ok) { return; }
         api.post('remote/delete', {conn, path: join(cwd, e.name), type: e.type})
           .then(() => refresh()).catch(err => sb.error(err.message));
       });
     }),
-    button('⟳', () => refresh(), 'refresh'));
+    button('⟳', () => refresh(), t('refresh')));
 
   // ---------- command tab ----------
   const cmdOut = el('pre', {class: 'wr-pre'}, '');
   const cmdIn = el('input', {class: 'wr-cmd',
-    placeholder: 'comando remoto… (ex: systemctl status nginx)'});
+    placeholder: t('remote.cmdPh')});
   const runCmd = () => {
     if (!conn || !cmdIn.value.trim()) { return; }
-    sb.set('executando…');
+    sb.set(t('remote.running'));
     api.post('remote/exec', {conn, cmd: cmdIn.value}).then(r => {
       cmdOut.textContent = `$ ${cmdIn.value}\n${r.out}${r.err ? '\n' + r.err : ''}` +
         `\n[exit ${r.rc}]`;
@@ -209,10 +212,10 @@ const register = (core, args, options, metadata) => {
 
   // ---------- git tab ----------
   const gConnSel = el('select', {},
-    el('option', {value: ''}, 'sem credencial (https público/chave do agente)'));
+    el('option', {value: ''}, t('remote.gitNoCred')));
   const gUrl = el('input', {class: 'wr-cmd',
-    placeholder: 'repo url (git@host:repo.git / https://…/repo.git)'});
-  const gPath = el('input', {class: 'wr-cmd', placeholder: 'diretório local'});
+    placeholder: t('remote.repoUrlPh')});
+  const gPath = el('input', {class: 'wr-cmd', placeholder: t('remote.localDirPh')});
   const gOut = el('pre', {class: 'wr-pre'}, '');
   const git = (action, extra = {}) => {
     sb.set(`git ${action}…`);
@@ -259,10 +262,11 @@ const register = (core, args, options, metadata) => {
     };
     const saved = typeof conn === 'string' ? conns[conn] : null;
     const startDir = ((saved || conn).dir) || '/';
-    sb.set(typeof conn === 'string' ? `conectado: ${conn}` : `conectado: ${conn.host}`);
+    sb.set(t('remote.connectedTo',
+      {name: typeof conn === 'string' ? conn : conn.host}));
     gConnSel.textContent = '';
     gConnSel.appendChild(el('option', {value: ''},
-      'sem credencial (https público/chave do agente)'));
+      t('remote.gitNoCred')));
     Object.keys(conns).forEach(n => gConnSel.appendChild(
       el('option', {value: n}, n)));
     refresh(startDir);
@@ -276,23 +280,23 @@ const register = (core, args, options, metadata) => {
     }),
     button('Edit', () => {
       const n = connSel.value;
-      if (!n) { sb.error('selecione uma conexão'); return; }
+      if (!n) { sb.error(t('remote.selConn')); return; }
       f.name.value = n; fillForm(conns[n]); form.classList.add('open');
     }),
     button('Save', () => {
       const c = formConn();
       if (!f.name.value.trim() || !c.host) {
-        sb.error('preencha alias + host'); return;
+        sb.error(t('remote.fillAliasHost')); return;
       }
       api.post('remote/connections', {name: f.name.value.trim(), ...c})
         .then(() => { form.classList.remove('open'); loadConns();
-          sb.set(`conexão '${f.name.value}' salva`); })
+          sb.set(t('remote.connSaved', {name: f.name.value})); })
         .catch(e => sb.error(e.message));
     }),
     button('Del', () => {
       const n = connSel.value;
-      if (!n) { sb.error('selecione uma conexão'); return; }
-      confirmDialog(core, 'Delete', `Remover conexão '${n}'?`).then(ok => {
+      if (!n) { sb.error(t('remote.selConn')); return; }
+      confirmDialog(core, t('remote.deleteTitle'), t('remote.delConnMsg', {name: n})).then(ok => {
         if (ok) {
           api.del(`remote/connections/${encodeURIComponent(n)}`)
             .then(loadConns).catch(e => sb.error(e.message));
@@ -302,7 +306,7 @@ const register = (core, args, options, metadata) => {
 
   proc.createWindow({
     id: 'WebOSRemoteWindow',
-    title: metadata.title.en_EN,
+    title: metaTitle(core, metadata),
     dimension: {width: 780, height: 520}
   })
     .on('destroy', () => proc.destroy())
