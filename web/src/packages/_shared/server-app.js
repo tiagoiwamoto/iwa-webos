@@ -37,6 +37,31 @@ css('webos-server-apps', `
   .wsrv-grid .webos-table { margin-top: 0; }
   .wsrv-grid td { max-width: 240px; overflow: hidden;
     text-overflow: ellipsis; white-space: nowrap; }
+  .wsrv-split { flex: 1 1 auto; display: flex; gap: 10px; min-height: 0;
+    margin-top: 8px; }
+  .wsrv-side { flex: 0 0 200px; overflow: auto;
+    border-right: 1px solid #33363f; padding-right: 8px; }
+  .wsrv-console { flex: 1 1 auto; display: flex; flex-direction: column;
+    min-width: 0; }
+  .wsrv-tabs { display: flex; gap: 3px; flex-wrap: wrap; }
+  .wsrv-tab { padding: 2px 9px; font-size: 11px; background: #2a2e37;
+    border: 1px solid #3a3f4b; border-radius: 4px 4px 0 0; color: #bbc;
+    cursor: pointer; }
+  .wsrv-tab.active { background: #39404d; color: #fff; }
+  .wsrv-tab-x { margin-left: 4px; opacity: .55; }
+  .wsrv-tab-x:hover { opacity: 1; }
+  .wsrv-pane { flex: 1 1 auto; overflow: auto; padding-top: 6px; }
+  .wsrv-tree-item { padding: 2px 5px; border-radius: 3px; cursor: pointer;
+    color: #cde; white-space: nowrap; overflow: hidden;
+    text-overflow: ellipsis; }
+  .wsrv-tree-item:hover { background: #2a2e37; }
+  .wsrv-tree-kids { margin: 0 0 2px 14px; }
+  .wsrv-tree-kids .wsrv-tree-item { color: #9ab; font-size: 12px; }
+  .wsrv-tree-x { float: right; opacity: 0; font-size: 10px;
+    padding: 1px 3px; }
+  .wsrv-tree-item:hover .wsrv-tree-x { opacity: .6; }
+  .wsrv-tree-x:hover { opacity: 1 !important; color: #f88; }
+  .wsrv-saved { margin-top: 12px; }
 `);
 
 export const serverApp = (sectionId, dims) =>
@@ -333,28 +358,52 @@ export const serverApp = (sectionId, dims) =>
     };
 
     // -------------------------------------------------------------- databases
-    // Mini database manager served by the agent itself (psql/mysql CLIs):
-    // pick engine + database, browse tables and rows, run SQL.
+    // Mini manager: engine picker on top, database/table tree on the
+    // left and a tabbed SQL console on the right. Saved queries persist
+    // per user in home:/.webos/db-queries.json.
     const db = () => {
       body.innerHTML = '';
-      body.style.display = '';
-      body.style.flexDirection = '';
+      body.style.display = 'flex';
+      body.style.flexDirection = 'column';
       api.get('server/db').then(d => {
         if (!d.available) return hint([
           {key: 'postgresql', label: 'PostgreSQL'},
           {key: 'mariadb', label: 'MariaDB'}], db);
         const engines = ['postgres', 'mysql'].filter(e => d[e]);
         const engSel = select(engines, engines[0]);
-        const dbSel = el('select', {class: 'webos-input'});
-        const nm = inp('server.dbName', '120px');
-        const view = el('div');
+        const vfs = core.make('osjs/vfs');
+        const SAVED_DIR = {path: 'home:/.webos'};
+        const SAVED_FILE = {path: 'home:/.webos/db-queries.json'};
+        const expanded = {};   // dbName -> tables[] once fetched
+        let saved = [];        // [{name, engine, db, sql}]
+        let tabs = [];         // [{name, db, sql, result, autorun}]
+        let active = -1;
+        let tabSeq = 0;
 
-        const fillDbs = () => {
-          dbSel.innerHTML = '';
-          (d[engSel.value] || []).forEach(x =>
-            dbSel.appendChild(el('option', {value: x.name}, x.name)));
+        const side = el('div', {class: 'wsrv-side'});
+        const tabBar = el('div', {class: 'wsrv-tabs'});
+        const pane = el('div', {class: 'wsrv-pane'});
+        const main = el('div', {class: 'wsrv-console'}, tabBar, pane);
+
+        body.appendChild(el('div', {class: 'wsrv-quick'},
+          el('span', {i18n: 'server.engine'}), engSel,
+          button({i18n: 'server.dbNewTab'}, () => addTab()),
+          button({i18n: 'server.dbNewDb'}, () => formWindow(proc, {
+            title: t('server.dbNewDb'),
+            fields: [
+              {name: 'engine', label: t('server.engine'),
+                options: engines},
+              {name: 'name', label: t('server.dbName')},
+              {name: 'owner', label: t('server.dbOwner'),
+                placeholder: 'postgres'}]
+          }, v => v && call('db', {op: 'create', ...v}, db)))));
+        body.appendChild(el('div', {class: 'wsrv-split'}, side, main));
+
+        const qname = table => {
+          const q = engSel.value === 'postgres' ? '"' : '`';
+          return table.split('.').map(p => q + p + q).join('.');
         };
-
+        const engineDbs = () => (d[engSel.value] || []).map(x => x.name);
         const dataTable = data => {
           const wrap = el('div', {class: 'wsrv-grid'});
           if (!data.cols.length) {
@@ -370,104 +419,179 @@ export const serverApp = (sectionId, dims) =>
           return wrap;
         };
 
-        const showRows = tableName => {
-          view.innerHTML = '';
-          view.appendChild(el('div', {class: 'wsrv-quick'},
-            mini('‹ ' + t('server.dbBack'), showTables),
-            el('b', {}, `${dbSel.value} › ${tableName}`)));
-          call('db', {op: 'rows', engine: engSel.value, name: dbSel.value,
-            table: tableName}, res => view.appendChild(dataTable(res)));
+        const persist = () => vfs.mkdir(SAVED_DIR).catch(() => {})
+          .then(() => vfs.writefile(SAVED_FILE, JSON.stringify(saved)))
+          .catch(() => {});
+
+        // ------------------------------------------------ console tabs
+        const addTab = init => {
+          tabs.push({
+            name: (init && init.name) || `${t('server.dbQuery')} ${++tabSeq}`,
+            db: (init && init.db) || engineDbs()[0],
+            sql: (init && init.sql) || '',
+            result: null,
+            autorun: !!(init && init.autorun)});
+          active = tabs.length - 1;
+          renderTabs();
+          renderPane();
         };
 
-        const showTables = () => {
-          view.innerHTML = '';
-          const dbname = dbSel.value;
-          if (!dbname) return;
-          call('db', {op: 'tables', engine: engSel.value, name: dbname},
-            r => {
-              view.appendChild(el('div', {class: 'wsrv-h'},
-                `${dbname} — ${r.tables.length} ${t('server.dbTables')}`));
-              view.appendChild(table(
-                [{i18n: 'server.dbTable'}, ''],
-                r.tables.map(x => [
-                  x,
-                  el('span', {},
-                    mini(t('server.dbBrowse'), () => showRows(x)),
-                    ' ',
-                    mini('✕', () => confirmDanger(
-                      `${t('server.dbDropTable')} ${x}?`,
-                      () => call('db', {op: 'table_drop',
-                        engine: engSel.value, name: dbname, table: x},
-                        showTables))))])));
-              const sql = el('textarea', {class: 'wsrv-sql',
-                placeholder: 'SELECT * FROM …'});
-              view.appendChild(el('div', {class: 'wsrv-h',
-                i18n: 'server.dbQuery'}));
-              view.appendChild(sql);
-              view.appendChild(el('div', {style: {marginTop: '6px'}},
-                button({i18n: 'server.dbRun'}, () => {
-                  if (sql.value.trim()) {
-                    call('db', {op: 'query', engine: engSel.value,
-                      db: dbname, sql: sql.value.trim()}, res => {
-                      const old = view.querySelector('.wsrv-grid');
-                      if (old) old.remove();
-                      if (res.cols.length) {
-                        view.appendChild(dataTable(res));
-                      }
-                    });
-                  }
-                })));
-            });
+        const closeTab = i => {
+          tabs.splice(i, 1);
+          if (active >= i) active--;
+          if (active < 0 && tabs.length) active = 0;
+          renderTabs();
+          renderPane();
         };
 
-        fillDbs();
-        engSel.onchange = () => { fillDbs(); showTables(); };
-        dbSel.onchange = showTables;
+        const renderTabs = () => {
+          tabBar.innerHTML = '';
+          tabs.forEach((tb, i) => {
+            const x = el('span', {class: 'wsrv-tab-x'}, '✕');
+            x.onclick = ev => { ev.stopPropagation(); closeTab(i); };
+            const b = el('button',
+              {class: 'wsrv-tab' + (i === active ? ' active' : '')},
+              tb.name, ' ', x);
+            b.onclick = () => { active = i; renderTabs(); renderPane(); };
+            tabBar.appendChild(b);
+          });
+          const plus = el('button', {class: 'wsrv-tab'}, '+');
+          plus.onclick = () => addTab();
+          tabBar.appendChild(plus);
+        };
 
-        body.appendChild(el('div', {class: 'wsrv-quick'},
-          el('span', {i18n: 'server.engine'}), engSel,
-          el('span', {i18n: 'server.dbName'}), dbSel, nm,
-          button({i18n: 'server.create'}, () => {
-            if (nm.value.trim()) {
-              call('db', {op: 'create', engine: engSel.value,
-                name: nm.value.trim()}, db);
-            }
-          }),
-          button({i18n: 'server.dbAdvanced'}, () => formWindow(proc, {
-            title: t('server.dbAdvanced'),
-            fields: [
-              {name: 'engine', label: t('server.engine'),
-                options: engines},
-              {name: 'name', label: t('server.dbName')},
-              {name: 'owner', label: t('server.dbOwner'),
-                placeholder: 'postgres'}]
-          }, v => v && call('db', {op: 'create', ...v}, db)))));
-        engines.forEach(e => {
-          body.appendChild(el('div', {class: 'wsrv-h'}, e));
-          body.appendChild(table(
-            [{i18n: 'server.dbName'}, {i18n: 'server.dbOwner'}, ''],
-            (d[e] || []).map(x => [
-              x.name, x.owner || '',
-              el('span', {},
-                mini('▸', () => {
-                  engSel.value = e;
-                  fillDbs();
-                  dbSel.value = x.name;
-                  showTables();
-                }),
-                ' ',
-                mini('✕', () => confirmDanger(
-                  `${t('server.dropDb')} ${x.name} (${e})?`,
-                  () => call('db', {op: 'drop', engine: e, name: x.name},
-                    db))))])));
-        });
-        body.appendChild(view);
-        ['postgres_error', 'mysql_error'].forEach(k => {
-          if (d[k]) {
-            body.appendChild(el('div', {class: 'wsrv-hint'}, `${k}: ${d[k]}`));
+        const renderPane = () => {
+          pane.innerHTML = '';
+          const tb = tabs[active];
+          if (!tb) {
+            pane.appendChild(el('div', {class: 'wsrv-hint',
+              i18n: 'server.dbNoTab'}));
+            return;
           }
-        });
-        showTables();
+          const dbSel = select(engineDbs(), tb.db);
+          const sql = el('textarea', {class: 'wsrv-sql',
+            placeholder: 'SELECT …'});
+          sql.value = tb.sql;
+          sql.oninput = () => { tb.sql = sql.value; };
+          const out = el('div');
+          const run = () => {
+            tb.db = dbSel.value;
+            call('db', {op: 'query', engine: engSel.value, db: tb.db,
+              sql: tb.sql}, r => {
+              tb.result = r;
+              out.innerHTML = '';
+              out.appendChild(dataTable(r));
+            });
+          };
+          sql.onkeydown = ev => {
+            if ((ev.ctrlKey || ev.metaKey) && ev.key === 'Enter') {
+              ev.preventDefault();
+              run();
+            }
+          };
+          pane.appendChild(el('div', {class: 'wsrv-quick'},
+            el('span', {i18n: 'server.dbName'}), dbSel,
+            button({i18n: 'server.dbRun'}, run),
+            button({i18n: 'server.dbSave'}, () => {
+              const nm = window.prompt(t('server.dbSaveAs'), tb.name);
+              if (nm && nm.trim()) {
+                saved.push({name: nm.trim(), engine: engSel.value,
+                  db: tb.db, sql: tb.sql});
+                persist().then(renderSaved);
+              }
+            })));
+          pane.appendChild(sql);
+          pane.appendChild(out);
+          if (tb.result) out.appendChild(dataTable(tb.result));
+          if (tb.autorun) { tb.autorun = false; run(); }
+        };
+
+        // ------------------------------------------------- side panel
+        const treeX = fn => {
+          const x = el('span', {class: 'wsrv-tree-x'}, '✕');
+          x.onclick = ev => { ev.stopPropagation(); fn(); };
+          return x;
+        };
+
+        const toggleDb = (name, tog, kids) => {
+          if (expanded[name]) {
+            delete expanded[name];
+            tog.textContent = '▸';
+            kids.innerHTML = '';
+            return;
+          }
+          call('db', {op: 'tables', engine: engSel.value, name}, r => {
+            expanded[name] = r.tables;
+            tog.textContent = '▾';
+            r.tables.forEach(tbl => {
+              const item = el('div', {class: 'wsrv-tree-item'}, tbl,
+                treeX(() => confirmDanger(
+                  `${t('server.dbDropTable')} ${tbl}?`,
+                  () => call('db', {op: 'table_drop',
+                    engine: engSel.value, name, table: tbl}, () => {
+                    tog.textContent = '▸';
+                    kids.innerHTML = '';
+                    delete expanded[name];
+                    toggleDb(name, tog, kids);
+                  }))));
+              item.onclick = () => addTab({name: tbl, db: name,
+                sql: `SELECT * FROM ${qname(tbl)} LIMIT 500`,
+                autorun: true});
+              kids.appendChild(item);
+            });
+          });
+        };
+
+        const renderSaved = () => {
+          const box = side.querySelector('.wsrv-saved');
+          if (!box) return;
+          box.innerHTML = '';
+          box.appendChild(el('div', {class: 'wsrv-h',
+            i18n: 'server.dbSaved'}));
+          saved.forEach((q, i) => {
+            const item = el('div', {class: 'wsrv-tree-item'}, q.name,
+              treeX(() => { saved.splice(i, 1);
+                persist().then(renderSaved); }));
+            item.onclick = () => {
+              if (q.engine && q.engine !== engSel.value) {
+                engSel.value = q.engine;
+                engSel.dispatchEvent(new Event('change'));
+              }
+              addTab(q);
+            };
+            box.appendChild(item);
+          });
+        };
+
+        const rebuildTree = () => {
+          Object.keys(expanded).forEach(k => delete expanded[k]);
+          side.innerHTML = '';
+          side.appendChild(el('div', {class: 'wsrv-h',
+            i18n: 'server.dbDbs'}));
+          engineDbs().forEach(name => {
+            const tog = el('span', {}, '▸ ');
+            const kids = el('div', {class: 'wsrv-tree-kids'});
+            const row = el('div', {class: 'wsrv-tree-item'}, tog, name,
+              treeX(() => confirmDanger(
+                `${t('server.dropDb')} ${name} (${engSel.value})?`,
+                () => call('db', {op: 'drop', engine: engSel.value, name},
+                  db))));
+            row.onclick = () => toggleDb(name, tog, kids);
+            side.appendChild(row);
+            side.appendChild(kids);
+          });
+          side.appendChild(el('div', {class: 'wsrv-saved'}));
+          renderSaved();
+        };
+
+        engSel.onchange = () => { rebuildTree(); renderPane(); };
+        vfs.readfile(SAVED_FILE).catch(() => '[]')
+          .then(txt => {
+            try {
+              saved = JSON.parse(txt) || [];
+            } catch (e) { /* keep [] */ }
+          })
+          .then(() => { rebuildTree(); addTab(); });
       }).catch(e => sb.error(e.message));
     };
 

@@ -2837,13 +2837,18 @@ registerDict('server', {
     dbAdvanced: 'Advanced…',
     dbTables: 'Tables',
     dbTable: 'Table',
-    dbBrowse: 'Browse',
-    dbQuery: 'SQL query',
+    dbQuery: 'Query',
     dbRun: 'Run',
-    dbBack: 'Back',
     dbDropTable: 'Drop table',
     dbTruncated: 'showing first 500 rows',
     dbEmpty: 'no rows',
+    dbDbs: 'Databases',
+    dbNewTab: 'New query',
+    dbNewDb: 'New database…',
+    dbSaved: 'Saved queries',
+    dbSave: 'Save',
+    dbSaveAs: 'Query name:',
+    dbNoTab: 'no query open — press +',
     engine: 'Engine',
     dbOwner: 'Owner',
     dropDb: 'Drop database',
@@ -2970,13 +2975,18 @@ registerDict('server', {
     dbAdvanced: 'Avançado…',
     dbTables: 'Tabelas',
     dbTable: 'Tabela',
-    dbBrowse: 'Ver dados',
-    dbQuery: 'Consulta SQL',
+    dbQuery: 'Consulta',
     dbRun: 'Executar',
-    dbBack: 'Voltar',
     dbDropTable: 'Apagar tabela',
     dbTruncated: 'mostrando as primeiras 500 linhas',
     dbEmpty: 'sem linhas',
+    dbDbs: 'Bancos',
+    dbNewTab: 'Nova consulta',
+    dbNewDb: 'Novo banco…',
+    dbSaved: 'Consultas salvas',
+    dbSave: 'Salvar',
+    dbSaveAs: 'Nome da consulta:',
+    dbNoTab: 'sem consulta aberta — pressione +',
     engine: 'Motor',
     dbOwner: 'Dono',
     dropDb: 'Apagar banco',
@@ -3103,13 +3113,18 @@ registerDict('server', {
     dbAdvanced: 'Avançado…',
     dbTables: 'Tabelas',
     dbTable: 'Tabela',
-    dbBrowse: 'Ver dados',
-    dbQuery: 'Consulta SQL',
+    dbQuery: 'Consulta',
     dbRun: 'Executar',
-    dbBack: 'Voltar',
     dbDropTable: 'Eliminar tabela',
     dbTruncated: 'a mostrar as primeiras 500 linhas',
     dbEmpty: 'sem linhas',
+    dbDbs: 'Bases de dados',
+    dbNewTab: 'Nova consulta',
+    dbNewDb: 'Nova base de dados…',
+    dbSaved: 'Consultas guardadas',
+    dbSave: 'Guardar',
+    dbSaveAs: 'Nome da consulta:',
+    dbNoTab: 'sem consulta aberta — prima +',
     engine: 'Motor',
     dbOwner: 'Dono',
     dropDb: 'Eliminar base de dados',
@@ -3236,13 +3251,18 @@ registerDict('server', {
     dbAdvanced: 'Avanzado…',
     dbTables: 'Tablas',
     dbTable: 'Tabla',
-    dbBrowse: 'Explorar',
-    dbQuery: 'Consulta SQL',
+    dbQuery: 'Consulta',
     dbRun: 'Ejecutar',
-    dbBack: 'Volver',
     dbDropTable: 'Eliminar tabla',
     dbTruncated: 'mostrando las primeras 500 filas',
     dbEmpty: 'sin filas',
+    dbDbs: 'Bases de datos',
+    dbNewTab: 'Nueva consulta',
+    dbNewDb: 'Nueva base de datos…',
+    dbSaved: 'Consultas guardadas',
+    dbSave: 'Guardar',
+    dbSaveAs: 'Nombre de la consulta:',
+    dbNoTab: 'sin consulta abierta — pulsa +',
     engine: 'Motor',
     dbOwner: 'Dueño',
     dropDb: 'Eliminar base de datos',
@@ -3369,13 +3389,18 @@ registerDict('server', {
     dbAdvanced: '詳細…',
     dbTables: 'テーブル',
     dbTable: 'テーブル',
-    dbBrowse: '参照',
-    dbQuery: 'SQLクエリ',
+    dbQuery: 'クエリ',
     dbRun: '実行',
-    dbBack: '戻る',
     dbDropTable: 'テーブルを削除',
     dbTruncated: '最初の500行を表示',
     dbEmpty: '行なし',
+    dbDbs: 'データベース',
+    dbNewTab: '新しいクエリ',
+    dbNewDb: '新規データベース…',
+    dbSaved: '保存したクエリ',
+    dbSave: '保存',
+    dbSaveAs: 'クエリ名:',
+    dbNoTab: 'クエリが開いていません — + を押してください',
     engine: 'エンジン',
     dbOwner: '所有者',
     dropDb: 'データベースを削除',
@@ -3502,13 +3527,18 @@ registerDict('server', {
     dbAdvanced: '高级…',
     dbTables: '表',
     dbTable: '表',
-    dbBrowse: '浏览',
-    dbQuery: 'SQL 查询',
+    dbQuery: '查询',
     dbRun: '运行',
-    dbBack: '返回',
     dbDropTable: '删除表',
     dbTruncated: '仅显示前 500 行',
     dbEmpty: '无数据行',
+    dbDbs: '数据库',
+    dbNewTab: '新建查询',
+    dbNewDb: '新建数据库…',
+    dbSaved: '已保存查询',
+    dbSave: '保存',
+    dbSaveAs: '查询名称：',
+    dbNoTab: '没有打开的查询 — 按 +',
     engine: '引擎',
     dbOwner: '所有者',
     dropDb: '删除数据库',
@@ -3813,7 +3843,7 @@ function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { va
 
 
 
-Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["css"])('webos-server-apps', "\n  .wsrv-wrap { display: flex; height: 100%; width: 100%; font-family: sans-serif;\n    font-size: 13px; background: #20232a; color: #e8e8e8; }\n  .wsrv-main { flex: 1 1 auto; display: flex; flex-direction: column; min-width: 0; }\n  .wsrv-body { flex: 1 1 auto; overflow: auto; padding: 8px 10px; }\n  .wsrv-body .webos-table { margin-top: 8px; }\n  .wsrv-quick { display: flex; gap: 6px; align-items: center; flex-wrap: wrap;\n    padding: 6px 8px; background: #2a2e37; border-radius: 4px; }\n  .wsrv-h { margin: 10px 0 4px; color: #9ab; font-size: 12px;\n    text-transform: uppercase; letter-spacing: .4px; }\n  .wsrv-hint { padding: 18px; color: #9ab; }\n  .wsrv-kv { display: inline-flex; gap: 4px 14px; flex-wrap: wrap; color: #bbc;\n    font-size: 12px; padding: 4px 0; }\n  .wsrv-kv b { color: #9ab; font-weight: 600; }\n  .wsrv-mini { padding: 1px 7px; font-size: 11px; }\n  .wsrv-pre { margin: 8px 0; padding: 10px; background: #17191f; border-radius: 4px;\n    white-space: pre-wrap; font-size: 11px; color: #cde; max-height: 220px;\n    overflow: auto; user-select: text; }\n  .wsrv-sql { width: 100%; box-sizing: border-box; min-height: 64px;\n    background: #17191f; color: #cde; border: 1px solid #3a3f4b;\n    border-radius: 4px; font-family: monospace; font-size: 12px;\n    padding: 6px 8px; resize: vertical; }\n  .wsrv-grid { overflow: auto; max-height: 340px; margin-top: 8px; }\n  .wsrv-grid .webos-table { margin-top: 0; }\n  .wsrv-grid td { max-width: 240px; overflow: hidden;\n    text-overflow: ellipsis; white-space: nowrap; }\n");
+Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["css"])('webos-server-apps', "\n  .wsrv-wrap { display: flex; height: 100%; width: 100%; font-family: sans-serif;\n    font-size: 13px; background: #20232a; color: #e8e8e8; }\n  .wsrv-main { flex: 1 1 auto; display: flex; flex-direction: column; min-width: 0; }\n  .wsrv-body { flex: 1 1 auto; overflow: auto; padding: 8px 10px; }\n  .wsrv-body .webos-table { margin-top: 8px; }\n  .wsrv-quick { display: flex; gap: 6px; align-items: center; flex-wrap: wrap;\n    padding: 6px 8px; background: #2a2e37; border-radius: 4px; }\n  .wsrv-h { margin: 10px 0 4px; color: #9ab; font-size: 12px;\n    text-transform: uppercase; letter-spacing: .4px; }\n  .wsrv-hint { padding: 18px; color: #9ab; }\n  .wsrv-kv { display: inline-flex; gap: 4px 14px; flex-wrap: wrap; color: #bbc;\n    font-size: 12px; padding: 4px 0; }\n  .wsrv-kv b { color: #9ab; font-weight: 600; }\n  .wsrv-mini { padding: 1px 7px; font-size: 11px; }\n  .wsrv-pre { margin: 8px 0; padding: 10px; background: #17191f; border-radius: 4px;\n    white-space: pre-wrap; font-size: 11px; color: #cde; max-height: 220px;\n    overflow: auto; user-select: text; }\n  .wsrv-sql { width: 100%; box-sizing: border-box; min-height: 64px;\n    background: #17191f; color: #cde; border: 1px solid #3a3f4b;\n    border-radius: 4px; font-family: monospace; font-size: 12px;\n    padding: 6px 8px; resize: vertical; }\n  .wsrv-grid { overflow: auto; max-height: 340px; margin-top: 8px; }\n  .wsrv-grid .webos-table { margin-top: 0; }\n  .wsrv-grid td { max-width: 240px; overflow: hidden;\n    text-overflow: ellipsis; white-space: nowrap; }\n  .wsrv-split { flex: 1 1 auto; display: flex; gap: 10px; min-height: 0;\n    margin-top: 8px; }\n  .wsrv-side { flex: 0 0 200px; overflow: auto;\n    border-right: 1px solid #33363f; padding-right: 8px; }\n  .wsrv-console { flex: 1 1 auto; display: flex; flex-direction: column;\n    min-width: 0; }\n  .wsrv-tabs { display: flex; gap: 3px; flex-wrap: wrap; }\n  .wsrv-tab { padding: 2px 9px; font-size: 11px; background: #2a2e37;\n    border: 1px solid #3a3f4b; border-radius: 4px 4px 0 0; color: #bbc;\n    cursor: pointer; }\n  .wsrv-tab.active { background: #39404d; color: #fff; }\n  .wsrv-tab-x { margin-left: 4px; opacity: .55; }\n  .wsrv-tab-x:hover { opacity: 1; }\n  .wsrv-pane { flex: 1 1 auto; overflow: auto; padding-top: 6px; }\n  .wsrv-tree-item { padding: 2px 5px; border-radius: 3px; cursor: pointer;\n    color: #cde; white-space: nowrap; overflow: hidden;\n    text-overflow: ellipsis; }\n  .wsrv-tree-item:hover { background: #2a2e37; }\n  .wsrv-tree-kids { margin: 0 0 2px 14px; }\n  .wsrv-tree-kids .wsrv-tree-item { color: #9ab; font-size: 12px; }\n  .wsrv-tree-x { float: right; opacity: 0; font-size: 10px;\n    padding: 1px 3px; }\n  .wsrv-tree-item:hover .wsrv-tree-x { opacity: .6; }\n  .wsrv-tree-x:hover { opacity: 1 !important; color: #f88; }\n  .wsrv-saved { margin-top: 12px; }\n");
 var serverApp = function serverApp(sectionId, dims) {
   return function (core, args, options, metadata) {
     var proc = core.make('osjs/application', {
@@ -4429,14 +4459,15 @@ var serverApp = function serverApp(sectionId, dims) {
         return sb.error(e.message);
       });
     }; // -------------------------------------------------------------- databases
-    // Mini database manager served by the agent itself (psql/mysql CLIs):
-    // pick engine + database, browse tables and rows, run SQL.
+    // Mini manager: engine picker on top, database/table tree on the
+    // left and a tabbed SQL console on the right. Saved queries persist
+    // per user in home:/.webos/db-queries.json.
 
 
     var db = function db() {
       body.innerHTML = '';
-      body.style.display = '';
-      body.style.flexDirection = '';
+      body.style.display = 'flex';
+      body.style.flexDirection = 'column';
       _api_js__WEBPACK_IMPORTED_MODULE_3__["api"].get('server/db').then(function (d) {
         if (!d.available) return hint([{
           key: 'postgresql',
@@ -4449,18 +4480,78 @@ var serverApp = function serverApp(sectionId, dims) {
           return d[e];
         });
         var engSel = select(engines, engines[0]);
-        var dbSel = Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('select', {
-          "class": 'webos-input'
-        });
-        var nm = inp('server.dbName', '120px');
-        var view = Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div');
+        var vfs = core.make('osjs/vfs');
+        var SAVED_DIR = {
+          path: 'home:/.webos'
+        };
+        var SAVED_FILE = {
+          path: 'home:/.webos/db-queries.json'
+        };
+        var expanded = {}; // dbName -> tables[] once fetched
 
-        var fillDbs = function fillDbs() {
-          dbSel.innerHTML = '';
-          (d[engSel.value] || []).forEach(function (x) {
-            return dbSel.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('option', {
-              value: x.name
-            }, x.name));
+        var saved = []; // [{name, engine, db, sql}]
+
+        var tabs = []; // [{name, db, sql, result, autorun}]
+
+        var active = -1;
+        var tabSeq = 0;
+        var side = Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
+          "class": 'wsrv-side'
+        });
+        var tabBar = Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
+          "class": 'wsrv-tabs'
+        });
+        var pane = Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
+          "class": 'wsrv-pane'
+        });
+        var main = Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
+          "class": 'wsrv-console'
+        }, tabBar, pane);
+        body.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
+          "class": 'wsrv-quick'
+        }, Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('span', {
+          i18n: 'server.engine'
+        }), engSel, Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["button"])({
+          i18n: 'server.dbNewTab'
+        }, function () {
+          return addTab();
+        }), Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["button"])({
+          i18n: 'server.dbNewDb'
+        }, function () {
+          return Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["formWindow"])(proc, {
+            title: t('server.dbNewDb'),
+            fields: [{
+              name: 'engine',
+              label: t('server.engine'),
+              options: engines
+            }, {
+              name: 'name',
+              label: t('server.dbName')
+            }, {
+              name: 'owner',
+              label: t('server.dbOwner'),
+              placeholder: 'postgres'
+            }]
+          }, function (v) {
+            return v && call('db', _objectSpread({
+              op: 'create'
+            }, v), db);
+          });
+        })));
+        body.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
+          "class": 'wsrv-split'
+        }, side, main));
+
+        var qname = function qname(table) {
+          var q = engSel.value === 'postgres' ? '"' : '`';
+          return table.split('.').map(function (p) {
+            return q + p + q;
+          }).join('.');
+        };
+
+        var engineDbs = function engineDbs() {
+          return (d[engSel.value] || []).map(function (x) {
+            return x.name;
           });
         };
 
@@ -4489,165 +4580,293 @@ var serverApp = function serverApp(sectionId, dims) {
           return wrap;
         };
 
-        var showRows = function showRows(tableName) {
-          view.innerHTML = '';
-          view.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
-            "class": 'wsrv-quick'
-          }, mini('‹ ' + t('server.dbBack'), showTables), Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('b', {}, "".concat(dbSel.value, " \u203A ").concat(tableName))));
-          call('db', {
-            op: 'rows',
-            engine: engSel.value,
-            name: dbSel.value,
-            table: tableName
-          }, function (res) {
-            return view.appendChild(dataTable(res));
+        var persist = function persist() {
+          return vfs.mkdir(SAVED_DIR)["catch"](function () {}).then(function () {
+            return vfs.writefile(SAVED_FILE, JSON.stringify(saved));
+          })["catch"](function () {});
+        }; // ------------------------------------------------ console tabs
+
+
+        var addTab = function addTab(init) {
+          tabs.push({
+            name: init && init.name || "".concat(t('server.dbQuery'), " ").concat(++tabSeq),
+            db: init && init.db || engineDbs()[0],
+            sql: init && init.sql || '',
+            result: null,
+            autorun: !!(init && init.autorun)
           });
+          active = tabs.length - 1;
+          renderTabs();
+          renderPane();
         };
 
-        var showTables = function showTables() {
-          view.innerHTML = '';
-          var dbname = dbSel.value;
-          if (!dbname) return;
+        var closeTab = function closeTab(i) {
+          tabs.splice(i, 1);
+          if (active >= i) active--;
+          if (active < 0 && tabs.length) active = 0;
+          renderTabs();
+          renderPane();
+        };
+
+        var renderTabs = function renderTabs() {
+          tabBar.innerHTML = '';
+          tabs.forEach(function (tb, i) {
+            var x = Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('span', {
+              "class": 'wsrv-tab-x'
+            }, '✕');
+
+            x.onclick = function (ev) {
+              ev.stopPropagation();
+              closeTab(i);
+            };
+
+            var b = Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('button', {
+              "class": 'wsrv-tab' + (i === active ? ' active' : '')
+            }, tb.name, ' ', x);
+
+            b.onclick = function () {
+              active = i;
+              renderTabs();
+              renderPane();
+            };
+
+            tabBar.appendChild(b);
+          });
+          var plus = Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('button', {
+            "class": 'wsrv-tab'
+          }, '+');
+
+          plus.onclick = function () {
+            return addTab();
+          };
+
+          tabBar.appendChild(plus);
+        };
+
+        var renderPane = function renderPane() {
+          pane.innerHTML = '';
+          var tb = tabs[active];
+
+          if (!tb) {
+            pane.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
+              "class": 'wsrv-hint',
+              i18n: 'server.dbNoTab'
+            }));
+            return;
+          }
+
+          var dbSel = select(engineDbs(), tb.db);
+          var sql = Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('textarea', {
+            "class": 'wsrv-sql',
+            placeholder: 'SELECT …'
+          });
+          sql.value = tb.sql;
+
+          sql.oninput = function () {
+            tb.sql = sql.value;
+          };
+
+          var out = Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div');
+
+          var run = function run() {
+            tb.db = dbSel.value;
+            call('db', {
+              op: 'query',
+              engine: engSel.value,
+              db: tb.db,
+              sql: tb.sql
+            }, function (r) {
+              tb.result = r;
+              out.innerHTML = '';
+              out.appendChild(dataTable(r));
+            });
+          };
+
+          sql.onkeydown = function (ev) {
+            if ((ev.ctrlKey || ev.metaKey) && ev.key === 'Enter') {
+              ev.preventDefault();
+              run();
+            }
+          };
+
+          pane.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
+            "class": 'wsrv-quick'
+          }, Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('span', {
+            i18n: 'server.dbName'
+          }), dbSel, Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["button"])({
+            i18n: 'server.dbRun'
+          }, run), Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["button"])({
+            i18n: 'server.dbSave'
+          }, function () {
+            var nm = window.prompt(t('server.dbSaveAs'), tb.name);
+
+            if (nm && nm.trim()) {
+              saved.push({
+                name: nm.trim(),
+                engine: engSel.value,
+                db: tb.db,
+                sql: tb.sql
+              });
+              persist().then(renderSaved);
+            }
+          })));
+          pane.appendChild(sql);
+          pane.appendChild(out);
+          if (tb.result) out.appendChild(dataTable(tb.result));
+
+          if (tb.autorun) {
+            tb.autorun = false;
+            run();
+          }
+        }; // ------------------------------------------------- side panel
+
+
+        var treeX = function treeX(fn) {
+          var x = Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('span', {
+            "class": 'wsrv-tree-x'
+          }, '✕');
+
+          x.onclick = function (ev) {
+            ev.stopPropagation();
+            fn();
+          };
+
+          return x;
+        };
+
+        var toggleDb = function toggleDb(name, tog, kids) {
+          if (expanded[name]) {
+            delete expanded[name];
+            tog.textContent = '▸';
+            kids.innerHTML = '';
+            return;
+          }
+
           call('db', {
             op: 'tables',
             engine: engSel.value,
-            name: dbname
+            name: name
           }, function (r) {
-            view.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
-              "class": 'wsrv-h'
-            }, "".concat(dbname, " \u2014 ").concat(r.tables.length, " ").concat(t('server.dbTables'))));
-            view.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["table"])([{
-              i18n: 'server.dbTable'
-            }, ''], r.tables.map(function (x) {
-              return [x, Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('span', {}, mini(t('server.dbBrowse'), function () {
-                return showRows(x);
-              }), ' ', mini('✕', function () {
-                return confirmDanger("".concat(t('server.dbDropTable'), " ").concat(x, "?"), function () {
+            expanded[name] = r.tables;
+            tog.textContent = '▾';
+            r.tables.forEach(function (tbl) {
+              var item = Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
+                "class": 'wsrv-tree-item'
+              }, tbl, treeX(function () {
+                return confirmDanger("".concat(t('server.dbDropTable'), " ").concat(tbl, "?"), function () {
                   return call('db', {
                     op: 'table_drop',
                     engine: engSel.value,
-                    name: dbname,
-                    table: x
-                  }, showTables);
+                    name: name,
+                    table: tbl
+                  }, function () {
+                    tog.textContent = '▸';
+                    kids.innerHTML = '';
+                    delete expanded[name];
+                    toggleDb(name, tog, kids);
+                  });
                 });
-              }))];
-            })));
-            var sql = Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('textarea', {
-              "class": 'wsrv-sql',
-              placeholder: 'SELECT * FROM …'
+              }));
+
+              item.onclick = function () {
+                return addTab({
+                  name: tbl,
+                  db: name,
+                  sql: "SELECT * FROM ".concat(qname(tbl), " LIMIT 500"),
+                  autorun: true
+                });
+              };
+
+              kids.appendChild(item);
             });
-            view.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
-              "class": 'wsrv-h',
-              i18n: 'server.dbQuery'
+          });
+        };
+
+        var renderSaved = function renderSaved() {
+          var box = side.querySelector('.wsrv-saved');
+          if (!box) return;
+          box.innerHTML = '';
+          box.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
+            "class": 'wsrv-h',
+            i18n: 'server.dbSaved'
+          }));
+          saved.forEach(function (q, i) {
+            var item = Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
+              "class": 'wsrv-tree-item'
+            }, q.name, treeX(function () {
+              saved.splice(i, 1);
+              persist().then(renderSaved);
             }));
-            view.appendChild(sql);
-            view.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
-              style: {
-                marginTop: '6px'
-              }
-            }, Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["button"])({
-              i18n: 'server.dbRun'
-            }, function () {
-              if (sql.value.trim()) {
-                call('db', {
-                  op: 'query',
-                  engine: engSel.value,
-                  db: dbname,
-                  sql: sql.value.trim()
-                }, function (res) {
-                  var old = view.querySelector('.wsrv-grid');
-                  if (old) old.remove();
 
-                  if (res.cols.length) {
-                    view.appendChild(dataTable(res));
-                  }
-                });
+            item.onclick = function () {
+              if (q.engine && q.engine !== engSel.value) {
+                engSel.value = q.engine;
+                engSel.dispatchEvent(new Event('change'));
               }
-            })));
+
+              addTab(q);
+            };
+
+            box.appendChild(item);
           });
         };
 
-        fillDbs();
-
-        engSel.onchange = function () {
-          fillDbs();
-          showTables();
-        };
-
-        dbSel.onchange = showTables;
-        body.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
-          "class": 'wsrv-quick'
-        }, Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('span', {
-          i18n: 'server.engine'
-        }), engSel, Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('span', {
-          i18n: 'server.dbName'
-        }), dbSel, nm, Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["button"])({
-          i18n: 'server.create'
-        }, function () {
-          if (nm.value.trim()) {
-            call('db', {
-              op: 'create',
-              engine: engSel.value,
-              name: nm.value.trim()
-            }, db);
-          }
-        }), Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["button"])({
-          i18n: 'server.dbAdvanced'
-        }, function () {
-          return Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["formWindow"])(proc, {
-            title: t('server.dbAdvanced'),
-            fields: [{
-              name: 'engine',
-              label: t('server.engine'),
-              options: engines
-            }, {
-              name: 'name',
-              label: t('server.dbName')
-            }, {
-              name: 'owner',
-              label: t('server.dbOwner'),
-              placeholder: 'postgres'
-            }]
-          }, function (v) {
-            return v && call('db', _objectSpread({
-              op: 'create'
-            }, v), db);
+        var rebuildTree = function rebuildTree() {
+          Object.keys(expanded).forEach(function (k) {
+            return delete expanded[k];
           });
-        })));
-        engines.forEach(function (e) {
-          body.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
-            "class": 'wsrv-h'
-          }, e));
-          body.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["table"])([{
-            i18n: 'server.dbName'
-          }, {
-            i18n: 'server.dbOwner'
-          }, ''], (d[e] || []).map(function (x) {
-            return [x.name, x.owner || '', Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('span', {}, mini('▸', function () {
-              engSel.value = e;
-              fillDbs();
-              dbSel.value = x.name;
-              showTables();
-            }), ' ', mini('✕', function () {
-              return confirmDanger("".concat(t('server.dropDb'), " ").concat(x.name, " (").concat(e, ")?"), function () {
+          side.innerHTML = '';
+          side.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
+            "class": 'wsrv-h',
+            i18n: 'server.dbDbs'
+          }));
+          engineDbs().forEach(function (name) {
+            var tog = Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('span', {}, '▸ ');
+            var kids = Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
+              "class": 'wsrv-tree-kids'
+            });
+            var row = Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
+              "class": 'wsrv-tree-item'
+            }, tog, name, treeX(function () {
+              return confirmDanger("".concat(t('server.dropDb'), " ").concat(name, " (").concat(engSel.value, ")?"), function () {
                 return call('db', {
                   op: 'drop',
-                  engine: e,
-                  name: x.name
+                  engine: engSel.value,
+                  name: name
                 }, db);
               });
-            }))];
-          })));
-        });
-        body.appendChild(view);
-        ['postgres_error', 'mysql_error'].forEach(function (k) {
-          if (d[k]) {
-            body.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
-              "class": 'wsrv-hint'
-            }, "".concat(k, ": ").concat(d[k])));
+            }));
+
+            row.onclick = function () {
+              return toggleDb(name, tog, kids);
+            };
+
+            side.appendChild(row);
+            side.appendChild(kids);
+          });
+          side.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
+            "class": 'wsrv-saved'
+          }));
+          renderSaved();
+        };
+
+        engSel.onchange = function () {
+          rebuildTree();
+          renderPane();
+        };
+
+        vfs.readfile(SAVED_FILE)["catch"](function () {
+          return '[]';
+        }).then(function (txt) {
+          try {
+            saved = JSON.parse(txt) || [];
+          } catch (e) {
+            /* keep [] */
           }
+        }).then(function () {
+          rebuildTree();
+          addTab();
         });
-        showTables();
       })["catch"](function (e) {
         return sb.error(e.message);
       });
