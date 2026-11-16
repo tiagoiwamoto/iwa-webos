@@ -50,10 +50,9 @@ if (!src.includes('desktop.webos.wm')) {
 // --- wallpapers gallery item in the Background section ---
 const bgAnchor = ']},{title:"Themes"';
 const GALLERY_IMAGES = [
-  {path: 'host:/home/images/maltese-ball.svg', label: 'Maltese · Ball'},
-  {path: 'host:/home/images/maltese-butterfly.svg', label: 'Maltese · Butterfly'},
-  {path: 'host:/home/images/maltese-beach.svg', label: 'Maltese · Beach'},
-  {path: 'host:/home/images/maltese-night.svg', label: 'Maltese · Night'},
+  {path: 'host:/home/images/maltes-sentado-pb-metade-wallpaper.png', label: 'Maltese · Sitting'},
+  {path: 'host:/home/images/maltes-correndo-pb-wallpaper.png', label: 'Maltese · Running'},
+  {path: 'host:/home/images/maltes-anime-contorno-wallpaper.svg', label: 'Maltese · Anime'},
   {path: 'host:/home/images/maltes-run-ball.jpeg', label: 'Maltese · Run'},
   {path: 'host:/home/images/maltes-stand-sit.jpeg', label: 'Maltese · Sit'},
   {path: 'host:/home/images/maltes-hunt.jpeg', label: 'Maltese · Hunt'}
