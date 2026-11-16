@@ -2,7 +2,23 @@
   "type": "application",
   "name": "WebOSSysInfo",
   "category": "utilities",
-  "title": {"en_EN": "System Information", "pt_BR": "System Information"},
-  "description": {"en_EN": "System Information", "pt_BR": "System Information"},
-  "files": ["main.js"]
+  "title": {
+    "en_EN": "System Information",
+    "pt_BR": "Informações do sistema",
+    "pt_PT": "Informações do sistema",
+    "es_ES": "Información del sistema",
+    "ja_JP": "システム情報",
+    "zh_CN": "系统信息"
+  },
+  "description": {
+    "en_EN": "System Information",
+    "pt_BR": "Informações do sistema",
+    "pt_PT": "Informações do sistema",
+    "es_ES": "Información del sistema",
+    "ja_JP": "システム情報",
+    "zh_CN": "系统信息"
+  },
+  "files": [
+    "main.js"
+  ]
 }

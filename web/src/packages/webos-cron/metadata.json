@@ -2,7 +2,23 @@
   "type": "application",
   "name": "WebOSCron",
   "category": "utilities",
-  "title": {"en_EN": "Cron Manager", "pt_BR": "Cron Manager"},
-  "description": {"en_EN": "visual crontab manager", "pt_BR": "visual crontab manager"},
-  "files": ["main.js"]
+  "title": {
+    "en_EN": "Cron Manager",
+    "pt_BR": "Tarefas agendadas",
+    "pt_PT": "Tarefas agendadas",
+    "es_ES": "Tareas programadas",
+    "ja_JP": "Cron マネージャー",
+    "zh_CN": "Cron 管理"
+  },
+  "description": {
+    "en_EN": "Cron Manager",
+    "pt_BR": "Tarefas agendadas",
+    "pt_PT": "Tarefas agendadas",
+    "es_ES": "Tareas programadas",
+    "ja_JP": "Cron マネージャー",
+    "zh_CN": "Cron 管理"
+  },
+  "files": [
+    "main.js"
+  ]
 }

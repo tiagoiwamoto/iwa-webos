@@ -40,6 +40,16 @@ export default {
   // No auth.login defaults: with WEBOS_AUTH=pam the server authenticates
   // against real Linux users, so the login form must stay empty (setting
   // both username+password here would auto-login with those credentials).
+  // auth.cookie makes OS.js replay the stored login arguments on reload;
+  // index.js swaps them for the agent-issued session {token} right after
+  // login, so only the token — never the password — persists.
+  auth: {
+    cookie: {
+      name: 'webos-session',
+      enabled: true,
+      expires: 7
+    }
+  },
   // NOTE: mountpoints are merged with the defaults (apps, osjs, home).
   vfs: {
     mountpoints: [{

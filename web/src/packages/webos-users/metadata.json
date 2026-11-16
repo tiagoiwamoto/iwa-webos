@@ -2,7 +2,23 @@
   "type": "application",
   "name": "WebOSUsers",
   "category": "utilities",
-  "title": {"en_EN": "Users", "pt_BR": "Users"},
-  "description": {"en_EN": "Users", "pt_BR": "Users"},
-  "files": ["main.js"]
+  "title": {
+    "en_EN": "Users",
+    "pt_BR": "Usuários",
+    "pt_PT": "Utilizadores",
+    "es_ES": "Usuarios",
+    "ja_JP": "ユーザー",
+    "zh_CN": "用户"
+  },
+  "description": {
+    "en_EN": "Users",
+    "pt_BR": "Usuários",
+    "pt_PT": "Utilizadores",
+    "es_ES": "Usuarios",
+    "ja_JP": "ユーザー",
+    "zh_CN": "用户"
+  },
+  "files": [
+    "main.js"
+  ]
 }

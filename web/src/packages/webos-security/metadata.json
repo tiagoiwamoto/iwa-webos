@@ -1,0 +1,25 @@
+{
+  "type": "application",
+  "name": "WebOSSecurity",
+  "category": "utilities",
+  "icon": "security-high",
+  "title": {
+    "en_EN": "Security",
+    "pt_BR": "Seguran\u00e7a",
+    "pt_PT": "Seguran\u00e7a",
+    "es_ES": "Seguridad",
+    "ja_JP": "\u30bb\u30ad\u30e5\u30ea\u30c6\u30a3",
+    "zh_CN": "\u5b89\u5168"
+  },
+  "description": {
+    "en_EN": "SSH and fail2ban",
+    "pt_BR": "SSH e fail2ban",
+    "pt_PT": "SSH e fail2ban",
+    "es_ES": "SSH y fail2ban",
+    "ja_JP": "SSH \u3068 fail2ban",
+    "zh_CN": "SSH \u548c fail2ban"
+  },
+  "files": [
+    "main.js"
+  ]
+}

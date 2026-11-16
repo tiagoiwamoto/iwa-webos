@@ -5,33 +5,36 @@
  */
 import {useI18n, LOCALES, setLocale, getLocale, intlLocale, metaTitle}
   from '../packages/_shared/i18n.js';
+import {allDockItems, dockItemFor, DOCK_ITEMS, HIDDEN_APPS}
+  from './dock-items.js';
+import {pickApp, openCustomize, openDockManager, setSetting}
+  from './customize.js';
 
-const ITEMS = [
-  {name: 'WebOSTerminal', glyph: '\u{1F4BB}', icon: 'utilities-terminal', label: 'Terminal'},
-  {name: 'WebOSProcesses', glyph: '\u{1F4C8}', icon: 'utilities-system-monitor', label: 'Tasks'},
-  {name: 'WebOSServices', glyph: '\u2699\uFE0F', icon: 'applications-system', label: 'Services'},
-  {name: 'WebOSDocker', glyph: '\u{1F433}', label: 'Docker'},
-  {name: 'WebOSStore', glyph: '\u{1F6D2}', icon: 'system-software-install', label: 'App Store'},
-  {name: 'WebOSDisks', glyph: '\u{1F4BD}', icon: 'drive-harddisk', label: 'Disks'},
-  {name: 'WebOSUsers', glyph: '\u{1F464}', icon: 'system-users', label: 'Users'},
-  {name: 'WebOSFiles', glyph: '\u{1F4C1}', icon: 'system-file-manager', label: 'Files'},
-  {name: 'WebOSEditor', glyph: '\u{1F4DD}', icon: 'text-editor', label: 'Editor'},
-  {name: 'WebOSSysInfo', glyph: '\u{1F4CA}', icon: 'utilities-system-monitor', label: 'System'},
-  {name: 'WebOSLogs', glyph: '\u{1F4DC}', icon: 'text-x-generic', label: 'Logs'},
-  {name: 'WebOSCron', glyph: '\u23F0', icon: 'x-office-calendar', label: 'Cron'},
-  {name: 'WebOSRemote', glyph: '\u{1F310}', icon: 'network-server', label: 'Remote'},
-  {name: 'WebOSBrowser', glyph: '\u{1F9ED}', icon: 'web-browser', label: 'Navigator'},
-  {name: 'WebOSBackup', glyph: '\u{2601}\u{FE0F}', icon: 'folder-remote', label: 'Backup'},
-  {name: 'Settings', glyph: '\u{1F527}', icon: 'preferences-system', label: 'Settings'}
-];
 
 const BASE = 48;      // px icon size at rest
-const BOOST = 34;     // px extra size at the cursor
 const RANGE = 120;    // px falloff radius
 const FONTPCT = 0.62; // glyph font-size as fraction of item size
 
-const WM_THEMES = [['', 'Standard'], ['macos', 'macOS'],
-  ['win11', 'Windows 11'], ['kde', 'KDE Breeze'], ['gnome', 'GNOME']];
+const dockCfg = core => {
+  const s = core.make('osjs/settings');
+  const get = (k, d) => s.get('osjs/desktop', k, d);
+  return {
+    items: get('webos.dock', null),
+    size: Number(get('webos.docksize', 0)) || BASE,
+    pos: get('webos.dockpos', 'bottom') || 'bottom',
+    magnify: get('webos.magnify', true) !== false
+  };
+};
+
+const dockItems = core => {
+  const all = allDockItems(core);
+  const names = dockCfg(core).items;
+  // curated default: DOCK_ITEMS only — every other app lives in the
+  // launcher until the user pins it
+  const list = Array.isArray(names) ? names : DOCK_ITEMS.map(i => i.name);
+  return list.map(n => all.find(i => i.name === n) || dockItemFor(n));
+};
+
 
 const applyAppearance = core => {
   let wm = 'win11', wbtn = 14;
@@ -71,7 +74,9 @@ export const createDock = core => {
     if (item.iconUrl) {
       const img = document.createElement('img');
       img.src = item.iconUrl;
-      img.onerror = () => { img.replaceWith(span); };
+      img.onerror = () => {
+        img.replaceWith(span);
+      };
       return img;
     }
     if (item.icon) {
@@ -79,7 +84,9 @@ export const createDock = core => {
       if (src) {
         const img = document.createElement('img');
         img.src = src;
-        img.onerror = () => { img.replaceWith(span); };
+        img.onerror = () => {
+          img.replaceWith(span);
+        };
         return img;
       }
     }
@@ -87,12 +94,16 @@ export const createDock = core => {
   };
 
   const sizeOf = (node, size) => {
-    node.style.width = node.style.height = `${size}px`;
+    node.style.width = `${size}px`;
+    node.style.height = `${size}px`;
     node.style.fontSize = `${size * FONTPCT}px`;
   };
 
   // magnify the ICON only (scale transform) — the dock strip never resizes
   const magnify = ev => {
+    if (!dockCfg(core).magnify) {
+      return;
+    }
     dock.querySelectorAll('.webos-dock-item[data-app]').forEach(node => {
       const icon = node.firstChild;
       const r = node.getBoundingClientRect();
@@ -143,11 +154,13 @@ export const createDock = core => {
     const paint = () => {
       const q = search.value.toLowerCase();
       grid.innerHTML = '';
-      core.make('osjs/packages').getPackages(m => m.type === 'application')
+      core.make('osjs/packages')
+        .getPackages(m => m.type === 'application' &&
+          !HIDDEN_APPS.includes(m.name))
         .filter(m => !q || (m.name + metaTitle(core, m))
           .toLowerCase().includes(q))
         .forEach(m => {
-          const item = ITEMS.find(i => i.name === m.name);
+          const item = allDockItems(core).find(i => i.name === m.name);
           const node = document.createElement('div');
           node.className = 'webos-launcher-item';
           node.appendChild(item ? itemIcon(item)
@@ -161,6 +174,19 @@ export const createDock = core => {
             close();
             core.run(m.name).catch(() => {});
           });
+          node.addEventListener('contextmenu', ev => {
+            ev.preventDefault();
+            ev.stopPropagation();
+            core.make('osjs/contextmenu').show({position: ev, menu: [
+              {label: t('cust.addToDock'), onclick: () => {
+                const cur = dockCfg(core).items ||
+                  allDockItems(core).map(i => i.name);
+                if (!cur.includes(m.name)) {
+                  setSetting(core, 'webos.dock', [...cur, m.name]);
+                }
+              }}
+            ]});
+          });
           grid.appendChild(node);
         });
     };
@@ -173,8 +199,9 @@ export const createDock = core => {
   };
 
   const build = () => {
+    const cfg = dockCfg(core);
     dock = document.createElement('div');
-    dock.className = 'webos-dock';
+    dock.className = 'webos-dock pos-' + cfg.pos;
 
     // brand/start button opens the app launcher
     const brand = document.createElement('div');
@@ -184,17 +211,26 @@ export const createDock = core => {
     const brandImg = document.createElement('img');
     brandImg.src = '/icone.png';
     brand.appendChild(brandImg);
-    sizeOf(brand, BASE);
+    sizeOf(brand, cfg.size);
     brand.addEventListener('click', () => openLauncher());
     dock.appendChild(brand);
     dock.appendChild(Object.assign(document.createElement('div'),
       {className: 'webos-dock-sep'}));
 
-    ITEMS.forEach(item => {
+    dockItems(core).forEach(item => {
       const node = document.createElement('div');
       node.className = 'webos-dock-item';
       node.dataset.app = item.name;
       node.title = t('shell.app.' + item.label);
+      if (node.title === 'shell.app.' + item.label) {
+        try {
+          const meta = core.make('osjs/packages')
+            .getPackages(m => m.name === item.name)[0];
+          node.title = meta ? metaTitle(core, meta) : item.label;
+        } catch (e) {
+          node.title = item.label;
+        }
+      }
       node.appendChild(itemIcon(item));
       node.addEventListener('click', () => {
         node.classList.remove('bounce');
@@ -202,7 +238,17 @@ export const createDock = core => {
         node.classList.add('bounce');
         core.run(item.name).catch(() => {});
       });
-      sizeOf(node, BASE);
+      sizeOf(node, cfg.size);
+      node.addEventListener('contextmenu', ev => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        core.make('osjs/contextmenu').show({position: ev, menu: [
+          {label: t('cust.removeDock'), onclick: () =>
+            setSetting(core, 'webos.dock',
+              dockItems(core).map(i => i.name)
+                .filter(n => n !== item.name))}
+        ]});
+      });
       dock.appendChild(node);
     });
     // --- tray: appearance settings + clock ---
@@ -228,7 +274,7 @@ export const createDock = core => {
       'stroke="#fff" stroke-width="2.4" stroke-linecap="round" ' +
       'style="width:52%;height:52%"><path d="M12 3v8"/>' +
       '<path d="M6.3 6.5a8 8 0 1 0 11.4 0"/></svg>';
-    sizeOf(power, BASE * 0.7);
+    sizeOf(power, cfg.size * 0.7);
     power.addEventListener('click', ev => {
       ev.stopPropagation();
       toggleSessionMenu();
@@ -239,6 +285,20 @@ export const createDock = core => {
 
     dock.addEventListener('mousemove', magnify);
     dock.addEventListener('mouseleave', reset);
+    dock.addEventListener('contextmenu', ev => {
+      if (ev.target !== dock) {
+        return;
+      }
+      ev.preventDefault();
+      core.make('osjs/contextmenu').show({position: ev, menu: [
+        {label: t('cust.addToDock'), onclick: () =>
+          pickApp(core, m =>
+            setSetting(core, 'webos.dock',
+              [...dockItems(core).map(i => i.name), m.name]))},
+        {label: t('cust.manageDock'), onclick: () => openDockManager(core)},
+        {label: t('cust.customize'), onclick: () => openCustomize(core)}
+      ]});
+    });
     document.body.appendChild(dock);
     requestAnimationFrame(() => dock.classList.add('visible'));
     paint();
@@ -279,6 +339,7 @@ export const createDock = core => {
     langRow.append(langLabel, langSel);
     popover.append(
       langRow,
+      item('\u{1F3A8}  ' + t('cust.customize'), () => openCustomize(core)),
       item('\u{1F4BE}  ' + t('shell.saveSession'), () =>
         core.make('osjs/session').save()),
       item('\u{1F511}  ' + t('shell.logout'), () =>
@@ -305,6 +366,15 @@ export const createDock = core => {
   core.on('osjs/application:launched', proc => bump(proc, 1));
   core.on('osjs/application:destroy', proc => bump(proc, -1));
   core.on('osjs/core:logged-in', build);
+  // the packages provider only exists after boot completes; rebuild once
+  // so user-pinned apps resolve their real icon/title
+  core.on('osjs/core:started', () => {
+    if (dock) {
+      dock.remove();
+      dock = null;
+      build();
+    }
+  });
   core.on('osjs/core:logged-out', () => {
     if (dock) {
       dock.remove();
@@ -331,4 +401,14 @@ export const createDock = core => {
   core.on('osjs/settings:save', apply);
   core.on('osjs/settings:load', apply);
   apply();
+
+  // dock geometry/items live in settings too — rebuild on save
+  core.on('osjs/settings:save', () => {
+    if (dock) {
+      popover = null;
+      dock.remove();
+      dock = null;
+      build();
+    }
+  });
 };

@@ -2,7 +2,24 @@
   "type": "application",
   "name": "WebOSUpdate",
   "category": "utilities",
-  "title": {"en_EN": "System Update", "pt_BR": "Atualização do Sistema"},
-  "description": {"en_EN": "Update Malta OS preserving data", "pt_BR": "Atualiza o Malta OS preservando dados"},
-  "files": ["main.js"]
+  "title": {
+    "en_EN": "System Update",
+    "pt_BR": "Atualiza\u00e7\u00e3o do sistema",
+    "pt_PT": "Atualiza\u00e7\u00e3o do sistema",
+    "es_ES": "Actualizaci\u00f3n del sistema",
+    "ja_JP": "\u30b7\u30b9\u30c6\u30e0\u66f4\u65b0",
+    "zh_CN": "\u7cfb\u7edf\u66f4\u65b0"
+  },
+  "description": {
+    "en_EN": "System Update",
+    "pt_BR": "Atualiza\u00e7\u00e3o do sistema",
+    "pt_PT": "Atualiza\u00e7\u00e3o do sistema",
+    "es_ES": "Actualizaci\u00f3n del sistema",
+    "ja_JP": "\u30b7\u30b9\u30c6\u30e0\u66f4\u65b0",
+    "zh_CN": "\u7cfb\u7edf\u66f4\u65b0"
+  },
+  "files": [
+    "main.js"
+  ],
+  "icon": "software-update-available"
 }

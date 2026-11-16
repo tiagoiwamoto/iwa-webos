@@ -2,9 +2,25 @@
   "type": "application",
   "name": "WebOSEditor",
   "category": "utilities",
-  "title": {"en_EN": "Code Editor", "pt_BR": "Code Editor"},
-  "description": {"en_EN": "Code Editor", "pt_BR": "Code Editor"},
-  "files": ["main.js"],
+  "title": {
+    "en_EN": "Code Editor",
+    "pt_BR": "Editor de código",
+    "pt_PT": "Editor de código",
+    "es_ES": "Editor de código",
+    "ja_JP": "コードエディタ",
+    "zh_CN": "代码编辑器"
+  },
+  "description": {
+    "en_EN": "Code Editor",
+    "pt_BR": "Editor de código",
+    "pt_PT": "Editor de código",
+    "es_ES": "Editor de código",
+    "ja_JP": "コードエディタ",
+    "zh_CN": "代码编辑器"
+  },
+  "files": [
+    "main.js"
+  ],
   "mimes": [
     "^text/",
     "^application/(json|xml|x-yaml|yaml|javascript|x-javascript|x-sh|x-shellscript|toml|x-php|x-perl|x-python|sql|x-config)$",

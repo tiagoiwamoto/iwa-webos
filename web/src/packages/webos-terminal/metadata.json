@@ -2,7 +2,23 @@
   "type": "application",
   "name": "WebOSTerminal",
   "category": "utilities",
-  "title": {"en_EN": "Terminal", "pt_BR": "Terminal"},
-  "description": {"en_EN": "Terminal", "pt_BR": "Terminal"},
-  "files": ["main.js"]
+  "title": {
+    "en_EN": "Terminal",
+    "pt_BR": "Terminal",
+    "pt_PT": "Terminal",
+    "es_ES": "Terminal",
+    "ja_JP": "ターミナル",
+    "zh_CN": "终端"
+  },
+  "description": {
+    "en_EN": "Terminal",
+    "pt_BR": "Terminal",
+    "pt_PT": "Terminal",
+    "es_ES": "Terminal",
+    "ja_JP": "ターミナル",
+    "zh_CN": "终端"
+  },
+  "files": [
+    "main.js"
+  ]
 }

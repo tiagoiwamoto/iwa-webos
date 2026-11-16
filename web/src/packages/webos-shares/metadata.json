@@ -1,0 +1,25 @@
+{
+  "type": "application",
+  "name": "WebOSShares",
+  "category": "utilities",
+  "icon": "folder-publicshare",
+  "title": {
+    "en_EN": "Shares",
+    "pt_BR": "Compartilhamentos",
+    "pt_PT": "Partilhas",
+    "es_ES": "Compartidos",
+    "ja_JP": "\u5171\u6709",
+    "zh_CN": "\u5171\u4eab"
+  },
+  "description": {
+    "en_EN": "Samba and NFS shares",
+    "pt_BR": "Compartilhamentos Samba e NFS",
+    "pt_PT": "Partilhas Samba e NFS",
+    "es_ES": "Compartidos Samba y NFS",
+    "ja_JP": "Samba \u3068 NFS \u5171\u6709",
+    "zh_CN": "Samba \u548c NFS \u5171\u4eab"
+  },
+  "files": [
+    "main.js"
+  ]
+}

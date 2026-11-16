@@ -2,26 +2,30 @@ import osjs from 'osjs';
 import {name as applicationName} from './metadata.json';
 import {api} from '../_shared/api.js';
 import {el, button, table, statusbar, layout} from '../_shared/ui.js';
+import {useI18n, metaTitle, watchLocale} from '../_shared/i18n.js';
 
 const register = (core, args, options, metadata) => {
   const proc = core.make('osjs/application', {args, options, metadata});
+  const {t} = useI18n(core);
 
   const body = el('div');
   const sb = statusbar();
   const filter = el('input', {
-    class: 'webos-input', placeholder: 'filter...', style: {flex: '1'}
+    class: 'webos-input', i18nPh: 'services.filter', style: {flex: '1'}
   });
   let selected = null;
   let rows = [];
+  let win = null;
 
   const render = () => {
     body.innerHTML = '';
     const q = (filter.value || '').toLowerCase();
     const shown = rows.filter(u =>
       !q || (u.unit + (u.description || '')).toLowerCase().includes(q));
-    sb.set(`${shown.length}/${rows.length} units`);
+    sb.set(`${shown.length}/${rows.length} ${t('services.units')}`);
     body.appendChild(table(
-      ['Unit', 'Load', 'Active', 'Sub', 'Description'],
+      [{i18n: 'services.unit'}, 'Load', {i18n: 'services.active'}, 'Sub',
+       {i18n: 'services.description'}],
       shown.map(u => [
         u.unit, u.load,
         el('span', {class: `webos-badge ${u.active === 'active' ? 'on' : 'off'}`},
@@ -38,7 +42,7 @@ const register = (core, args, options, metadata) => {
   };
 
   const refresh = () => {
-    sb.set('loading...');
+    sb.set(t('loading'));
     api.get('services').then(data => {
       rows = data;
       render();
@@ -47,7 +51,7 @@ const register = (core, args, options, metadata) => {
 
   const act = action => {
     if (!selected) {
-      sb.set('select a unit first');
+      sb.set(t('services.selUnit'));
       return;
     }
     api.post('services/action', {unit: selected.unit, action})
@@ -57,12 +61,12 @@ const register = (core, args, options, metadata) => {
 
   const showStatus = () => {
     if (!selected) {
-      sb.set('select a unit first');
+      sb.set(t('services.selUnit'));
       return;
     }
     api.get(`services/${selected.unit}/status`).then(({output}) => {
       const w = proc.createWindow({
-        title: `Status: ${selected.unit}`,
+        title: `${t('services.status')}: ${selected.unit}`,
         dimension: {width: 720, height: 440}
       });
       w.render($c => $c.appendChild(el('pre', {style: {
@@ -76,25 +80,30 @@ const register = (core, args, options, metadata) => {
 
   const tb = el('div', {class: 'webos-toolbar'},
     filter,
-    button('Start', () => act('start')),
-    button('Stop', () => act('stop')),
-    button('Restart', () => act('restart')),
-    button('Enable', () => act('enable')),
-    button('Disable', () => act('disable')),
-    button('Status', showStatus),
-    button('Refresh', refresh)
+    button({i18n: 'services.start'}, () => act('start')),
+    button({i18n: 'services.stop'}, () => act('stop')),
+    button({i18n: 'services.restart'}, () => act('restart')),
+    button({i18n: 'services.enable'}, () => act('enable')),
+    button({i18n: 'services.disable'}, () => act('disable')),
+    button({i18n: 'services.status'}, showStatus),
+    button({i18n: 'refresh'}, refresh)
   );
 
-  proc.createWindow({
+  win = proc.createWindow({
     id: 'WebOSServicesWindow',
-    title: metadata.title.en_EN,
+    title: metaTitle(core, metadata),
     dimension: {width: 780, height: 480}
-  })
-    .on('destroy', () => proc.destroy())
+  });
+  win.on('destroy', () => proc.destroy())
     .render($content => {
       $content.appendChild(layout(tb, body, sb));
       refresh();
     });
+
+  watchLocale(proc, () => {
+    win.setTitle(metaTitle(core, metadata));
+    render();
+  });
 
   return proc;
 };

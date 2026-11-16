@@ -2,6 +2,7 @@ import osjs from 'osjs';
 import {name as applicationName} from './metadata.json';
 import {api} from '../_shared/api.js';
 import {el, button, table, statusbar, layout, confirmDialog} from '../_shared/ui.js';
+import {useI18n, metaTitle, watchLocale} from '../_shared/i18n.js';
 
 const SORTS = {
   cpu: (a, b) => b.cpu - a.cpu,
@@ -12,11 +13,13 @@ const SORTS = {
 
 const register = (core, args, options, metadata) => {
   const proc = core.make('osjs/application', {args, options, metadata});
+  const {t} = useI18n(core);
+  let win = null;
 
   const body = el('div');
   const sb = statusbar();
   const filter = el('input', {
-    class: 'webos-input', placeholder: 'filter by name/cmd/user',
+    class: 'webos-input', i18nPh: 'processes.filter',
     style: {width: '220px'}
   });
   let rows = [];
@@ -37,9 +40,11 @@ const register = (core, args, options, metadata) => {
     const list = rows
       .filter(p => !f || (p.name + p.cmd + p.user).toLowerCase().includes(f))
       .sort(SORTS[sortKey]);
-    sb.set(`${list.length} processes (of ${rows.length})`);
+    sb.set(t('processes.count', {n: list.length, total: rows.length}));
     body.appendChild(table(
-      ['PID', 'User', 'Name', 'CPU%', 'MEM%', 'Threads', 'Status', 'Command'],
+      ['PID', {i18n: 'processes.user'}, {i18n: 'name'}, 'CPU%', 'MEM%',
+       {i18n: 'processes.threads'}, {i18n: 'processes.status'},
+       {i18n: 'processes.command'}],
       list.map(p => [
         p.pid, p.user, p.name, p.cpu, p.mem, p.threads, p.status,
         el('span', {title: p.cmd, style: {
@@ -58,14 +63,14 @@ const register = (core, args, options, metadata) => {
 
   const kill = sig => {
     if (!selected) {
-      sb.set('select a process first');
+      sb.set(t('processes.selFirst'));
       return;
     }
     const p = selected;
-    confirmDialog(core, 'Signal process',
-      `Send SIG${sig === 'kill' ? 'KILL' : sig.toUpperCase()} to ${p.name} (pid ${p.pid})?`)
+    confirmDialog(core, t('processes.signal'),
+      t('processes.signalMsg', {sig: sig === 'kill' ? 'KILL' : sig.toUpperCase(), name: p.name, pid: p.pid}))
       .then(ok => ok && api.post(`processes/${p.pid}/signal`, {signal: sig})
-        .then(() => { sb.set(`signaled ${p.pid}`); refresh(); })
+        .then(() => { sb.set(t('processes.signaled', {pid: p.pid})); refresh(); })
         .catch(e => sb.error(e.message)));
   };
 
@@ -73,19 +78,19 @@ const register = (core, args, options, metadata) => {
 
   const tb = el('div', {class: 'webos-toolbar'},
     filter,
-    button('Sort CPU', sorter('cpu')),
-    button('Sort MEM', sorter('mem')),
-    button('Sort PID', sorter('pid')),
-    button('Sort name', sorter('name')),
+    button({i18n: 'processes.sortCpu'}, sorter('cpu')),
+    button({i18n: 'processes.sortMem'}, sorter('mem')),
+    button({i18n: 'processes.sortPid'}, sorter('pid')),
+    button({i18n: 'processes.sortName'}, sorter('name')),
     el('span', {style: {flex: '1'}}),
-    button('End (SIGTERM)', () => kill('term')),
-    button('Kill (SIGKILL)', () => kill('kill'), 'danger'),
-    button('Refresh', refresh)
+    button('SIGTERM', () => kill('term')),
+    button('SIGKILL', () => kill('kill'), 'danger'),
+    button({i18n: 'refresh'}, refresh)
   );
 
-  proc.createWindow({
+  win = proc.createWindow({
     id: 'WebOSProcessesWindow',
-    title: metadata.title.en_EN,
+    title: metaTitle(core, metadata),
     dimension: {width: 860, height: 480}
   })
     .on('destroy', () => {
@@ -100,6 +105,11 @@ const register = (core, args, options, metadata) => {
       refresh();
       timer = setInterval(refresh, 3000);
     });
+
+  watchLocale(proc, () => {
+    win.setTitle(metaTitle(core, metadata));
+    render();
+  });
 
   return proc;
 };

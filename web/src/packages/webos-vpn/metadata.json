@@ -1,0 +1,25 @@
+{
+  "type": "application",
+  "name": "WebOSVpn",
+  "category": "utilities",
+  "icon": "network-vpn",
+  "title": {
+    "en_EN": "VPN",
+    "pt_BR": "VPN",
+    "pt_PT": "VPN",
+    "es_ES": "VPN",
+    "ja_JP": "VPN",
+    "zh_CN": "VPN"
+  },
+  "description": {
+    "en_EN": "WireGuard VPN",
+    "pt_BR": "WireGuard VPN",
+    "pt_PT": "WireGuard VPN",
+    "es_ES": "WireGuard VPN",
+    "ja_JP": "WireGuard VPN",
+    "zh_CN": "WireGuard VPN"
+  },
+  "files": [
+    "main.js"
+  ]
+}

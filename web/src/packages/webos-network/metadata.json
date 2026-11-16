@@ -1,0 +1,25 @@
+{
+  "type": "application",
+  "name": "WebOSNetwork",
+  "category": "utilities",
+  "icon": "preferences-system-network",
+  "title": {
+    "en_EN": "Network",
+    "pt_BR": "Rede",
+    "pt_PT": "Rede",
+    "es_ES": "Red",
+    "ja_JP": "\u30cd\u30c3\u30c8\u30ef\u30fc\u30af",
+    "zh_CN": "\u7f51\u7edc"
+  },
+  "description": {
+    "en_EN": "Interfaces, routes and ports",
+    "pt_BR": "Interfaces, rotas e portas",
+    "pt_PT": "Interfaces, rotas e portas",
+    "es_ES": "Interfaces, rutas y puertos",
+    "ja_JP": "\u30a4\u30f3\u30bf\u30fc\u30d5\u30a7\u30fc\u30b9\u30fb\u30eb\u30fc\u30c8\u30fb\u30dd\u30fc\u30c8",
+    "zh_CN": "\u63a5\u53e3\u3001\u8def\u7531\u548c\u7aef\u53e3"
+  },
+  "files": [
+    "main.js"
+  ]
+}

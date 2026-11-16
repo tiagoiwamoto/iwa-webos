@@ -2,7 +2,23 @@
   "type": "application",
   "name": "WebOSDocker",
   "category": "utilities",
-  "title": {"en_EN": "Docker", "pt_BR": "Docker"},
-  "description": {"en_EN": "Docker", "pt_BR": "Docker"},
-  "files": ["main.js"]
+  "title": {
+    "en_EN": "Docker",
+    "pt_BR": "Docker",
+    "pt_PT": "Docker",
+    "es_ES": "Docker",
+    "ja_JP": "Docker",
+    "zh_CN": "Docker"
+  },
+  "description": {
+    "en_EN": "Docker",
+    "pt_BR": "Docker",
+    "pt_PT": "Docker",
+    "es_ES": "Docker",
+    "ja_JP": "Docker",
+    "zh_CN": "Docker"
+  },
+  "files": [
+    "main.js"
+  ]
 }

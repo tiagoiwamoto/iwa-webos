@@ -2,7 +2,23 @@
   "type": "application",
   "name": "WebOSProcesses",
   "category": "utilities",
-  "title": {"en_EN": "Tasks", "pt_BR": "Tarefas"},
-  "description": {"en_EN": "Task Manager", "pt_BR": "Gerenciador de tarefas"},
-  "files": ["main.js"]
+  "title": {
+    "en_EN": "Tasks",
+    "pt_BR": "Tarefas",
+    "pt_PT": "Tarefas",
+    "es_ES": "Tareas",
+    "ja_JP": "タスク",
+    "zh_CN": "任务"
+  },
+  "description": {
+    "en_EN": "Tasks",
+    "pt_BR": "Tarefas",
+    "pt_PT": "Tarefas",
+    "es_ES": "Tareas",
+    "ja_JP": "タスク",
+    "zh_CN": "任务"
+  },
+  "files": [
+    "main.js"
+  ]
 }

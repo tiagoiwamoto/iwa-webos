@@ -80,11 +80,15 @@ if (src.includes('type":"gallery"') || src.includes('type:"gallery"')) {
 const renderAnchor = ',fallback:function(t){return function(e,n){return f(G';
 const galleryRenderer = ',gallery:function(t){return function(e,n){' +
   'var dir="host:/home/images";' +
+  'var PER=10,page=0;' +
   'var sel=t.value&&(t.value.path||t.value);' +
   'var draw=function(box,imgs){' +
     'box.querySelectorAll(".webos-wallpaper-thumb,' +
-      '.webos-wallpaper-upload").forEach(function(x){x.remove()});' +
-    'imgs.forEach(function(g){' +
+      '.webos-wallpaper-upload,.webos-wallpaper-pager")' +
+      '.forEach(function(x){x.remove()});' +
+    'var total=Math.max(1,Math.ceil(imgs.length/PER));' +
+    'if(page>=total)page=total-1;' +
+    'imgs.slice(page*PER,page*PER+PER).forEach(function(g){' +
       'var im=document.createElement("img");' +
       'im.className="webos-wallpaper-thumb";' +
       'im.title=g.label||g.filename||"";' +
@@ -98,6 +102,21 @@ const galleryRenderer = ',gallery:function(t){return function(e,n){' +
     'up.title="Enviar imagem (png, jpg, jpeg)";' +
     'up.textContent="+";' +
     'box.appendChild(up);' +
+    'if(total>1){' +
+      'var pager=document.createElement("div");' +
+      'pager.className="webos-wallpaper-pager";' +
+      'var mk=function(txt,fn,dis){' +
+        'var b=document.createElement("button");' +
+        'b.type="button";b.textContent=txt;b.disabled=!!dis;' +
+        'b.onclick=fn;return b};' +
+      'var info=document.createElement("span");' +
+      'info.textContent=(page+1)+"/"+total;' +
+      'pager.appendChild(mk("\u2039",function(){page--;' +
+        'draw(box,imgs)},page<1));' +
+      'pager.appendChild(info);' +
+      'pager.appendChild(mk("\u203a",function(){page++;' +
+        'draw(box,imgs)},page>=total-1));' +
+      'box.appendChild(pager)};' +
     'return up};' +
   'var build=function(box){' +
     'var pick=document.createElement("input");' +

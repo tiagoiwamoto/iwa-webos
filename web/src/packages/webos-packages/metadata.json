@@ -1,0 +1,25 @@
+{
+  "type": "application",
+  "name": "WebOSPackages",
+  "category": "utilities",
+  "icon": "package-x-generic",
+  "title": {
+    "en_EN": "Packages",
+    "pt_BR": "Pacotes",
+    "pt_PT": "Pacotes",
+    "es_ES": "Paquetes",
+    "ja_JP": "\u30d1\u30c3\u30b1\u30fc\u30b8",
+    "zh_CN": "\u8f6f\u4ef6\u5305"
+  },
+  "description": {
+    "en_EN": "Install and update software",
+    "pt_BR": "Instalar e atualizar software",
+    "pt_PT": "Instalar e atualizar software",
+    "es_ES": "Instalar y actualizar software",
+    "ja_JP": "\u30bd\u30d5\u30c8\u30a6\u30a7\u30a2\u306e\u30a4\u30f3\u30b9\u30c8\u30fc\u30eb\u3068\u66f4\u65b0",
+    "zh_CN": "\u5b89\u88c5\u548c\u66f4\u65b0\u8f6f\u4ef6"
+  },
+  "files": [
+    "main.js"
+  ]
+}

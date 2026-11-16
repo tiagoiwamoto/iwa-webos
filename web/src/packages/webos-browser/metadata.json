@@ -2,7 +2,23 @@
   "type": "application",
   "name": "WebOSBrowser",
   "category": "utilities",
-  "title": {"en_EN": "Navigator", "pt_BR": "Navigator"},
-  "description": {"en_EN": "Web browser (Netscape style)", "pt_BR": "Navegador web (estilo Netscape)"},
-  "files": ["main.js"]
+  "title": {
+    "en_EN": "Navigator",
+    "pt_BR": "Navegador",
+    "pt_PT": "Navegador",
+    "es_ES": "Navegador",
+    "ja_JP": "ナビゲーター",
+    "zh_CN": "导航器"
+  },
+  "description": {
+    "en_EN": "Navigator",
+    "pt_BR": "Navegador",
+    "pt_PT": "Navegador",
+    "es_ES": "Navegador",
+    "ja_JP": "ナビゲーター",
+    "zh_CN": "导航器"
+  },
+  "files": [
+    "main.js"
+  ]
 }

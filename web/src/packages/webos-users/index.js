@@ -2,9 +2,12 @@ import osjs from 'osjs';
 import {name as applicationName} from './metadata.json';
 import {api} from '../_shared/api.js';
 import {el, button, table, statusbar, layout, confirmDialog, promptText, formWindow} from '../_shared/ui.js';
+import {useI18n, metaTitle, watchLocale} from '../_shared/i18n.js';
 
 const register = (core, args, options, metadata) => {
   const proc = core.make('osjs/application', {args, options, metadata});
+  const {t} = useI18n(core);
+  let win = null;
 
   const body = el('div');
   const sb = statusbar();
@@ -12,18 +15,19 @@ const register = (core, args, options, metadata) => {
   let rows = [];
 
   const refresh = () => {
-    sb.set('loading...');
+    sb.set(t('loading'));
     body.innerHTML = '';
     api.get('users').then(data => {
       rows = data;
-      sb.set(`${rows.length} users`);
+      sb.set(t('users.count', {n: rows.length}));
       body.appendChild(table(
-        ['User', 'UID', 'Home', 'Shell', 'Groups', 'State'],
+        [{i18n: 'users.user'}, 'UID', 'Home', 'Shell',
+         {i18n: 'users.groups'}, {i18n: 'users.state'}],
         rows.map(u => [
           u.name, u.uid, u.home, u.shell,
           (u.groups || []).join(' '),
           el('span', {class: `webos-badge ${u.locked ? 'off' : 'on'}`},
-            u.locked ? 'locked' : 'active')
+            u.locked ? t('users.locked') : t('users.active'))
         ]),
         tr => {
           body.querySelectorAll('tr.selected')
@@ -37,11 +41,11 @@ const register = (core, args, options, metadata) => {
 
   const createUser = () => {
     formWindow(proc, {
-      title: 'New user',
+      title: t('users.newUser'),
       fields: [
-        {name: 'name', label: 'Username'},
-        {name: 'password', label: 'Password', type: 'password'},
-        {name: 'groups', label: 'Extra groups (comma separated)'}
+        {name: 'name', label: t('users.user')},
+        {name: 'password', label: t('users.password'), type: 'password'},
+        {name: 'groups', label: t('users.extraGroups')}
       ]
     }, v => {
       if (!v || !v.name) {
@@ -51,30 +55,30 @@ const register = (core, args, options, metadata) => {
         name: v.name,
         password: v.password,
         groups: (v.groups || '').split(',').map(s => s.trim()).filter(Boolean)
-      }).then(() => { sb.set(`created ${v.name}`); refresh(); })
+      }).then(() => { sb.set(t('users.created', {name: v.name})); refresh(); })
         .catch(e => sb.error(e.message));
     });
   };
 
   const setPw = () => {
     if (!selected) {
-      sb.set('select a user first');
+      sb.set(t('users.selFirst'));
       return;
     }
-    promptText(core, 'Set password', `New password for ${selected.name}`)
+    promptText(core, t('users.setPw'), t('users.newPwFor', {name: selected.name}))
       .then(password => {
         if (!password) {
           return;
         }
         api.post('users/password', {name: selected.name, password})
-          .then(() => sb.set('password updated'))
+          .then(() => sb.set(t('users.pwUpdated')))
           .catch(e => sb.error(e.message));
       });
   };
 
   const lock = lockIt => {
     if (!selected) {
-      sb.set('select a user first');
+      sb.set(t('users.selFirst'));
       return;
     }
     api.post(`users/${lockIt ? 'lock' : 'unlock'}`, {name: selected.name})
@@ -84,28 +88,28 @@ const register = (core, args, options, metadata) => {
 
   const remove = () => {
     if (!selected) {
-      sb.set('select a user first');
+      sb.set(t('users.selFirst'));
       return;
     }
-    confirmDialog(core, 'Delete user',
-      `Delete ${selected.name} and their home directory?`)
+    confirmDialog(core, t('users.delUser'),
+      t('users.delUserMsg', {name: selected.name}))
       .then(ok => ok && api.del(`users/${selected.name}`, {remove_home: true})
-        .then(() => { sb.set('deleted'); refresh(); })
+        .then(() => { sb.set(t('users.deleted')); refresh(); })
         .catch(e => sb.error(e.message)));
   };
 
   const tb = el('div', {class: 'webos-toolbar'},
-    button('+ New user', createUser),
-    button('Set password', setPw),
-    button('Lock', () => lock(true)),
-    button('Unlock', () => lock(false)),
-    button('✕ Delete', remove, 'danger'),
-    button('Refresh', refresh)
+    button({i18n: 'users.newUser'}, createUser),
+    button({i18n: 'users.setPw'}, setPw),
+    button({i18n: 'users.lock'}, () => lock(true)),
+    button({i18n: 'users.unlock'}, () => lock(false)),
+    button({i18n: 'del'}, remove, 'danger'),
+    button({i18n: 'refresh'}, refresh)
   );
 
-  proc.createWindow({
+  win = proc.createWindow({
     id: 'WebOSUsersWindow',
-    title: metadata.title.en_EN,
+    title: metaTitle(core, metadata),
     dimension: {width: 720, height: 430}
   })
     .on('destroy', () => proc.destroy())
@@ -113,6 +117,11 @@ const register = (core, args, options, metadata) => {
       $content.appendChild(layout(tb, body, sb));
       refresh();
     });
+
+  watchLocale(proc, () => {
+    win.setTitle(metaTitle(core, metadata));
+    refresh();
+  });
 
   return proc;
 };

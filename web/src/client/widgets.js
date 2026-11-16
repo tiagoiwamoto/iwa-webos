@@ -8,13 +8,15 @@ const color = pct => pct > 85 ? '#e5534b' : pct > 60 ? '#e8a13f' : '#4fb96f';
 const fmtBytes = n => {
   const u = ['B', 'K', 'M', 'G', 'T'];
   let i = 0, v = Number(n) || 0;
-  while (v >= 1024 && i < u.length - 1) { v /= 1024; i++; }
+  while (v >= 1024 && i < u.length - 1) {
+    v /= 1024; i++;
+  }
   return `${v.toFixed(v >= 100 || i === 0 ? 0 : 1)}${u[i]}`;
 };
 
 const fmtUptime = s => {
   const d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600),
-        m = Math.floor(s % 3600 / 60);
+    m = Math.floor(s % 3600 / 60);
   return d ? `${d}d ${h}h` : h ? `${h}h ${m}m` : `${m}m`;
 };
 
@@ -79,8 +81,11 @@ export const createWidgets = () => {
 
   const build = () => {
     if (root) {
-      return;
+      return root.parentNode;
     }
+    // stack wraps every desktop widget — spacing handled by flex gap
+    const stack = document.createElement('div');
+    stack.className = 'webos-widget-stack';
     root = document.createElement('div');
     root.className = 'webos-widgets';
     const head = document.createElement('div');
@@ -91,11 +96,15 @@ export const createWidgets = () => {
     const foot = document.createElement('div');
     foot.className = 'ww-foot';
     root.append(head, body, foot);
+    stack.appendChild(root);
 
-    const desktop = document.querySelector('.osjs-desktop') || document.body;
-    desktop.appendChild(root);
+    // .osjs-contents holds the iconview + windows: appended last, the
+    // stack sits above the icons and below any window by DOM order
+    const desktop = document.querySelector('.osjs-contents') || document.body;
+    desktop.appendChild(stack);
     timer = setInterval(tick, 2000);
     tick();
+    return stack;
   };
 
   return {build};

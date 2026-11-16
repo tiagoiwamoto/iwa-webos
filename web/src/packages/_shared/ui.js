@@ -3,11 +3,49 @@
  */
 import {useI18n} from './i18n.js';
 
+// translate through the global OSjs api (window.OSjs.make) — available in
+// every package bundle without threading `core` through el()
+const tGlobal = () => {
+  try {
+    return useI18n(window.OSjs).t;
+  } catch (e) {
+    return key => key;
+  }
+};
+
+// re-translate every element tagged with data-i18n* on locale change —
+// this is what makes open windows follow the language live
+if (typeof document !== 'undefined' && !document.__webosI18nBound) {
+  document.__webosI18nBound = true;
+  document.addEventListener('webos:locale', () => {
+    const t = tGlobal();
+    document.querySelectorAll('[data-i18n]').forEach(n => {
+      n.textContent = t(n.dataset.i18n);
+    });
+    document.querySelectorAll('[data-i18n-ph]').forEach(n => {
+      n.placeholder = t(n.dataset.i18nPh);
+    });
+    document.querySelectorAll('[data-i18n-title]').forEach(n => {
+      n.title = t(n.dataset.i18nTitle);
+    });
+  });
+}
+
 export const el = (tag, attrs = {}, ...children) => {
   const node = document.createElement(tag);
+  const t = tGlobal();
   Object.entries(attrs).forEach(([k, v]) => {
     if (k === 'style' && typeof v === 'object') {
       Object.assign(node.style, v);
+    } else if (k === 'i18n') {
+      node.dataset.i18n = v;
+      node.textContent = t(v);
+    } else if (k === 'i18nPh') {
+      node.dataset.i18nPh = v;
+      node.placeholder = t(v);
+    } else if (k === 'i18nTitle') {
+      node.dataset.i18nTitle = v;
+      node.title = t(v);
     } else if (k.startsWith('on')) {
       node.addEventListener(k.slice(2).toLowerCase(), v);
     } else if (k === 'class') {
@@ -41,12 +79,25 @@ export const css = (() => {
 
 export const toolbar = (...items) => el('div', {class: 'webos-toolbar'}, ...items);
 
-export const button = (label, onclick, title) =>
-  el('button', {class: 'webos-btn', onclick, title}, label);
+// label: string, or {i18n: 'ns.key'} for a live-translated caption.
+// 3rd/4th arg: a tooltip string, or a known modifier class ('danger',
+// 'primary') — callers historically passed 'danger' as the 3rd arg.
+export const button = (label, onclick, title, cls) => {
+  const i18n = label && label.i18n;
+  const isCls = v => v === 'danger' || v === 'primary';
+  const b = el('button', {class: 'webos-btn', onclick,
+    title: isCls(title) ? undefined : title,
+    ...(i18n ? {i18n} : {})}, i18n ? '' : label);
+  [title, cls].forEach(c => isCls(c) && b.classList.add(c));
+  return b;
+};
 
+// columns: strings or {i18n: 'ns.key'} — headers also re-translate live
 export const table = (columns, rows, onRow) => {
   const thead = el('thead', {},
-    el('tr', {}, ...columns.map(c => el('th', {}, c))));
+    el('tr', {}, ...columns.map(c => c && c.i18n
+      ? el('th', {i18n: c.i18n})
+      : el('th', {}, c))));
   const tbody = el('tbody', {}, ...rows.map(r => {
     const tr = el('tr', {}, ...r.map(c =>
       el('td', {}, c instanceof Node ? c : String(c ?? ''))));

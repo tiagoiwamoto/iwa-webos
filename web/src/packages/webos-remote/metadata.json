@@ -2,7 +2,23 @@
   "type": "application",
   "name": "WebOSRemote",
   "category": "utilities",
-  "title": {"en_EN": "Remote Access", "pt_BR": "Acesso Remoto"},
-  "description": {"en_EN": "SSH/SFTP/SCP/FTP/Git remote access", "pt_BR": "acesso remoto SSH/SFTP/SCP/FTP/Git"},
-  "files": ["main.js"]
+  "title": {
+    "en_EN": "Remote Access",
+    "pt_BR": "Acesso remoto",
+    "pt_PT": "Acesso remoto",
+    "es_ES": "Acceso remoto",
+    "ja_JP": "リモートアクセス",
+    "zh_CN": "远程访问"
+  },
+  "description": {
+    "en_EN": "Remote Access",
+    "pt_BR": "Acesso remoto",
+    "pt_PT": "Acesso remoto",
+    "es_ES": "Acceso remoto",
+    "ja_JP": "リモートアクセス",
+    "zh_CN": "远程访问"
+  },
+  "files": [
+    "main.js"
+  ]
 }

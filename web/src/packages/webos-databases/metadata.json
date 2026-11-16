@@ -1,0 +1,25 @@
+{
+  "type": "application",
+  "name": "WebOSDatabases",
+  "category": "utilities",
+  "icon": "x-package-repository",
+  "title": {
+    "en_EN": "Databases",
+    "pt_BR": "Bancos de Dados",
+    "pt_PT": "Bases de Dados",
+    "es_ES": "Bases de datos",
+    "ja_JP": "\u30c7\u30fc\u30bf\u30d9\u30fc\u30b9",
+    "zh_CN": "\u6570\u636e\u5e93"
+  },
+  "description": {
+    "en_EN": "PostgreSQL and MySQL",
+    "pt_BR": "PostgreSQL e MySQL",
+    "pt_PT": "PostgreSQL e MySQL",
+    "es_ES": "PostgreSQL y MySQL",
+    "ja_JP": "PostgreSQL \u3068 MySQL",
+    "zh_CN": "PostgreSQL \u548c MySQL"
+  },
+  "files": [
+    "main.js"
+  ]
+}

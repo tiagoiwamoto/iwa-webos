@@ -1,0 +1,25 @@
+{
+  "type": "application",
+  "name": "WebOSFirewall",
+  "category": "utilities",
+  "icon": "security-medium",
+  "title": {
+    "en_EN": "Firewall",
+    "pt_BR": "Firewall",
+    "pt_PT": "Firewall",
+    "es_ES": "Cortafuegos",
+    "ja_JP": "\u30d5\u30a1\u30a4\u30a2\u30a6\u30a9\u30fc\u30eb",
+    "zh_CN": "\u9632\u706b\u5899"
+  },
+  "description": {
+    "en_EN": "Firewall rules (ufw)",
+    "pt_BR": "Regras de firewall (ufw)",
+    "pt_PT": "Regras de firewall (ufw)",
+    "es_ES": "Reglas de firewall (ufw)",
+    "ja_JP": "\u30d5\u30a1\u30a4\u30a2\u30a6\u30a9\u30fc\u30eb\u898f\u5247 (ufw)",
+    "zh_CN": "\u9632\u706b\u5899\u89c4\u5219 (ufw)"
+  },
+  "files": [
+    "main.js"
+  ]
+}

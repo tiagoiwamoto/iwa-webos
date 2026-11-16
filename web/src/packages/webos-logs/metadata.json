@@ -2,7 +2,23 @@
   "type": "application",
   "name": "WebOSLogs",
   "category": "utilities",
-  "title": {"en_EN": "Log Viewer", "pt_BR": "Log Viewer"},
-  "description": {"en_EN": "systemd journal viewer", "pt_BR": "systemd journal viewer"},
-  "files": ["main.js"]
+  "title": {
+    "en_EN": "Log Viewer",
+    "pt_BR": "Visualizador de logs",
+    "pt_PT": "Visualizador de registos",
+    "es_ES": "Visor de registros",
+    "ja_JP": "ログビューア",
+    "zh_CN": "日志查看器"
+  },
+  "description": {
+    "en_EN": "Log Viewer",
+    "pt_BR": "Visualizador de logs",
+    "pt_PT": "Visualizador de registos",
+    "es_ES": "Visor de registros",
+    "ja_JP": "ログビューア",
+    "zh_CN": "日志查看器"
+  },
+  "files": [
+    "main.js"
+  ]
 }

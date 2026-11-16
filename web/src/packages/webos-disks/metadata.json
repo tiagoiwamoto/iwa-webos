@@ -2,7 +2,23 @@
   "type": "application",
   "name": "WebOSDisks",
   "category": "utilities",
-  "title": {"en_EN": "Disks", "pt_BR": "Disks"},
-  "description": {"en_EN": "Disks", "pt_BR": "Disks"},
-  "files": ["main.js"]
+  "title": {
+    "en_EN": "Disks",
+    "pt_BR": "Discos",
+    "pt_PT": "Discos",
+    "es_ES": "Discos",
+    "ja_JP": "ディスク",
+    "zh_CN": "磁盘"
+  },
+  "description": {
+    "en_EN": "Disks",
+    "pt_BR": "Discos",
+    "pt_PT": "Discos",
+    "es_ES": "Discos",
+    "ja_JP": "ディスク",
+    "zh_CN": "磁盘"
+  },
+  "files": [
+    "main.js"
+  ]
 }

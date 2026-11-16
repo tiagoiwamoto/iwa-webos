@@ -1,0 +1,25 @@
+{
+  "type": "application",
+  "name": "WebOSAlerts",
+  "category": "utilities",
+  "icon": "preferences-system-notifications",
+  "title": {
+    "en_EN": "Alerts",
+    "pt_BR": "Alertas",
+    "pt_PT": "Alertas",
+    "es_ES": "Alertas",
+    "ja_JP": "\u30a2\u30e9\u30fc\u30c8",
+    "zh_CN": "\u8b66\u62a5"
+  },
+  "description": {
+    "en_EN": "Usage threshold alerts",
+    "pt_BR": "Alertas por limite de uso",
+    "pt_PT": "Alertas por limite de utiliza\u00e7\u00e3o",
+    "es_ES": "Alertas por umbral de uso",
+    "ja_JP": "\u4f7f\u7528\u3057\u304d\u3044\u5024\u30a2\u30e9\u30fc\u30c8",
+    "zh_CN": "\u4f7f\u7528\u9608\u503c\u8b66\u62a5"
+  },
+  "files": [
+    "main.js"
+  ]
+}

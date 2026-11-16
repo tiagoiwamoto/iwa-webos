@@ -570,11 +570,17 @@ body.login {
 
 /* ---- Desktop widgets ---- */
 
-.webos-widgets {
+.webos-widget-stack {
   position: absolute;
   top: 16px;
   right: 16px;
   width: 210px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.webos-widgets {
+  width: 100%;
   padding: 10px 12px;
   border-radius: 14px;
   background: rgba(22, 26, 36, .5);
@@ -582,7 +588,6 @@ body.login {
   -webkit-backdrop-filter: blur(14px) saturate(1.3);
   border: 1px solid rgba(255,255,255,.1);
   box-shadow: 0 8px 30px rgba(0,0,0,.4);
-  z-index: 0;
 }
 .webos-widgets .ww-head {
   font-size: 11px;
@@ -618,6 +623,159 @@ body.login {
   text-align: center;
 }
 
+/* ---- Notification widget ---- */
+
+.webos-notify {
+  position: relative;
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 14px;
+  background: rgba(22, 26, 36, .5);
+  backdrop-filter: blur(14px) saturate(1.3);
+  -webkit-backdrop-filter: blur(14px) saturate(1.3);
+  border: 1px solid rgba(255,255,255,.1);
+  box-shadow: 0 8px 30px rgba(0,0,0,.4);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  cursor: pointer;
+  transition: border-color .15s ease, background .15s ease;
+  user-select: none;
+}
+.webos-notify:hover {
+  border-color: rgba(127,212,255,.35);
+}
+.webos-notify .wn-bell {
+  font-size: 17px;
+  line-height: 1;
+}
+.webos-notify .wn-mid {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.webos-notify .wn-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: #dde4f0;
+}
+.webos-notify .wn-sub {
+  font-size: 10px;
+  color: #8b93a5;
+  margin-top: 1px;
+}
+.webos-notify .wn-count {
+  flex: 0 0 auto;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  background: #5b8dd9;
+  padding: 0 5px;
+}
+.webos-notify .wn-count:not(:empty) {
+  display: inline-flex;
+}
+.webos-notify .wn-count[data-sev="critical"] {
+  background: #e5534b;
+}
+.webos-notify .wn-count[data-sev="warning"] {
+  background: #e8a13f;
+}
+
+/* popup listing the notifications */
+.wn-popup {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 290px;
+  max-height: 340px;
+  border-radius: 14px;
+  background: rgba(24, 28, 38, .92);
+  backdrop-filter: blur(16px) saturate(1.3);
+  -webkit-backdrop-filter: blur(16px) saturate(1.3);
+  border: 1px solid rgba(255,255,255,.12);
+  box-shadow: 0 12px 40px rgba(0,0,0,.55);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  cursor: default;
+}
+.wn-popup .wn-head {
+  padding: 9px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: #8fb7e8;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.wn-popup .wn-list {
+  overflow-y: auto;
+}
+.wn-popup .wn-empty {
+  padding: 22px 14px;
+  text-align: center;
+  font-size: 12px;
+  color: #8b93a5;
+}
+.wn-popup .wn-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 9px 10px 9px 12px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  cursor: pointer;
+}
+.wn-popup .wn-item:hover {
+  background: rgba(255,255,255,.05);
+}
+.wn-popup .wn-item.sev-critical {
+  border-left: 3px solid #e5534b;
+}
+.wn-popup .wn-item.sev-warning {
+  border-left: 3px solid #e8a13f;
+}
+.wn-popup .wn-item.sev-info {
+  border-left: 3px solid #5b8dd9;
+}
+.wn-popup .wn-dot {
+  font-size: 10px;
+  margin-top: 3px;
+}
+.wn-popup .wn-txt {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.wn-popup .wn-title {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #dde4f0;
+}
+.wn-popup .wn-desc {
+  font-size: 11px;
+  color: #9aa4b8;
+  margin-top: 2px;
+  word-break: break-word;
+}
+.wn-popup .wn-x {
+  flex: 0 0 auto;
+  background: none;
+  border: none;
+  color: #6b7280;
+  font-size: 15px;
+  cursor: pointer;
+  padding: 0 3px;
+  line-height: 1;
+}
+.wn-popup .wn-x:hover {
+  color: #dde4f0;
+}
+
 /* ---- titlebar alignment fix ---- */
 
 .osjs-window-header {
@@ -647,8 +805,8 @@ body[data-wm="gnome"] .osjs-window-title {
 
 .webos-wallpaper-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
   width: 100%;
   margin: 6px 0 14px;
 }
@@ -656,7 +814,7 @@ body[data-wm="gnome"] .osjs-window-title {
   width: 100%;
   aspect-ratio: 16/9;
   object-fit: cover;
-  border-radius: 10px;
+  border-radius: 6px;
   border: 2px solid rgba(255, 255, 255, .18);
   cursor: pointer;
   transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease;
@@ -672,12 +830,12 @@ body[data-wm="gnome"] .osjs-window-title {
 .webos-wallpaper-upload {
   width: 100%;
   aspect-ratio: 16/9;
-  border-radius: 10px;
+  border-radius: 6px;
   border: 2px dashed rgba(255, 255, 255, .3);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 30px;
+  font-size: 18px;
   font-weight: 300;
   color: rgba(255, 255, 255, .55);
   cursor: pointer;
@@ -688,4 +846,190 @@ body[data-wm="gnome"] .osjs-window-title {
   border-color: rgba(127, 212, 255, .8);
   color: #7fd4ff;
   background: rgba(127, 212, 255, .08);
+}
+.webos-wallpaper-pager {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding-top: 2px;
+}
+.webos-wallpaper-pager button {
+  background: #2a2e37;
+  color: #e8e8e8;
+  border: 1px solid rgba(255, 255, 255, .22);
+  border-radius: 6px;
+  padding: 1px 10px;
+  font-size: 15px;
+  line-height: 1.4;
+  cursor: pointer;
+}
+.webos-wallpaper-pager button:hover:not(:disabled) {
+  border-color: rgba(127, 212, 255, .7);
+  color: #7fd4ff;
+}
+.webos-wallpaper-pager button:disabled {
+  opacity: .35;
+  cursor: default;
+}
+.webos-wallpaper-pager span {
+  color: #9ab;
+  font-size: 12px;
+}
+
+/* ---- Dock position variants (webos.dockpos) ---- */
+
+.webos-dock.pos-left,
+.webos-dock.pos-right {
+  top: 50%;
+  bottom: auto;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 8px;
+}
+
+.webos-dock.pos-left {
+  left: 12px;
+  transform: translate(-130%, -50%);
+}
+
+.webos-dock.pos-right {
+  left: auto;
+  right: 12px;
+  transform: translate(130%, -50%);
+}
+
+.webos-dock.pos-left.visible,
+.webos-dock.pos-right.visible {
+  transform: translate(0, -50%);
+}
+
+.webos-dock.pos-left .webos-dock-sep,
+.webos-dock.pos-right .webos-dock-sep {
+  width: 34px;
+  height: 1px;
+  margin: 6px 0;
+}
+
+.webos-dock.pos-left .webos-dock-tray,
+.webos-dock.pos-right .webos-dock-tray {
+  flex-direction: column;
+  height: auto;
+  margin-left: 0;
+  padding-left: 0;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-left: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.webos-dock.pos-left .webos-dock-popover {
+  left: calc(100% + 12px);
+  right: auto;
+  bottom: auto;
+}
+
+.webos-dock.pos-right .webos-dock-popover {
+  right: calc(100% + 12px);
+  left: auto;
+  bottom: auto;
+}
+
+/* ---- Customize + dock manager dialogs ---- */
+
+.webos-cust {
+  position: fixed;
+  inset: 0;
+  z-index: 960000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 13, 19, 0.6);
+  backdrop-filter: blur(6px);
+}
+
+.webos-cust-box {
+  width: 340px;
+  max-height: 82vh;
+  overflow: auto;
+  background: rgba(22, 26, 36, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 16px;
+  padding: 16px;
+  color: #dde4f0;
+  font-size: 12px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55);
+}
+
+.webos-cust-box h4 {
+  margin: 0 0 12px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #8fb7e8;
+}
+
+.webos-cust-box .row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.webos-cust-box .row label {
+  flex: 0 0 110px;
+  color: #9ab;
+}
+
+.webos-cust-box select {
+  flex: 1;
+  background: #14171f;
+  border: 1px solid #333845;
+  color: #dde4f0;
+  border-radius: 6px;
+  padding: 4px 6px;
+}
+
+.webos-cust-box input[type=range] {
+  flex: 1;
+  accent-color: #7fd4ff;
+}
+
+.webos-cust-box input[type=checkbox] {
+  accent-color: #7fd4ff;
+}
+
+.webos-cust-box > .webos-btn {
+  width: 100%;
+  margin-top: 4px;
+}
+
+.webos-dockmgr-list {
+  max-height: 320px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.webos-dockmgr-list .row {
+  margin-bottom: 0;
+}
+
+.webos-dockmgr-list .row label {
+  flex: 1;
+  color: #dde4f0;
+}
+
+.webos-dockmgr-list .webos-btn {
+  padding: 2px 8px;
+  font-size: 12px;
+}
+
+.webos-cust-foot {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+  justify-content: space-between;
 }

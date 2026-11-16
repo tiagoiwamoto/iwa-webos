@@ -1,4 +1,4 @@
-/*!
+/* !
  * OS.js - JavaScript Cloud/Web Desktop Platform
  *
  * Copyright (c) 2011-2020, Anders Evenrud <andersevenrud@gmail.com>
@@ -54,6 +54,8 @@ import {DialogServiceProvider} from '@osjs/dialogs';
 import config from './config.js';
 import {createDock} from './dock.js';
 import {createWidgets} from './widgets.js';
+import {createNotifyWidget} from './notify.js';
+import {setupDesktopExtras} from './customize.js';
 import './index.scss';
 
 const init = () => {
@@ -86,14 +88,36 @@ const init = () => {
     });
   });
 
+  // OS.js persists the raw login arguments ({username, password}) in the
+  // auth cookie for replay on reload. Swap them for the session token the
+  // agent issued, so only {token} ever rests in the cookie.
+  osjs.on('osjs/core:logged-in', () => {
+    const cookie = osjs.config('auth.cookie', {});
+    const session = (osjs.getUser() || {}).session;
+    if (!cookie.enabled || !cookie.name || !session) {
+      return;
+    }
+    const value = encodeURIComponent(JSON.stringify({token: session}));
+    const maxAge = Math.max(1, Math.round((cookie.expires || 7) * 86400));
+    document.cookie = `${cookie.name}=${value};path=/;max-age=${maxAge};samesite=strict`;
+  });
+
   createDock(osjs);
+  setupDesktopExtras(osjs);
   const widgets = createWidgets();
-  osjs.on('osjs/core:logged-in', () => setTimeout(widgets.build, 600));
+  const notify = createNotifyWidget(osjs);
+  osjs.on('osjs/core:logged-in', () => setTimeout(() => {
+    const stack = widgets.build();
+    if (stack) {
+      notify.build(stack); // below the System widget
+    }
+  }, 600));
   osjs.on('osjs/core:logged-out', () => {
-    const el = document.querySelector('.webos-widgets');
+    const el = document.querySelector('.webos-widget-stack');
     if (el) {
       el.remove();
     }
+    notify.destroy();
   });
   osjs.boot();
 };

@@ -1,0 +1,25 @@
+{
+  "type": "application",
+  "name": "WebOSCertificates",
+  "category": "utilities",
+  "icon": "application-certificate",
+  "title": {
+    "en_EN": "Certificates",
+    "pt_BR": "Certificados",
+    "pt_PT": "Certificados",
+    "es_ES": "Certificados",
+    "ja_JP": "\u8a3c\u660e\u66f8",
+    "zh_CN": "\u8bc1\u4e66"
+  },
+  "description": {
+    "en_EN": "TLS certificates (Let's Encrypt)",
+    "pt_BR": "Certificados TLS (Let's Encrypt)",
+    "pt_PT": "Certificados TLS (Let's Encrypt)",
+    "es_ES": "Certificados TLS (Let's Encrypt)",
+    "ja_JP": "TLS \u8a3c\u660e\u66f8 (Let's Encrypt)",
+    "zh_CN": "TLS \u8bc1\u4e66 (Let's Encrypt)"
+  },
+  "files": [
+    "main.js"
+  ]
+}

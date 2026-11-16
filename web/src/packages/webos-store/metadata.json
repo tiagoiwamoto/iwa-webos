@@ -2,7 +2,23 @@
   "type": "application",
   "name": "WebOSStore",
   "category": "utilities",
-  "title": {"en_EN": "App Store", "pt_BR": "Loja de Apps"},
-  "description": {"en_EN": "Server App Store", "pt_BR": "Loja de apps de servidor"},
-  "files": ["main.js"]
+  "title": {
+    "en_EN": "App Store",
+    "pt_BR": "Loja de apps",
+    "pt_PT": "Loja de apps",
+    "es_ES": "Tienda de apps",
+    "ja_JP": "アプリストア",
+    "zh_CN": "应用商店"
+  },
+  "description": {
+    "en_EN": "App Store",
+    "pt_BR": "Loja de apps",
+    "pt_PT": "Loja de apps",
+    "es_ES": "Tienda de apps",
+    "ja_JP": "アプリストア",
+    "zh_CN": "应用商店"
+  },
+  "files": [
+    "main.js"
+  ]
 }

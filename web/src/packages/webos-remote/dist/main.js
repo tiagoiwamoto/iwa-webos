@@ -190,6 +190,33 @@ module.exports["default"] = module.exports, module.exports.__esModule = true;
 
 /***/ }),
 
+/***/ "./node_modules/@babel/runtime/helpers/defineProperty.js":
+/*!***************************************************************!*\
+  !*** ./node_modules/@babel/runtime/helpers/defineProperty.js ***!
+  \***************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+function _defineProperty(obj, key, value) {
+  if (key in obj) {
+    Object.defineProperty(obj, key, {
+      value: value,
+      enumerable: true,
+      configurable: true,
+      writable: true
+    });
+  } else {
+    obj[key] = value;
+  }
+
+  return obj;
+}
+
+module.exports = _defineProperty;
+module.exports["default"] = module.exports, module.exports.__esModule = true;
+
+/***/ }),
+
 /***/ "./node_modules/@babel/runtime/helpers/iterableToArray.js":
 /*!****************************************************************!*\
   !*** ./node_modules/@babel/runtime/helpers/iterableToArray.js ***!
@@ -1282,7 +1309,7 @@ var formatBytes = function formatBytes(n) {
 /*!**************************************!*\
   !*** ./src/packages/_shared/i18n.js ***!
   \**************************************/
-/*! exports provided: LOCALES, intlLocale, getLocale, setLocale, useI18n, metaTitle */
+/*! exports provided: LOCALES, intlLocale, getLocale, setLocale, watchLocale, useI18n, metaTitle */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -1291,6 +1318,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "intlLocale", function() { return intlLocale; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getLocale", function() { return getLocale; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "setLocale", function() { return setLocale; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "watchLocale", function() { return watchLocale; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "useI18n", function() { return useI18n; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "metaTitle", function() { return metaTitle; });
 /*
@@ -1355,9 +1383,22 @@ var OSJS_LOCALE = {
 var setLocale = function setLocale(core, id) {
   var s = core.make('osjs/settings');
   s.set('webos', 'locale', id);
-  s.set('osjs/locale', 'language', OSJS_LOCALE[id] || 'en_EN');
-  return s.save().then(function () {
-    return document.dispatchEvent(new CustomEvent('webos:locale'));
+  s.set('osjs/locale', 'language', OSJS_LOCALE[id] || 'en_EN'); // apply immediately — a failed save must never gate the UI switch
+
+  document.dispatchEvent(new CustomEvent('webos:locale'));
+  return s.save()["catch"](function (e) {
+    return console.warn('settings save failed', e);
+  });
+}; // call fn on every locale change; auto-unsubscribes when proc dies
+
+var watchLocale = function watchLocale(proc, fn) {
+  var h = function h() {
+    return fn();
+  };
+
+  document.addEventListener('webos:locale', h);
+  proc.on('destroy', function () {
+    return document.removeEventListener('webos:locale', h);
   });
 };
 var useI18n = function useI18n(core) {
@@ -1537,6 +1578,7 @@ registerDict('shell', {
     'app.Remote': 'Remote',
     'app.Navigator': 'Navigator',
     'app.Backup': 'Backup',
+    'app.Server': 'Server',
     'app.Settings': 'Settings'
   },
   pt_BR: {
@@ -1560,6 +1602,7 @@ registerDict('shell', {
     'app.Remote': 'Remoto',
     'app.Navigator': 'Navegador',
     'app.Backup': 'Backup',
+    'app.Server': 'Servidor',
     'app.Settings': 'Configurações'
   },
   pt_PT: {
@@ -1583,6 +1626,7 @@ registerDict('shell', {
     'app.Remote': 'Remoto',
     'app.Navigator': 'Navegador',
     'app.Backup': 'Cópia de segurança',
+    'app.Server': 'Servidor',
     'app.Settings': 'Definições'
   },
   es: {
@@ -1606,6 +1650,7 @@ registerDict('shell', {
     'app.Remote': 'Remoto',
     'app.Navigator': 'Navegador',
     'app.Backup': 'Copia de seguridad',
+    'app.Server': 'Servidor',
     'app.Settings': 'Configuración'
   },
   ja: {
@@ -1629,6 +1674,7 @@ registerDict('shell', {
     'app.Remote': 'リモート',
     'app.Navigator': 'ナビゲーター',
     'app.Backup': 'バックアップ',
+    'app.Server': 'サーバー',
     'app.Settings': '設定'
   },
   zh: {
@@ -1652,6 +1698,7 @@ registerDict('shell', {
     'app.Remote': '远程',
     'app.Navigator': '导航器',
     'app.Backup': '备份',
+    'app.Server': '服务器',
     'app.Settings': '设置'
   }
 });
@@ -2708,6 +2755,962 @@ registerDict('remote', {
     delConnMsg: "删除连接 '{name}'？",
     connectedTo: '已连接：{name}'
   }
+}); // ---------------------------------------------------------------------------
+// WebOSServer — consolidated server administration
+
+registerDict('server', {
+  en: {
+    firewall: 'Firewall',
+    network: 'Network',
+    packages: 'Packages',
+    webSites: 'Web sites',
+    certs: 'Certificates',
+    databases: 'Databases',
+    shares: 'Shares',
+    security: 'Security',
+    smart: 'Disk health',
+    vpn: 'VPN',
+    alerts: 'Alerts',
+    notInstalled: 'tool not installed on this system',
+    port: 'port',
+    fwQuick: 'Quick allow — port:',
+    allow: 'Allow',
+    fwAdvanced: 'Advanced…',
+    action: 'Action',
+    direction: 'Direction',
+    from: 'From',
+    to: 'To',
+    comment: 'Comment',
+    fwEnable: 'Enable firewall',
+    fwDisable: 'Disable firewall',
+    fwTo: 'To',
+    delRule: 'Delete rule',
+    rules: 'rules',
+    hostname: 'Hostname',
+    setHostname: 'Set hostname…',
+    interfaces: 'Interfaces',
+    state: 'State',
+    gateway: 'Gateway / DNS',
+    listening: 'Listening ports',
+    filter: 'filter…',
+    address: 'Address',
+    process: 'Process',
+    ports: 'listening ports',
+    pkgSearch: 'search or package name…',
+    search: 'Search',
+    pkgUpdates: 'Updates',
+    pkgAdvanced: 'Advanced…',
+    pkgInstalled: 'Installed',
+    pkgFilter: 'filter',
+    pkgInfo: 'Info',
+    install: 'Install',
+    remove: 'Remove',
+    pkgRemove: 'Remove package',
+    pkgHint: 'search a package, check updates, or open Advanced for apt ops',
+    webQuick: 'New site — domain:',
+    create: 'Create',
+    webAdvanced: 'Advanced…',
+    confName: 'Config name',
+    domains: 'Domains',
+    type: 'Type',
+    staticSite: 'Static files',
+    proxyPass: 'Reverse proxy',
+    site: 'Site',
+    target: 'Target',
+    enabled: 'Enabled',
+    delSite: 'Delete site',
+    certQuick: 'Issue — domain + email:',
+    domain: 'Domain',
+    email: 'E-mail',
+    issue: 'Issue',
+    certAdvanced: 'Advanced…',
+    extraDomains: 'Extra domains',
+    forceHttps: 'Force HTTPS',
+    no: 'No',
+    yes: 'Yes',
+    renewAll: 'Renew all',
+    cert: 'Certificate',
+    expiry: 'Expiry',
+    dbQuick: 'New database:',
+    dbName: 'Name',
+    dbAdvanced: 'Advanced…',
+    engine: 'Engine',
+    dbOwner: 'Owner',
+    dropDb: 'Drop database',
+    shareQuick: 'Share a folder:',
+    shareName: 'Name',
+    path: 'Path',
+    share: 'Share',
+    shareAdvanced: 'Advanced…',
+    readOnly: 'Read-only',
+    guestOk: 'Guest access',
+    nfsHosts: 'Allowed hosts',
+    smbUsers: 'Valid users',
+    smbShares: 'Samba shares',
+    nfsExports: 'NFS exports',
+    delShare: 'Delete share',
+    sshd: 'SSH server',
+    fail2ban: 'fail2ban',
+    secQuick: 'Jail + IP:',
+    ipAddr: 'IP address',
+    ban: 'Ban',
+    unban: 'Unban',
+    jail: 'Jail',
+    banned: 'Banned',
+    ips: 'IPs',
+    device: 'Device',
+    model: 'Model',
+    health: 'Health',
+    temp: 'Temp',
+    hours: 'Power-on h',
+    iface: 'Interface',
+    vpnUp: 'Up',
+    vpnDown: 'Down',
+    peerAdd: 'Add peer',
+    peerAdvanced: 'Advanced…',
+    clientConf: 'Client configuration — copy to the device',
+    vpnNone: 'no wireguard configs in /etc/wireguard',
+    peers: 'Peers',
+    pubkey: 'Public key',
+    handshake: 'Last handshake',
+    peerDel: 'Remove peer',
+    alertQuick: 'Alert when',
+    alertAdvanced: 'Advanced…',
+    metric: 'Metric',
+    mountPoint: 'Mount point',
+    note: 'Note',
+    disk: 'Disk',
+    current: 'Current'
+  },
+  pt_BR: {
+    firewall: 'Firewall',
+    network: 'Rede',
+    packages: 'Pacotes',
+    webSites: 'Sites web',
+    certs: 'Certificados',
+    databases: 'Bancos de dados',
+    shares: 'Compartilhamentos',
+    security: 'Segurança',
+    smart: 'Saúde do disco',
+    vpn: 'VPN',
+    alerts: 'Alertas',
+    notInstalled: 'ferramenta não instalada neste sistema',
+    port: 'porta',
+    fwQuick: 'Liberação rápida — porta:',
+    allow: 'Liberar',
+    fwAdvanced: 'Avançado…',
+    action: 'Ação',
+    direction: 'Direção',
+    from: 'De',
+    to: 'Para',
+    comment: 'Comentário',
+    fwEnable: 'Ativar firewall',
+    fwDisable: 'Desativar firewall',
+    fwTo: 'Para',
+    delRule: 'Excluir regra',
+    rules: 'regras',
+    hostname: 'Hostname',
+    setHostname: 'Definir hostname…',
+    interfaces: 'Interfaces',
+    state: 'Estado',
+    gateway: 'Gateway / DNS',
+    listening: 'Portas abertas',
+    filter: 'filtrar…',
+    address: 'Endereço',
+    process: 'Processo',
+    ports: 'portas escutando',
+    pkgSearch: 'buscar ou nome do pacote…',
+    search: 'Buscar',
+    pkgUpdates: 'Atualizações',
+    pkgAdvanced: 'Avançado…',
+    pkgInstalled: 'Instalados',
+    pkgFilter: 'filtro',
+    pkgInfo: 'Info',
+    install: 'Instalar',
+    remove: 'Remover',
+    pkgRemove: 'Remover pacote',
+    pkgHint: 'busque um pacote, veja atualizações ou abra Avançado p/ apt',
+    webQuick: 'Novo site — domínio:',
+    create: 'Criar',
+    webAdvanced: 'Avançado…',
+    confName: 'Nome da config',
+    domains: 'Domínios',
+    type: 'Tipo',
+    staticSite: 'Arquivos estáticos',
+    proxyPass: 'Proxy reverso',
+    site: 'Site',
+    target: 'Destino',
+    enabled: 'Ativo',
+    delSite: 'Excluir site',
+    certQuick: 'Emitir — domínio + e-mail:',
+    domain: 'Domínio',
+    email: 'E-mail',
+    issue: 'Emitir',
+    certAdvanced: 'Avançado…',
+    extraDomains: 'Domínios extras',
+    forceHttps: 'Forçar HTTPS',
+    no: 'Não',
+    yes: 'Sim',
+    renewAll: 'Renovar tudo',
+    cert: 'Certificado',
+    expiry: 'Validade',
+    dbQuick: 'Novo banco:',
+    dbName: 'Nome',
+    dbAdvanced: 'Avançado…',
+    engine: 'Motor',
+    dbOwner: 'Dono',
+    dropDb: 'Apagar banco',
+    shareQuick: 'Compartilhar pasta:',
+    shareName: 'Nome',
+    path: 'Caminho',
+    share: 'Compartilhar',
+    shareAdvanced: 'Avançado…',
+    readOnly: 'Somente leitura',
+    guestOk: 'Acesso convidado',
+    nfsHosts: 'Hosts permitidos',
+    smbUsers: 'Usuários válidos',
+    smbShares: 'Compartilhamentos Samba',
+    nfsExports: 'Exports NFS',
+    delShare: 'Excluir compartilhamento',
+    sshd: 'Servidor SSH',
+    fail2ban: 'fail2ban',
+    secQuick: 'Jail + IP:',
+    ipAddr: 'Endereço IP',
+    ban: 'Banir',
+    unban: 'Desbanir',
+    jail: 'Jail',
+    banned: 'Banidos',
+    ips: 'IPs',
+    device: 'Dispositivo',
+    model: 'Modelo',
+    health: 'Saúde',
+    temp: 'Temp',
+    hours: 'Horas ligado',
+    iface: 'Interface',
+    vpnUp: 'Subir',
+    vpnDown: 'Descer',
+    peerAdd: 'Novo peer',
+    peerAdvanced: 'Avançado…',
+    clientConf: 'Config do cliente — copie para o dispositivo',
+    vpnNone: 'sem configs wireguard em /etc/wireguard',
+    peers: 'Peers',
+    pubkey: 'Chave pública',
+    handshake: 'Último handshake',
+    peerDel: 'Remover peer',
+    alertQuick: 'Alertar quando',
+    alertAdvanced: 'Avançado…',
+    metric: 'Métrica',
+    mountPoint: 'Ponto de montagem',
+    note: 'Nota',
+    disk: 'Disco',
+    current: 'Atual'
+  },
+  pt_PT: {
+    firewall: 'Firewall',
+    network: 'Rede',
+    packages: 'Pacotes',
+    webSites: 'Sites web',
+    certs: 'Certificados',
+    databases: 'Bases de dados',
+    shares: 'Partilhas',
+    security: 'Segurança',
+    smart: 'Saúde do disco',
+    vpn: 'VPN',
+    alerts: 'Alertas',
+    notInstalled: 'ferramenta não instalada neste sistema',
+    port: 'porta',
+    fwQuick: 'Abertura rápida — porta:',
+    allow: 'Permitir',
+    fwAdvanced: 'Avançado…',
+    action: 'Ação',
+    direction: 'Direção',
+    from: 'De',
+    to: 'Para',
+    comment: 'Comentário',
+    fwEnable: 'Ativar firewall',
+    fwDisable: 'Desativar firewall',
+    fwTo: 'Para',
+    delRule: 'Eliminar regra',
+    rules: 'regras',
+    hostname: 'Hostname',
+    setHostname: 'Definir hostname…',
+    interfaces: 'Interfaces',
+    state: 'Estado',
+    gateway: 'Gateway / DNS',
+    listening: 'Portas abertas',
+    filter: 'filtrar…',
+    address: 'Endereço',
+    process: 'Processo',
+    ports: 'portas à escuta',
+    pkgSearch: 'procurar ou nome do pacote…',
+    search: 'Procurar',
+    pkgUpdates: 'Atualizações',
+    pkgAdvanced: 'Avançado…',
+    pkgInstalled: 'Instalados',
+    pkgFilter: 'filtro',
+    pkgInfo: 'Info',
+    install: 'Instalar',
+    remove: 'Remover',
+    pkgRemove: 'Remover pacote',
+    pkgHint: 'procure um pacote, veja atualizações ou abra Avançado p/ apt',
+    webQuick: 'Novo site — domínio:',
+    create: 'Criar',
+    webAdvanced: 'Avançado…',
+    confName: 'Nome da config',
+    domains: 'Domínios',
+    type: 'Tipo',
+    staticSite: 'Ficheiros estáticos',
+    proxyPass: 'Proxy reverso',
+    site: 'Site',
+    target: 'Destino',
+    enabled: 'Ativo',
+    delSite: 'Eliminar site',
+    certQuick: 'Emitir — domínio + e-mail:',
+    domain: 'Domínio',
+    email: 'E-mail',
+    issue: 'Emitir',
+    certAdvanced: 'Avançado…',
+    extraDomains: 'Domínios extra',
+    forceHttps: 'Forçar HTTPS',
+    no: 'Não',
+    yes: 'Sim',
+    renewAll: 'Renovar tudo',
+    cert: 'Certificado',
+    expiry: 'Validade',
+    dbQuick: 'Nova base de dados:',
+    dbName: 'Nome',
+    dbAdvanced: 'Avançado…',
+    engine: 'Motor',
+    dbOwner: 'Dono',
+    dropDb: 'Eliminar base de dados',
+    shareQuick: 'Partilhar pasta:',
+    shareName: 'Nome',
+    path: 'Caminho',
+    share: 'Partilhar',
+    shareAdvanced: 'Avançado…',
+    readOnly: 'Só leitura',
+    guestOk: 'Acesso convidado',
+    nfsHosts: 'Hosts permitidos',
+    smbUsers: 'Utilizadores válidos',
+    smbShares: 'Partilhas Samba',
+    nfsExports: 'Exports NFS',
+    delShare: 'Eliminar partilha',
+    sshd: 'Servidor SSH',
+    fail2ban: 'fail2ban',
+    secQuick: 'Jail + IP:',
+    ipAddr: 'Endereço IP',
+    ban: 'Banir',
+    unban: 'Desbanir',
+    jail: 'Jail',
+    banned: 'Banidos',
+    ips: 'IPs',
+    device: 'Dispositivo',
+    model: 'Modelo',
+    health: 'Saúde',
+    temp: 'Temp',
+    hours: 'Horas ligado',
+    iface: 'Interface',
+    vpnUp: 'Ativar',
+    vpnDown: 'Desativar',
+    peerAdd: 'Novo peer',
+    peerAdvanced: 'Avançado…',
+    clientConf: 'Config do cliente — copie para o dispositivo',
+    vpnNone: 'sem configs wireguard em /etc/wireguard',
+    peers: 'Peers',
+    pubkey: 'Chave pública',
+    handshake: 'Último handshake',
+    peerDel: 'Remover peer',
+    alertQuick: 'Alertar quando',
+    alertAdvanced: 'Avançado…',
+    metric: 'Métrica',
+    mountPoint: 'Ponto de montagem',
+    note: 'Nota',
+    disk: 'Disco',
+    current: 'Atual'
+  },
+  es: {
+    firewall: 'Firewall',
+    network: 'Red',
+    packages: 'Paquetes',
+    webSites: 'Sitios web',
+    certs: 'Certificados',
+    databases: 'Bases de datos',
+    shares: 'Recursos compartidos',
+    security: 'Seguridad',
+    smart: 'Salud del disco',
+    vpn: 'VPN',
+    alerts: 'Alertas',
+    notInstalled: 'herramienta no instalada en este sistema',
+    port: 'puerto',
+    fwQuick: 'Permitir rápido — puerto:',
+    allow: 'Permitir',
+    fwAdvanced: 'Avanzado…',
+    action: 'Acción',
+    direction: 'Dirección',
+    from: 'Desde',
+    to: 'Hacia',
+    comment: 'Comentario',
+    fwEnable: 'Activar firewall',
+    fwDisable: 'Desactivar firewall',
+    fwTo: 'Hacia',
+    delRule: 'Eliminar regla',
+    rules: 'reglas',
+    hostname: 'Hostname',
+    setHostname: 'Definir hostname…',
+    interfaces: 'Interfaces',
+    state: 'Estado',
+    gateway: 'Gateway / DNS',
+    listening: 'Puertos abiertos',
+    filter: 'filtrar…',
+    address: 'Dirección',
+    process: 'Proceso',
+    ports: 'puertos escuchando',
+    pkgSearch: 'buscar o nombre del paquete…',
+    search: 'Buscar',
+    pkgUpdates: 'Actualizaciones',
+    pkgAdvanced: 'Avanzado…',
+    pkgInstalled: 'Instalados',
+    pkgFilter: 'filtro',
+    pkgInfo: 'Info',
+    install: 'Instalar',
+    remove: 'Eliminar',
+    pkgRemove: 'Eliminar paquete',
+    pkgHint: 'busca un paquete, revisa actualizaciones o abre Avanzado p/ apt',
+    webQuick: 'Nuevo sitio — dominio:',
+    create: 'Crear',
+    webAdvanced: 'Avanzado…',
+    confName: 'Nombre de config',
+    domains: 'Dominios',
+    type: 'Tipo',
+    staticSite: 'Archivos estáticos',
+    proxyPass: 'Proxy inverso',
+    site: 'Sitio',
+    target: 'Destino',
+    enabled: 'Activo',
+    delSite: 'Eliminar sitio',
+    certQuick: 'Emitir — dominio + e-mail:',
+    domain: 'Dominio',
+    email: 'E-mail',
+    issue: 'Emitir',
+    certAdvanced: 'Avanzado…',
+    extraDomains: 'Dominios extra',
+    forceHttps: 'Forzar HTTPS',
+    no: 'No',
+    yes: 'Sí',
+    renewAll: 'Renovar todo',
+    cert: 'Certificado',
+    expiry: 'Vencimiento',
+    dbQuick: 'Nueva base de datos:',
+    dbName: 'Nombre',
+    dbAdvanced: 'Avanzado…',
+    engine: 'Motor',
+    dbOwner: 'Dueño',
+    dropDb: 'Eliminar base de datos',
+    shareQuick: 'Compartir carpeta:',
+    shareName: 'Nombre',
+    path: 'Ruta',
+    share: 'Compartir',
+    shareAdvanced: 'Avanzado…',
+    readOnly: 'Solo lectura',
+    guestOk: 'Acceso invitado',
+    nfsHosts: 'Hosts permitidos',
+    smbUsers: 'Usuarios válidos',
+    smbShares: 'Recursos Samba',
+    nfsExports: 'Exports NFS',
+    delShare: 'Eliminar recurso',
+    sshd: 'Servidor SSH',
+    fail2ban: 'fail2ban',
+    secQuick: 'Jail + IP:',
+    ipAddr: 'Dirección IP',
+    ban: 'Banear',
+    unban: 'Desbanear',
+    jail: 'Jail',
+    banned: 'Baneados',
+    ips: 'IPs',
+    device: 'Dispositivo',
+    model: 'Modelo',
+    health: 'Salud',
+    temp: 'Temp',
+    hours: 'Horas encendido',
+    iface: 'Interfaz',
+    vpnUp: 'Subir',
+    vpnDown: 'Bajar',
+    peerAdd: 'Nuevo peer',
+    peerAdvanced: 'Avanzado…',
+    clientConf: 'Config del cliente — copia al dispositivo',
+    vpnNone: 'sin configs wireguard en /etc/wireguard',
+    peers: 'Peers',
+    pubkey: 'Clave pública',
+    handshake: 'Último handshake',
+    peerDel: 'Eliminar peer',
+    alertQuick: 'Alertar cuando',
+    alertAdvanced: 'Avanzado…',
+    metric: 'Métrica',
+    mountPoint: 'Punto de montaje',
+    note: 'Nota',
+    disk: 'Disco',
+    current: 'Actual'
+  },
+  ja: {
+    firewall: 'ファイアウォール',
+    network: 'ネットワーク',
+    packages: 'パッケージ',
+    webSites: 'Webサイト',
+    certs: '証明書',
+    databases: 'データベース',
+    shares: '共有',
+    security: 'セキュリティ',
+    smart: 'ディスク健全性',
+    vpn: 'VPN',
+    alerts: 'アラート',
+    notInstalled: 'このシステムにツールがインストールされていません',
+    port: 'ポート',
+    fwQuick: 'クイック許可 — ポート:',
+    allow: '許可',
+    fwAdvanced: '詳細…',
+    action: 'アクション',
+    direction: '方向',
+    from: '送信元',
+    to: '送信先',
+    comment: 'コメント',
+    fwEnable: 'ファイアウォール有効化',
+    fwDisable: 'ファイアウォール無効化',
+    fwTo: '送信先',
+    delRule: 'ルールを削除',
+    rules: 'ルール',
+    hostname: 'ホスト名',
+    setHostname: 'ホスト名を設定…',
+    interfaces: 'インターフェース',
+    state: '状態',
+    gateway: 'ゲートウェイ / DNS',
+    listening: 'リスニングポート',
+    filter: 'フィルタ…',
+    address: 'アドレス',
+    process: 'プロセス',
+    ports: 'リスニングポート',
+    pkgSearch: '検索またはパッケージ名…',
+    search: '検索',
+    pkgUpdates: '更新',
+    pkgAdvanced: '詳細…',
+    pkgInstalled: 'インストール済み',
+    pkgFilter: 'フィルタ',
+    pkgInfo: '情報',
+    install: 'インストール',
+    remove: '削除',
+    pkgRemove: 'パッケージを削除',
+    pkgHint: 'パッケージを検索・更新確認、または詳細から apt 操作',
+    webQuick: '新規サイト — ドメイン:',
+    create: '作成',
+    webAdvanced: '詳細…',
+    confName: '設定名',
+    domains: 'ドメイン',
+    type: 'タイプ',
+    staticSite: '静的ファイル',
+    proxyPass: 'リバースプロキシ',
+    site: 'サイト',
+    target: 'ターゲット',
+    enabled: '有効',
+    delSite: 'サイトを削除',
+    certQuick: '発行 — ドメイン + メール:',
+    domain: 'ドメイン',
+    email: 'メール',
+    issue: '発行',
+    certAdvanced: '詳細…',
+    extraDomains: '追加ドメイン',
+    forceHttps: 'HTTPSを強制',
+    no: 'いいえ',
+    yes: 'はい',
+    renewAll: 'すべて更新',
+    cert: '証明書',
+    expiry: '有効期限',
+    dbQuick: '新規データベース:',
+    dbName: '名前',
+    dbAdvanced: '詳細…',
+    engine: 'エンジン',
+    dbOwner: '所有者',
+    dropDb: 'データベースを削除',
+    shareQuick: 'フォルダを共有:',
+    shareName: '名前',
+    path: 'パス',
+    share: '共有',
+    shareAdvanced: '詳細…',
+    readOnly: '読み取り専用',
+    guestOk: 'ゲストアクセス',
+    nfsHosts: '許可ホスト',
+    smbUsers: '有効ユーザー',
+    smbShares: 'Samba共有',
+    nfsExports: 'NFSエクスポート',
+    delShare: '共有を削除',
+    sshd: 'SSHサーバー',
+    fail2ban: 'fail2ban',
+    secQuick: 'Jail + IP:',
+    ipAddr: 'IPアドレス',
+    ban: 'バン',
+    unban: 'バン解除',
+    jail: 'Jail',
+    banned: 'バン済み',
+    ips: 'IP',
+    device: 'デバイス',
+    model: 'モデル',
+    health: '健全性',
+    temp: '温度',
+    hours: '通電時間',
+    iface: 'インターフェース',
+    vpnUp: '起動',
+    vpnDown: '停止',
+    peerAdd: 'ピア追加',
+    peerAdvanced: '詳細…',
+    clientConf: 'クライアント設定 — デバイスにコピー',
+    vpnNone: '/etc/wireguard に設定がありません',
+    peers: 'ピア',
+    pubkey: '公開鍵',
+    handshake: '最終ハンドシェイク',
+    peerDel: 'ピアを削除',
+    alertQuick: 'アラート条件',
+    alertAdvanced: '詳細…',
+    metric: 'メトリクス',
+    mountPoint: 'マウントポイント',
+    note: 'メモ',
+    disk: 'ディスク',
+    current: '現在'
+  },
+  zh: {
+    firewall: '防火墙',
+    network: '网络',
+    packages: '软件包',
+    webSites: '网站',
+    certs: '证书',
+    databases: '数据库',
+    shares: '共享',
+    security: '安全',
+    smart: '磁盘健康',
+    vpn: 'VPN',
+    alerts: '告警',
+    notInstalled: '此系统未安装该工具',
+    port: '端口',
+    fwQuick: '快速放行 — 端口:',
+    allow: '放行',
+    fwAdvanced: '高级…',
+    action: '操作',
+    direction: '方向',
+    from: '来源',
+    to: '目标',
+    comment: '备注',
+    fwEnable: '启用防火墙',
+    fwDisable: '禁用防火墙',
+    fwTo: '目标',
+    delRule: '删除规则',
+    rules: '条规则',
+    hostname: '主机名',
+    setHostname: '设置主机名…',
+    interfaces: '接口',
+    state: '状态',
+    gateway: '网关 / DNS',
+    listening: '监听端口',
+    filter: '过滤…',
+    address: '地址',
+    process: '进程',
+    ports: '个监听端口',
+    pkgSearch: '搜索或包名…',
+    search: '搜索',
+    pkgUpdates: '更新',
+    pkgAdvanced: '高级…',
+    pkgInstalled: '已安装',
+    pkgFilter: '过滤',
+    pkgInfo: '信息',
+    install: '安装',
+    remove: '移除',
+    pkgRemove: '移除软件包',
+    pkgHint: '搜索软件包、检查更新，或在“高级”中执行 apt 操作',
+    webQuick: '新站点 — 域名:',
+    create: '创建',
+    webAdvanced: '高级…',
+    confName: '配置名',
+    domains: '域名',
+    type: '类型',
+    staticSite: '静态文件',
+    proxyPass: '反向代理',
+    site: '站点',
+    target: '目标',
+    enabled: '已启用',
+    delSite: '删除站点',
+    certQuick: '签发 — 域名 + 邮箱:',
+    domain: '域名',
+    email: '邮箱',
+    issue: '签发',
+    certAdvanced: '高级…',
+    extraDomains: '附加域名',
+    forceHttps: '强制 HTTPS',
+    no: '否',
+    yes: '是',
+    renewAll: '全部续期',
+    cert: '证书',
+    expiry: '到期',
+    dbQuick: '新建数据库:',
+    dbName: '名称',
+    dbAdvanced: '高级…',
+    engine: '引擎',
+    dbOwner: '所有者',
+    dropDb: '删除数据库',
+    shareQuick: '共享文件夹:',
+    shareName: '名称',
+    path: '路径',
+    share: '共享',
+    shareAdvanced: '高级…',
+    readOnly: '只读',
+    guestOk: '访客访问',
+    nfsHosts: '允许的主机',
+    smbUsers: '有效用户',
+    smbShares: 'Samba 共享',
+    nfsExports: 'NFS 导出',
+    delShare: '删除共享',
+    sshd: 'SSH 服务器',
+    fail2ban: 'fail2ban',
+    secQuick: 'Jail + IP:',
+    ipAddr: 'IP 地址',
+    ban: '封禁',
+    unban: '解封',
+    jail: 'Jail',
+    banned: '已封禁',
+    ips: 'IP',
+    device: '设备',
+    model: '型号',
+    health: '健康',
+    temp: '温度',
+    hours: '通电小时',
+    iface: '接口',
+    vpnUp: '启用',
+    vpnDown: '停用',
+    peerAdd: '添加节点',
+    peerAdvanced: '高级…',
+    clientConf: '客户端配置 — 复制到设备',
+    vpnNone: '/etc/wireguard 中没有配置',
+    peers: '节点',
+    pubkey: '公钥',
+    handshake: '最近握手',
+    peerDel: '删除节点',
+    alertQuick: '告警条件',
+    alertAdvanced: '高级…',
+    metric: '指标',
+    mountPoint: '挂载点',
+    note: '备注',
+    disk: '磁盘',
+    current: '当前'
+  }
+});
+registerDict('cust', {
+  en: {
+    customize: 'Customize…',
+    manageDock: 'Manage dock…',
+    addToDock: 'Add to dock',
+    removeDock: 'Remove from dock',
+    resetDock: 'Reset to defaults',
+    addShortcut: 'Add app shortcut…',
+    pickApp: 'Pick an application…',
+    shortcutAdded: 'Shortcut created for {name}',
+    wmTheme: 'Window theme',
+    winBtns: 'Buttons size',
+    dockSize: 'Dock size',
+    dockPos: 'Dock position',
+    magnify: 'Magnify on hover',
+    desktopIcons: 'Desktop icons',
+    posBottom: 'Bottom',
+    posLeft: 'Left',
+    posRight: 'Right'
+  },
+  pt_BR: {
+    customize: 'Personalizar…',
+    manageDock: 'Gerenciar dock…',
+    addToDock: 'Adicionar à dock',
+    removeDock: 'Remover da dock',
+    resetDock: 'Restaurar padrões',
+    addShortcut: 'Criar atalho no desktop…',
+    pickApp: 'Escolha um aplicativo…',
+    shortcutAdded: 'Atalho criado para {name}',
+    wmTheme: 'Tema das janelas',
+    winBtns: 'Tamanho dos botões',
+    dockSize: 'Tamanho da dock',
+    dockPos: 'Posição da dock',
+    magnify: 'Ampliar ao passar o mouse',
+    desktopIcons: 'Ícones no desktop',
+    posBottom: 'Inferior',
+    posLeft: 'Esquerda',
+    posRight: 'Direita'
+  },
+  pt_PT: {
+    customize: 'Personalizar…',
+    manageDock: 'Gerir dock…',
+    addToDock: 'Adicionar à dock',
+    removeDock: 'Remover da dock',
+    resetDock: 'Repor predefinições',
+    addShortcut: 'Criar atalho no desktop…',
+    pickApp: 'Escolha uma aplicação…',
+    shortcutAdded: 'Atalho criado para {name}',
+    wmTheme: 'Tema das janelas',
+    winBtns: 'Tamanho dos botões',
+    dockSize: 'Tamanho da dock',
+    dockPos: 'Posição da dock',
+    magnify: 'Ampliar ao passar o rato',
+    desktopIcons: 'Ícones no desktop',
+    posBottom: 'Inferior',
+    posLeft: 'Esquerda',
+    posRight: 'Direita'
+  },
+  es: {
+    customize: 'Personalizar…',
+    manageDock: 'Gestionar dock…',
+    addToDock: 'Añadir al dock',
+    removeDock: 'Quitar del dock',
+    resetDock: 'Restablecer valores',
+    addShortcut: 'Crear acceso directo…',
+    pickApp: 'Elige una aplicación…',
+    shortcutAdded: 'Acceso directo creado para {name}',
+    wmTheme: 'Tema de ventanas',
+    winBtns: 'Tamaño de botones',
+    dockSize: 'Tamaño del dock',
+    dockPos: 'Posición del dock',
+    magnify: 'Ampliar al pasar el cursor',
+    desktopIcons: 'Iconos en el escritorio',
+    posBottom: 'Abajo',
+    posLeft: 'Izquierda',
+    posRight: 'Derecha'
+  },
+  ja: {
+    customize: 'カスタマイズ…',
+    manageDock: 'ドックを管理…',
+    addToDock: 'ドックに追加',
+    removeDock: 'ドックから削除',
+    resetDock: '初期設定に戻す',
+    addShortcut: 'アプリのショートカットを作成…',
+    pickApp: 'アプリケーションを選択…',
+    shortcutAdded: '{name} のショートカットを作成しました',
+    wmTheme: 'ウィンドウテーマ',
+    winBtns: 'ボタンサイズ',
+    dockSize: 'ドックのサイズ',
+    dockPos: 'ドックの位置',
+    magnify: 'ホバー時に拡大',
+    desktopIcons: 'デスクトップアイコン',
+    posBottom: '下',
+    posLeft: '左',
+    posRight: '右'
+  },
+  zh: {
+    customize: '自定义…',
+    manageDock: '管理坞…',
+    addToDock: '添加到坞',
+    removeDock: '从坞中移除',
+    resetDock: '恢复默认',
+    addShortcut: '创建应用快捷方式…',
+    pickApp: '选择一个应用…',
+    shortcutAdded: '已为 {name} 创建快捷方式',
+    wmTheme: '窗口主题',
+    winBtns: '按钮大小',
+    dockSize: '坞大小',
+    dockPos: '坞位置',
+    magnify: '悬停时放大',
+    desktopIcons: '桌面图标',
+    posBottom: '底部',
+    posLeft: '左侧',
+    posRight: '右侧'
+  }
+});
+registerDict('ntf', {
+  en: {
+    title: 'Notifications',
+    clear: 'All clear — nothing needs attention.',
+    clearShort: 'All clear',
+    count: '{count} need attention',
+    dismiss: 'Dismiss',
+    'k.alert': 'Threshold breached',
+    'k.updates': 'Updates available',
+    'k.unit': 'Service failed',
+    'k.log': 'System error',
+    'k.backup': 'Backup due',
+    alert: '{metric} at {value}% (limit {threshold}%)',
+    updates: '{count} package updates can be installed',
+    backupLast: 'last run {days}d ago',
+    backupNever: 'never ran'
+  },
+  pt_BR: {
+    title: 'Notificações',
+    clear: 'Tudo certo — nada precisa de atenção.',
+    clearShort: 'Tudo certo',
+    count: '{count} precisam de atenção',
+    dismiss: 'Dispensar',
+    'k.alert': 'Limite excedido',
+    'k.updates': 'Atualizações disponíveis',
+    'k.unit': 'Serviço falhou',
+    'k.log': 'Erro do sistema',
+    'k.backup': 'Backup pendente',
+    alert: '{metric} em {value}% (limite {threshold}%)',
+    updates: '{count} atualizações de pacotes disponíveis',
+    backupLast: 'último há {days}d',
+    backupNever: 'nunca executado'
+  },
+  pt_PT: {
+    title: 'Notificações',
+    clear: 'Tudo bem — nada precisa de atenção.',
+    clearShort: 'Tudo bem',
+    count: '{count} precisam de atenção',
+    dismiss: 'Dispensar',
+    'k.alert': 'Limite excedido',
+    'k.updates': 'Atualizações disponíveis',
+    'k.unit': 'Serviço falhou',
+    'k.log': 'Erro do sistema',
+    'k.backup': 'Backup pendente',
+    alert: '{metric} em {value}% (limite {threshold}%)',
+    updates: '{count} atualizações de pacotes disponíveis',
+    backupLast: 'último há {days}d',
+    backupNever: 'nunca executado'
+  },
+  es: {
+    title: 'Notificaciones',
+    clear: 'Todo bien — nada requiere atención.',
+    clearShort: 'Todo bien',
+    count: '{count} requieren atención',
+    dismiss: 'Descartar',
+    'k.alert': 'Límite superado',
+    'k.updates': 'Actualizaciones disponibles',
+    'k.unit': 'Servicio falló',
+    'k.log': 'Error del sistema',
+    'k.backup': 'Copia de seguridad pendiente',
+    alert: '{metric} en {value}% (límite {threshold}%)',
+    updates: '{count} actualizaciones de paquetes disponibles',
+    backupLast: 'última hace {days}d',
+    backupNever: 'nunca ejecutada'
+  },
+  ja: {
+    title: '通知',
+    clear: 'すべて正常 — 対応が必要な項目はありません。',
+    clearShort: 'すべて正常',
+    count: '{count} 件の対応が必要',
+    dismiss: '閉じる',
+    'k.alert': 'しきい値超過',
+    'k.updates': '更新があります',
+    'k.unit': 'サービスが失敗',
+    'k.log': 'システムエラー',
+    'k.backup': 'バックアップ期限',
+    alert: '{metric} が {value}% (上限 {threshold}%)',
+    updates: '{count} 件のパッケージ更新があります',
+    backupLast: '最終実行 {days} 日前',
+    backupNever: '未実行'
+  },
+  zh: {
+    title: '通知',
+    clear: '一切正常 — 无需处理。',
+    clearShort: '一切正常',
+    count: '{count} 项需要注意',
+    dismiss: '忽略',
+    'k.alert': '超过阈值',
+    'k.updates': '有可用更新',
+    'k.unit': '服务失败',
+    'k.log': '系统错误',
+    'k.backup': '备份到期',
+    alert: '{metric} 达 {value}%（上限 {threshold}%）',
+    updates: '有 {count} 个软件包更新可用',
+    backupLast: '上次运行于 {days} 天前',
+    backupNever: '从未运行'
+  }
 });
 
 /***/ }),
@@ -2734,29 +3737,76 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "formWindow", function() { return formWindow; });
 /* harmony import */ var _babel_runtime_helpers_toConsumableArray__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @babel/runtime/helpers/toConsumableArray */ "./node_modules/@babel/runtime/helpers/toConsumableArray.js");
 /* harmony import */ var _babel_runtime_helpers_toConsumableArray__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_babel_runtime_helpers_toConsumableArray__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _babel_runtime_helpers_typeof__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @babel/runtime/helpers/typeof */ "./node_modules/@babel/runtime/helpers/typeof.js");
-/* harmony import */ var _babel_runtime_helpers_typeof__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_babel_runtime_helpers_typeof__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var _babel_runtime_helpers_slicedToArray__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @babel/runtime/helpers/slicedToArray */ "./node_modules/@babel/runtime/helpers/slicedToArray.js");
-/* harmony import */ var _babel_runtime_helpers_slicedToArray__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(_babel_runtime_helpers_slicedToArray__WEBPACK_IMPORTED_MODULE_2__);
-/* harmony import */ var _i18n_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./i18n.js */ "./src/packages/_shared/i18n.js");
+/* harmony import */ var _babel_runtime_helpers_defineProperty__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @babel/runtime/helpers/defineProperty */ "./node_modules/@babel/runtime/helpers/defineProperty.js");
+/* harmony import */ var _babel_runtime_helpers_defineProperty__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_babel_runtime_helpers_defineProperty__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _babel_runtime_helpers_typeof__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @babel/runtime/helpers/typeof */ "./node_modules/@babel/runtime/helpers/typeof.js");
+/* harmony import */ var _babel_runtime_helpers_typeof__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(_babel_runtime_helpers_typeof__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var _babel_runtime_helpers_slicedToArray__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @babel/runtime/helpers/slicedToArray */ "./node_modules/@babel/runtime/helpers/slicedToArray.js");
+/* harmony import */ var _babel_runtime_helpers_slicedToArray__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(_babel_runtime_helpers_slicedToArray__WEBPACK_IMPORTED_MODULE_3__);
+/* harmony import */ var _i18n_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./i18n.js */ "./src/packages/_shared/i18n.js");
 
 
 
+
+
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) { symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); } keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { _babel_runtime_helpers_defineProperty__WEBPACK_IMPORTED_MODULE_1___default()(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
 
 /*
  * Minimal DOM helpers so apps don't need a framework.
  */
+ // translate through the global OSjs api (window.OSjs.make) — available in
+// every package bundle without threading `core` through el()
+
+var tGlobal = function tGlobal() {
+  try {
+    return Object(_i18n_js__WEBPACK_IMPORTED_MODULE_4__["useI18n"])(window.OSjs).t;
+  } catch (e) {
+    return function (key) {
+      return key;
+    };
+  }
+}; // re-translate every element tagged with data-i18n* on locale change —
+// this is what makes open windows follow the language live
+
+
+if (typeof document !== 'undefined' && !document.__webosI18nBound) {
+  document.__webosI18nBound = true;
+  document.addEventListener('webos:locale', function () {
+    var t = tGlobal();
+    document.querySelectorAll('[data-i18n]').forEach(function (n) {
+      n.textContent = t(n.dataset.i18n);
+    });
+    document.querySelectorAll('[data-i18n-ph]').forEach(function (n) {
+      n.placeholder = t(n.dataset.i18nPh);
+    });
+    document.querySelectorAll('[data-i18n-title]').forEach(function (n) {
+      n.title = t(n.dataset.i18nTitle);
+    });
+  });
+}
 
 var el = function el(tag) {
   var attrs = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
   var node = document.createElement(tag);
+  var t = tGlobal();
   Object.entries(attrs).forEach(function (_ref) {
-    var _ref2 = _babel_runtime_helpers_slicedToArray__WEBPACK_IMPORTED_MODULE_2___default()(_ref, 2),
+    var _ref2 = _babel_runtime_helpers_slicedToArray__WEBPACK_IMPORTED_MODULE_3___default()(_ref, 2),
         k = _ref2[0],
         v = _ref2[1];
 
-    if (k === 'style' && _babel_runtime_helpers_typeof__WEBPACK_IMPORTED_MODULE_1___default()(v) === 'object') {
+    if (k === 'style' && _babel_runtime_helpers_typeof__WEBPACK_IMPORTED_MODULE_2___default()(v) === 'object') {
       Object.assign(node.style, v);
+    } else if (k === 'i18n') {
+      node.dataset.i18n = v;
+      node.textContent = t(v);
+    } else if (k === 'i18nPh') {
+      node.dataset.i18nPh = v;
+      node.placeholder = t(v);
+    } else if (k === 'i18nTitle') {
+      node.dataset.i18nTitle = v;
+      node.title = t(v);
     } else if (k.startsWith('on')) {
       node.addEventListener(k.slice(2).toLowerCase(), v);
     } else if (k === 'class') {
@@ -2801,17 +3851,35 @@ var toolbar = function toolbar() {
   return el.apply(void 0, ['div', {
     "class": 'webos-toolbar'
   }].concat(items));
-};
-var button = function button(label, onclick, title) {
-  return el('button', {
+}; // label: string, or {i18n: 'ns.key'} for a live-translated caption.
+// 3rd/4th arg: a tooltip string, or a known modifier class ('danger',
+// 'primary') — callers historically passed 'danger' as the 3rd arg.
+
+var button = function button(label, onclick, title, cls) {
+  var i18n = label && label.i18n;
+
+  var isCls = function isCls(v) {
+    return v === 'danger' || v === 'primary';
+  };
+
+  var b = el('button', _objectSpread({
     "class": 'webos-btn',
     onclick: onclick,
-    title: title
-  }, label);
-};
+    title: isCls(title) ? undefined : title
+  }, i18n ? {
+    i18n: i18n
+  } : {}), i18n ? '' : label);
+  [title, cls].forEach(function (c) {
+    return isCls(c) && b.classList.add(c);
+  });
+  return b;
+}; // columns: strings or {i18n: 'ns.key'} — headers also re-translate live
+
 var table = function table(columns, rows, onRow) {
   var thead = el('thead', {}, el.apply(void 0, ['tr', {}].concat(_babel_runtime_helpers_toConsumableArray__WEBPACK_IMPORTED_MODULE_0___default()(columns.map(function (c) {
-    return el('th', {}, c);
+    return c && c.i18n ? el('th', {
+      i18n: c.i18n
+    }) : el('th', {}, c);
   })))));
   var tbody = el.apply(void 0, ['tbody', {}].concat(_babel_runtime_helpers_toConsumableArray__WEBPACK_IMPORTED_MODULE_0___default()(rows.map(function (r) {
     var tr = el.apply(void 0, ['tr', {}].concat(_babel_runtime_helpers_toConsumableArray__WEBPACK_IMPORTED_MODULE_0___default()(r.map(function (c) {
@@ -2893,7 +3961,7 @@ var formWindow = function formWindow(proc, _ref3, cb) {
   var title = _ref3.title,
       fields = _ref3.fields;
 
-  var _useI18n = Object(_i18n_js__WEBPACK_IMPORTED_MODULE_3__["useI18n"])(proc.core),
+  var _useI18n = Object(_i18n_js__WEBPACK_IMPORTED_MODULE_4__["useI18n"])(proc.core),
       t = _useI18n.t;
 
   var win = proc.createWindow({
@@ -3515,7 +4583,7 @@ osjs__WEBPACK_IMPORTED_MODULE_0___default.a.register(_metadata_json__WEBPACK_IMP
 /*! exports provided: type, name, category, title, description, files, default */
 /***/ (function(module) {
 
-module.exports = JSON.parse("{\"type\":\"application\",\"name\":\"WebOSRemote\",\"category\":\"utilities\",\"title\":{\"en_EN\":\"Remote Access\",\"pt_BR\":\"Acesso Remoto\"},\"description\":{\"en_EN\":\"SSH/SFTP/SCP/FTP/Git remote access\",\"pt_BR\":\"acesso remoto SSH/SFTP/SCP/FTP/Git\"},\"files\":[\"main.js\"]}");
+module.exports = JSON.parse("{\"type\":\"application\",\"name\":\"WebOSRemote\",\"category\":\"utilities\",\"title\":{\"en_EN\":\"Remote Access\",\"pt_BR\":\"Acesso remoto\",\"pt_PT\":\"Acesso remoto\",\"es_ES\":\"Acceso remoto\",\"ja_JP\":\"リモートアクセス\",\"zh_CN\":\"远程访问\"},\"description\":{\"en_EN\":\"Remote Access\",\"pt_BR\":\"Acesso remoto\",\"pt_PT\":\"Acesso remoto\",\"es_ES\":\"Acceso remoto\",\"ja_JP\":\"リモートアクセス\",\"zh_CN\":\"远程访问\"},\"files\":[\"main.js\"]}");
 
 /***/ }),
 
