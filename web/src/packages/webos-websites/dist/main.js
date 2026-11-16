@@ -2804,6 +2804,7 @@ registerDict('server', {
     pkgFilter: 'filter',
     pkgInfo: 'Info',
     install: 'Install',
+    installing: 'Installing…',
     remove: 'Remove',
     pkgRemove: 'Remove package',
     pkgHint: 'search a package, check updates, or open Advanced for apt ops',
@@ -2927,6 +2928,7 @@ registerDict('server', {
     pkgFilter: 'filtro',
     pkgInfo: 'Info',
     install: 'Instalar',
+    installing: 'Instalando…',
     remove: 'Remover',
     pkgRemove: 'Remover pacote',
     pkgHint: 'busque um pacote, veja atualizações ou abra Avançado p/ apt',
@@ -3050,6 +3052,7 @@ registerDict('server', {
     pkgFilter: 'filtro',
     pkgInfo: 'Info',
     install: 'Instalar',
+    installing: 'A instalar…',
     remove: 'Remover',
     pkgRemove: 'Remover pacote',
     pkgHint: 'procure um pacote, veja atualizações ou abra Avançado p/ apt',
@@ -3173,6 +3176,7 @@ registerDict('server', {
     pkgFilter: 'filtro',
     pkgInfo: 'Info',
     install: 'Instalar',
+    installing: 'Instalando…',
     remove: 'Eliminar',
     pkgRemove: 'Eliminar paquete',
     pkgHint: 'busca un paquete, revisa actualizaciones o abre Avanzado p/ apt',
@@ -3296,6 +3300,7 @@ registerDict('server', {
     pkgFilter: 'フィルタ',
     pkgInfo: '情報',
     install: 'インストール',
+    installing: 'インストール中…',
     remove: '削除',
     pkgRemove: 'パッケージを削除',
     pkgHint: 'パッケージを検索・更新確認、または詳細から apt 操作',
@@ -3419,6 +3424,7 @@ registerDict('server', {
     pkgFilter: '过滤',
     pkgInfo: '信息',
     install: '安装',
+    installing: '安装中…',
     remove: '移除',
     pkgRemove: '移除软件包',
     pkgHint: '搜索软件包、检查更新，或在“高级”中执行 apt 操作',
@@ -3811,12 +3817,36 @@ var serverApp = function serverApp(sectionId, dims) {
       return Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('span', {
         "class": "webos-badge ".concat(ok ? 'on' : 'off')
       }, ok ? yes : no);
-    };
+    }; // one-click install for a missing system tool (agent POST /server/tools)
 
-    var hint = function hint() {
-      return body.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
+
+    var installBtn = function installBtn(key, label, refresh) {
+      return Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["button"])("".concat(t('server.install'), " ").concat(label), function () {
+        sb.set(t('server.installing'));
+        _api_js__WEBPACK_IMPORTED_MODULE_3__["api"].post('server/tools', {
+          tool: key
+        }).then(function () {
+          sb.set('ok');
+          refresh();
+        })["catch"](function (e) {
+          return sb.error(e.message);
+        });
+      });
+    }; // "tool not installed" card with one-click Install buttons.
+    // tools: [{key: TOOL_PKGS key, label: display name}]
+
+
+    var hint = function hint(tools, refresh) {
+      var box = Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
         "class": 'wsrv-hint'
-      }, t('server.notInstalled')));
+      });
+      box.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('span', {}, t('server.notInstalled') + ' '));
+      (tools || []).forEach(function (_ref) {
+        var key = _ref.key,
+            label = _ref.label;
+        return box.appendChild(installBtn(key, label, refresh));
+      });
+      body.appendChild(box);
     };
 
     var head = function head(key) {
@@ -3865,7 +3895,10 @@ var serverApp = function serverApp(sectionId, dims) {
     var firewall = function firewall() {
       body.innerHTML = '';
       _api_js__WEBPACK_IMPORTED_MODULE_3__["api"].get('server/firewall').then(function (d) {
-        if (!d.available) return hint();
+        if (!d.available) return hint([{
+          key: 'ufw',
+          label: 'ufw'
+        }], firewall);
         var quickPort = inp('server.port', '80px');
         body.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
           "class": 'wsrv-quick'
@@ -3956,6 +3989,10 @@ var serverApp = function serverApp(sectionId, dims) {
     var network = function network() {
       body.innerHTML = '';
       _api_js__WEBPACK_IMPORTED_MODULE_3__["api"].get('server/network').then(function (d) {
+        if (!d.available) return hint([{
+          key: 'iproute2',
+          label: 'iproute2'
+        }], network);
         body.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
           "class": 'wsrv-quick'
         }, Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('span', {
@@ -4166,7 +4203,10 @@ var serverApp = function serverApp(sectionId, dims) {
     var web = function web() {
       body.innerHTML = '';
       _api_js__WEBPACK_IMPORTED_MODULE_3__["api"].get('server/web').then(function (d) {
-        if (!d.available) return hint();
+        if (!d.available) return hint([{
+          key: 'nginx',
+          label: 'nginx'
+        }], web);
         var dom = inp('server.domain', '180px');
         body.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
           "class": 'wsrv-quick'
@@ -4257,7 +4297,10 @@ var serverApp = function serverApp(sectionId, dims) {
     var certs = function certs() {
       body.innerHTML = '';
       _api_js__WEBPACK_IMPORTED_MODULE_3__["api"].get('server/certs').then(function (d) {
-        if (!d.available) return hint();
+        if (!d.available) return hint([{
+          key: 'certbot',
+          label: 'certbot'
+        }], certs);
         var dom = inp('server.domain', '160px');
         var mail = inp('server.email', '160px');
         body.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
@@ -4337,7 +4380,13 @@ var serverApp = function serverApp(sectionId, dims) {
     var db = function db() {
       body.innerHTML = '';
       _api_js__WEBPACK_IMPORTED_MODULE_3__["api"].get('server/db').then(function (d) {
-        if (!d.available) return hint();
+        if (!d.available) return hint([{
+          key: 'postgresql',
+          label: 'PostgreSQL'
+        }, {
+          key: 'mariadb',
+          label: 'MariaDB'
+        }], db);
         var engines = ['postgres', 'mysql'].filter(function (e) {
           return d[e];
         });
@@ -4416,15 +4465,21 @@ var serverApp = function serverApp(sectionId, dims) {
     var shares = function shares() {
       body.innerHTML = '';
       _api_js__WEBPACK_IMPORTED_MODULE_3__["api"].get('server/shares').then(function (d) {
-        if (!d.samba.available && !d.nfs.available) return hint();
-        var kinds = [['samba', d.samba.available], ['nfs', d.nfs.available]].filter(function (_ref) {
-          var _ref2 = _babel_runtime_helpers_slicedToArray__WEBPACK_IMPORTED_MODULE_0___default()(_ref, 2),
-              a = _ref2[1];
+        if (!d.samba.available && !d.nfs.available) return hint([{
+          key: 'samba',
+          label: 'Samba'
+        }, {
+          key: 'nfs',
+          label: 'NFS'
+        }], shares);
+        var kinds = [['samba', d.samba.available], ['nfs', d.nfs.available]].filter(function (_ref2) {
+          var _ref3 = _babel_runtime_helpers_slicedToArray__WEBPACK_IMPORTED_MODULE_0___default()(_ref2, 2),
+              a = _ref3[1];
 
           return a;
-        }).map(function (_ref3) {
-          var _ref4 = _babel_runtime_helpers_slicedToArray__WEBPACK_IMPORTED_MODULE_0___default()(_ref3, 1),
-              k = _ref4[0];
+        }).map(function (_ref4) {
+          var _ref5 = _babel_runtime_helpers_slicedToArray__WEBPACK_IMPORTED_MODULE_0___default()(_ref4, 1),
+              k = _ref5[0];
 
           return k;
         });
@@ -4541,6 +4596,20 @@ var serverApp = function serverApp(sectionId, dims) {
             })];
           })));
         }
+
+        [['samba', 'Samba'], ['nfs', 'NFS']].forEach(function (_ref6) {
+          var _ref7 = _babel_runtime_helpers_slicedToArray__WEBPACK_IMPORTED_MODULE_0___default()(_ref6, 2),
+              k = _ref7[0],
+              label = _ref7[1];
+
+          if (!d[k].available) {
+            var box = Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
+              "class": 'wsrv-hint'
+            }, "".concat(label, " \u2014 ").concat(t('server.notInstalled'), " "));
+            box.appendChild(installBtn(k, label, shares));
+            body.appendChild(box);
+          }
+        });
       })["catch"](function (e) {
         return sb.error(e.message);
       });
@@ -4554,10 +4623,10 @@ var serverApp = function serverApp(sectionId, dims) {
           body.appendChild(head('server.sshd'));
           body.appendChild(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"].apply(void 0, ['div', {
             "class": 'wsrv-kv'
-          }].concat(_babel_runtime_helpers_toConsumableArray__WEBPACK_IMPORTED_MODULE_1___default()(Object.entries(d.sshd).map(function (_ref5) {
-            var _ref6 = _babel_runtime_helpers_slicedToArray__WEBPACK_IMPORTED_MODULE_0___default()(_ref5, 2),
-                k = _ref6[0],
-                v = _ref6[1];
+          }].concat(_babel_runtime_helpers_toConsumableArray__WEBPACK_IMPORTED_MODULE_1___default()(Object.entries(d.sshd).map(function (_ref8) {
+            var _ref9 = _babel_runtime_helpers_slicedToArray__WEBPACK_IMPORTED_MODULE_0___default()(_ref8, 2),
+                k = _ref9[0],
+                v = _ref9[1];
 
             return Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('span', {}, Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('b', {}, k), ' ', v.join(', '));
           })))));
@@ -4601,9 +4670,11 @@ var serverApp = function serverApp(sectionId, dims) {
             return [j.name, j.banned, j.ips.join(' ')];
           })));
         } else {
-          body.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
+          var box = Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
             "class": 'wsrv-hint'
-          }, 'fail2ban — ' + t('server.notInstalled')));
+          }, 'fail2ban — ' + t('server.notInstalled') + ' ');
+          box.appendChild(installBtn('fail2ban', 'fail2ban', security));
+          body.appendChild(box);
         }
       })["catch"](function (e) {
         return sb.error(e.message);
@@ -4614,7 +4685,10 @@ var serverApp = function serverApp(sectionId, dims) {
     var smart = function smart() {
       body.innerHTML = '';
       _api_js__WEBPACK_IMPORTED_MODULE_3__["api"].get('server/smart').then(function (d) {
-        if (!d.available) return hint();
+        if (!d.available) return hint([{
+          key: 'smartmontools',
+          label: 'smartmontools'
+        }], smart);
         body.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["table"])([{
           i18n: 'server.device'
         }, {
@@ -4637,7 +4711,10 @@ var serverApp = function serverApp(sectionId, dims) {
     var vpn = function vpn() {
       body.innerHTML = '';
       _api_js__WEBPACK_IMPORTED_MODULE_3__["api"].get('server/vpn').then(function (d) {
-        if (!d.available) return hint();
+        if (!d.available) return hint([{
+          key: 'wireguard',
+          label: 'WireGuard'
+        }], vpn);
         var ifaces = d.configs.length ? d.configs : d.interfaces.map(function (i) {
           return i.name;
         });

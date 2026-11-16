@@ -59,8 +59,23 @@ export const serverApp = (sectionId, dims) =>
     };
     const badge = (ok, yes = 'on', no = 'off') =>
       el('span', {class: `webos-badge ${ok ? 'on' : 'off'}`}, ok ? yes : no);
-    const hint = () => body.appendChild(el('div', {class: 'wsrv-hint'},
-      t('server.notInstalled')));
+    // one-click install for a missing system tool (agent POST /server/tools)
+    const installBtn = (key, label, refresh) =>
+      button(`${t('server.install')} ${label}`, () => {
+        sb.set(t('server.installing'));
+        api.post('server/tools', {tool: key})
+          .then(() => { sb.set('ok'); refresh(); })
+          .catch(e => sb.error(e.message));
+      });
+    // "tool not installed" card with one-click Install buttons.
+    // tools: [{key: TOOL_PKGS key, label: display name}]
+    const hint = (tools, refresh) => {
+      const box = el('div', {class: 'wsrv-hint'});
+      box.appendChild(el('span', {}, t('server.notInstalled') + ' '));
+      (tools || []).forEach(({key, label}) => box.appendChild(
+        installBtn(key, label, refresh)));
+      body.appendChild(box);
+    };
     const head = key => el('div', {class: 'wsrv-h', i18n: key});
 
     const call = (ep, data, done) => {
@@ -86,7 +101,7 @@ export const serverApp = (sectionId, dims) =>
     const firewall = () => {
       body.innerHTML = '';
       api.get('server/firewall').then(d => {
-        if (!d.available) return hint();
+        if (!d.available) return hint([{key: 'ufw', label: 'ufw'}], firewall);
         const quickPort = inp('server.port', '80px');
         body.appendChild(el('div', {class: 'wsrv-quick'},
           el('span', {i18n: 'server.fwQuick'}), quickPort,
@@ -132,6 +147,7 @@ export const serverApp = (sectionId, dims) =>
     const network = () => {
       body.innerHTML = '';
       api.get('server/network').then(d => {
+        if (!d.available) return hint([{key: 'iproute2', label: 'iproute2'}], network);
         body.appendChild(el('div', {class: 'wsrv-quick'},
           el('span', {i18n: 'server.hostname'}),
           el('b', {}, d.hostname),
@@ -226,7 +242,7 @@ export const serverApp = (sectionId, dims) =>
     const web = () => {
       body.innerHTML = '';
       api.get('server/web').then(d => {
-        if (!d.available) return hint();
+        if (!d.available) return hint([{key: 'nginx', label: 'nginx'}], web);
         const dom = inp('server.domain', '180px');
         body.appendChild(el('div', {class: 'wsrv-quick'},
           el('span', {i18n: 'server.webQuick'}), dom,
@@ -272,7 +288,7 @@ export const serverApp = (sectionId, dims) =>
     const certs = () => {
       body.innerHTML = '';
       api.get('server/certs').then(d => {
-        if (!d.available) return hint();
+        if (!d.available) return hint([{key: 'certbot', label: 'certbot'}], certs);
         const dom = inp('server.domain', '160px');
         const mail = inp('server.email', '160px');
         body.appendChild(el('div', {class: 'wsrv-quick'},
@@ -312,7 +328,7 @@ export const serverApp = (sectionId, dims) =>
     const db = () => {
       body.innerHTML = '';
       api.get('server/db').then(d => {
-        if (!d.available) return hint();
+        if (!d.available) return hint([{key: 'postgresql', label: 'PostgreSQL'}, {key: 'mariadb', label: 'MariaDB'}], db);
         const engines = ['postgres', 'mysql'].filter(e => d[e]);
         const eng = select(engines, engines[0]);
         const nm = inp('server.dbName', '140px');
@@ -354,7 +370,8 @@ export const serverApp = (sectionId, dims) =>
     const shares = () => {
       body.innerHTML = '';
       api.get('server/shares').then(d => {
-        if (!d.samba.available && !d.nfs.available) return hint();
+        if (!d.samba.available && !d.nfs.available)
+          return hint([{key: 'samba', label: 'Samba'}, {key: 'nfs', label: 'NFS'}], shares);
         const kinds = [['samba', d.samba.available], ['nfs', d.nfs.available]]
           .filter(([, a]) => a).map(([k]) => k);
         const kind = select(kinds);
@@ -406,6 +423,14 @@ export const serverApp = (sectionId, dims) =>
                 () => call('shares', {op: 'del', kind: 'nfs', path: x.path},
                   shares)))])));
         }
+        [['samba', 'Samba'], ['nfs', 'NFS']].forEach(([k, label]) => {
+          if (!d[k].available) {
+            const box = el('div', {class: 'wsrv-hint'},
+              `${label} — ${t('server.notInstalled')} `);
+            box.appendChild(installBtn(k, label, shares));
+            body.appendChild(box);
+          }
+        });
       }).catch(e => sb.error(e.message));
     };
 
@@ -437,8 +462,10 @@ export const serverApp = (sectionId, dims) =>
              {i18n: 'server.ips'}],
             jails.map(j => [j.name, j.banned, j.ips.join(' ')])));
         } else {
-          body.appendChild(el('div', {class: 'wsrv-hint'},
-            'fail2ban — ' + t('server.notInstalled')));
+          const box = el('div', {class: 'wsrv-hint'},
+            'fail2ban — ' + t('server.notInstalled') + ' ');
+          box.appendChild(installBtn('fail2ban', 'fail2ban', security));
+          body.appendChild(box);
         }
       }).catch(e => sb.error(e.message));
     };
@@ -447,7 +474,7 @@ export const serverApp = (sectionId, dims) =>
     const smart = () => {
       body.innerHTML = '';
       api.get('server/smart').then(d => {
-        if (!d.available) return hint();
+        if (!d.available) return hint([{key: 'smartmontools', label: 'smartmontools'}], smart);
         body.appendChild(table(
           [{i18n: 'server.device'}, {i18n: 'server.model'},
            {i18n: 'server.health'}, {i18n: 'server.temp'},
@@ -467,7 +494,7 @@ export const serverApp = (sectionId, dims) =>
     const vpn = () => {
       body.innerHTML = '';
       api.get('server/vpn').then(d => {
-        if (!d.available) return hint();
+        if (!d.available) return hint([{key: 'wireguard', label: 'WireGuard'}], vpn);
         const ifaces = d.configs.length ? d.configs
           : d.interfaces.map(i => i.name);
         if (!ifaces.length) {

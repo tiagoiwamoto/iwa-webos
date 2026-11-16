@@ -133,6 +133,7 @@ def test_network_overview(client, fake):
     fake.add(("hostname",), out="web-01\n")
 
     data = client.get("/api/server/network").json()
+    assert data["available"] is True
     assert data["hostname"] == "web-01"
     assert data["interfaces"][0]["name"] == "eth0"
     assert data["interfaces"][0]["ips"] == ["10.0.0.5/24", "fe80::1/64"]
@@ -723,3 +724,41 @@ def test_alerts_validation(client, fake, paths):
     ):
         assert client.post("/api/server/alerts",
                            json=body).status_code == 400, body
+
+
+# --------------------------------------------------------------------------
+# tool installation
+
+def test_network_unavailable_without_ip(client, fake):
+    fake.tools.discard("ip")
+    data = client.get("/api/server/network").json()
+    assert data == {"available": False}
+
+
+def test_tool_install_whitelist(client, fake):
+    r = client.post("/api/server/tools", json={"tool": "rm"})
+    assert r.status_code == 400
+    r = client.post("/api/server/tools", json={"tool": "ufw"})
+    assert r.is_success and r.json()["package"] == "ufw"
+    assert fake.called("apt-get", "install", "-y",
+                       "--no-install-recommends", "ufw")
+    assert not fake.called("apt-get", "update")
+
+
+def test_tool_install_retries_after_update(client, fake):
+    state = {"n": 0}
+
+    def fail_first(cmd, input_text=None):
+        state["n"] += 1
+        return mkproc(cmd, rc=100 if state["n"] == 1 else 0)
+
+    fake.add(("apt-get", "install"), fn=fail_first)
+    r = client.post("/api/server/tools", json={"tool": "nginx"})
+    assert r.is_success
+    assert fake.called("apt-get", "update")
+
+
+def test_tool_install_requires_apt(client, fake):
+    fake.tools.discard("apt-get")
+    r = client.post("/api/server/tools", json={"tool": "ufw"})
+    assert r.status_code == 400

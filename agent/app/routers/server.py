@@ -87,6 +87,40 @@ def capabilities():
 
 
 # ---------------------------------------------------------------------------
+# tool installation — lets the UI offer one-click install for missing tools
+
+TOOL_PKGS = {
+    "ufw": "ufw",
+    "iproute2": "iproute2",
+    "openssh": "openssh-server",
+    "nginx": "nginx",
+    "certbot": "certbot",
+    "postgresql": "postgresql",
+    "mariadb": "mariadb-server",
+    "samba": "samba",
+    "nfs": "nfs-kernel-server",
+    "fail2ban": "fail2ban",
+    "smartmontools": "smartmontools",
+    "wireguard": "wireguard-tools",
+}
+
+
+@router.post("/tools")
+def tool_install(body: dict):
+    tool = str(body.get("tool") or "")
+    _req(tool in TOOL_PKGS, "unknown tool")
+    _req(_has("apt-get"), "apt-get not found")
+    pkg = TOOL_PKGS[tool]
+    proc = _run(["apt-get", "install", "-y", "--no-install-recommends", pkg],
+                timeout=600, check=False)
+    if proc.returncode != 0:
+        run(["apt-get", "update"], timeout=300)
+        proc = _run(["apt-get", "install", "-y", "--no-install-recommends",
+                     pkg], timeout=600)
+    return {"ok": True, "package": pkg, "output": proc.stdout[-2000:]}
+
+
+# ---------------------------------------------------------------------------
 # firewall (ufw)
 
 _RULE = re.compile(r"\[\s*(\d+)\]\s+(.+?)\s{2,}(ALLOW|DENY|REJECT|LIMIT)"
@@ -151,6 +185,8 @@ def firewall_op(body: dict):
 
 @router.get("/network")
 def network():
+    if not _has("ip"):
+        return {"available": False}
     ifaces = []
     proc = run(["ip", "-j", "addr", "show"])
     if proc.returncode == 0:
@@ -197,8 +233,8 @@ def network():
         pass
 
     host = run(["hostname"]).stdout.strip()
-    return {"hostname": host, "interfaces": ifaces, "routes": routes,
-            "listening": listen, "dns": dns}
+    return {"available": True, "hostname": host, "interfaces": ifaces,
+            "routes": routes, "listening": listen, "dns": dns}
 
 
 @router.post("/network")

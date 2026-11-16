@@ -33,9 +33,15 @@ def require_ws_token(websocket: WebSocket):
 
 
 def run(cmd: list[str], timeout: int = 30, input_text: str | None = None) -> subprocess.CompletedProcess:
-    return subprocess.run(
-        cmd, capture_output=True, text=True, timeout=timeout, input=input_text
-    )
+    try:
+        return subprocess.run(
+            cmd, capture_output=True, text=True, timeout=timeout,
+            input=input_text
+        )
+    except FileNotFoundError:
+        # tool not installed: degrade to rc=127 instead of a 500
+        return subprocess.CompletedProcess(
+            cmd, 127, "", f"{cmd[0]}: command not found")
 
 
 from app.routers import auth, backup, browser, cron, sysupdate, disks, docker_api, files, logs, notifications, processes, remote, server, services, store, system, terminal, users  # noqa: E402

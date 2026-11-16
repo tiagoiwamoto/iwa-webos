@@ -21,6 +21,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       e2fsprogs dosfstools xfsprogs btrfs-progs ntfs-3g exfatprogs \
       docker.io docker-compose-v2 cron \
       openssh-client sshpass git curl rclone \
+      iproute2 ufw openssh-server nginx \
+      certbot python3-certbot-nginx \
+      postgresql mariadb-server samba nfs-kernel-server \
+      fail2ban smartmontools wireguard-tools \
       ca-certificates \
     && rm -rf /var/lib/apt/lists/* \
     # host's dockerd is used via the mounted socket; mask in-container ones
