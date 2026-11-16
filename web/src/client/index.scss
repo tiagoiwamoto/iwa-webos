@@ -807,8 +807,8 @@ body[data-wm="gnome"] .osjs-window-title {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 8px;
-  width: 100%;
-  margin: 6px 0 14px;
+  width: 50%;
+  margin: 6px auto 14px;
 }
 .webos-wallpaper-thumb {
   width: 100%;
