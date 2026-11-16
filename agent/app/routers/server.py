@@ -528,35 +528,115 @@ def db_list():
     return out
 
 
+_MAX_ROWS = 500
+_TABLE = re.compile(r"^\w{1,63}(\.\w{1,63})?$")
+
+
+def _db_exec(engine: str, name: str, sql: str):
+    """Run SQL against `name` and return TSV output (headers included)."""
+    if engine == "postgres":
+        return _pg(["psql", "-d", name, "-A", "-F", "\t",
+                    "--pset", "footer=off", "-c", sql])
+    return run(["mysql", "-B", "-e", sql] + ([name] if name else []),
+               timeout=30)
+
+
+def _tsv(out: str):
+    lines = [l for l in out.splitlines() if l]
+    if not lines:
+        return {"cols": [], "rows": []}
+    rows = [l.split("\t") for l in lines]
+    truncated = len(rows) - 1 > _MAX_ROWS
+    return {"cols": rows[0], "rows": rows[1:_MAX_ROWS + 1],
+            "truncated": truncated}
+
+
+def _qident(engine: str, name: str) -> str:
+    """Quote a possibly schema-qualified table name."""
+    q = '"' if engine == "postgres" else "`"
+    return ".".join(q + p + q for p in name.split("."))
+
+
 @router.post("/db")
 def db_op(body: dict):
     op = body.get("op", "")
     engine = body.get("engine", "")
     name = str(body.get("name") or "").strip()
-    _req(re.match(r"^\w{1,63}$", name), "invalid database name")
     if engine == "postgres":
         _req(_has("psql"), "postgres not installed")
-        if op == "create":
+    elif engine == "mysql":
+        _req(_has("mysql"), "mysql not installed")
+    else:
+        raise HTTPException(400, "bad engine")
+
+    # ops that don't need a database name
+    if op == "query":
+        db = str(body.get("db") or "").strip()
+        _req(re.match(r"^\w{1,63}$", db), "invalid database")
+        sql = str(body.get("sql") or "").strip()
+        _req(bool(sql), "empty query")
+        proc = _db_exec(engine, db, sql)
+        if proc.returncode != 0:
+            raise HTTPException(500, proc.stderr.strip()[:400])
+        return _tsv(proc.stdout)
+
+    _req(re.match(r"^\w{1,63}$", name), "invalid database name")
+    if op == "create":
+        if engine == "postgres":
             owner = str(body.get("owner") or "").strip()
             sql = f'CREATE DATABASE "{name}"'
             if owner:
                 _req(_NAME.match(owner), "bad owner")
                 sql += f' OWNER "{owner}"'
-            proc = _pg(["psql", "-c", sql])
-        elif op == "drop":
-            proc = _pg(["psql", "-c", f'DROP DATABASE "{name}"'])
         else:
-            raise HTTPException(400, "bad op")
-    elif engine == "mysql":
-        _req(_has("mysql"), "mysql not installed")
-        if op == "create":
-            proc = run(["mysql", "-e", f"CREATE DATABASE `{name}`"])
-        elif op == "drop":
-            proc = run(["mysql", "-e", f"DROP DATABASE `{name}`"])
+            sql = f"CREATE DATABASE `{name}`"
+        proc = _db_exec(engine, "", sql) if engine == "mysql" \
+            else _pg(["psql", "-c", sql])
+    elif op == "drop":
+        sql = (f'DROP DATABASE "{name}"' if engine == "postgres"
+               else f"DROP DATABASE `{name}`")
+        proc = _db_exec(engine, "", sql) if engine == "mysql" \
+            else _pg(["psql", "-c", sql])
+    elif op == "tables":
+        if engine == "postgres":
+            sql = ("SELECT table_schema||'.'||table_name "
+                   "FROM information_schema.tables "
+                   "WHERE table_schema NOT IN ('pg_catalog',"
+                   "'information_schema') ORDER BY 1")
         else:
-            raise HTTPException(400, "bad op")
+            sql = ("SELECT table_name FROM information_schema.tables "
+                   f"WHERE table_schema='{name}' ORDER BY 1")
+        proc = _db_exec(engine, name, sql)
+        if proc.returncode != 0:
+            raise HTTPException(500, proc.stderr.strip()[:400])
+        data = _tsv(proc.stdout)
+        return {"tables": [r[0] for r in data["rows"]]}
+    elif op == "rows":
+        table = str(body.get("table") or "").strip()
+        _req(_TABLE.match(table), "invalid table")
+        sql = f"SELECT * FROM {_qident(engine, table)} LIMIT {_MAX_ROWS}"
+        proc = _db_exec(engine, name, sql)
+        if proc.returncode != 0:
+            raise HTTPException(500, proc.stderr.strip()[:400])
+        data = _tsv(proc.stdout)
+        if not data["cols"] and engine == "mysql":
+            # mysql -B prints nothing on empty results — fetch the schema
+            bare = table.split(".")[-1]
+            cols = _db_exec(engine, name,
+                            "SELECT column_name FROM information_schema.columns"
+                            f" WHERE table_schema='{name}'"
+                            f" AND table_name='{bare}'"
+                            " ORDER BY ordinal_position")
+            if cols.returncode == 0:
+                data["cols"] = [r[0] for r in _tsv(cols.stdout)["rows"]]
+        return data
+    elif op == "table_drop":
+        table = str(body.get("table") or "").strip()
+        _req(_TABLE.match(table), "invalid table")
+        proc = _db_exec(engine, name,
+                        f"DROP TABLE {_qident(engine, table)}")
     else:
-        raise HTTPException(400, "bad engine")
+        raise HTTPException(400, "bad op")
     if proc.returncode != 0:
         raise HTTPException(500, proc.stderr.strip()[:400])
     return {"ok": True}

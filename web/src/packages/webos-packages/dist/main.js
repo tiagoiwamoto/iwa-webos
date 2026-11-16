@@ -2835,8 +2835,15 @@ registerDict('server', {
     dbQuick: 'New database:',
     dbName: 'Name',
     dbAdvanced: 'Advanced…',
-    dbMgrHint: 'unified manager — PostgreSQL, MariaDB, MongoDB & more',
-    dbOpenTab: 'Open in new tab',
+    dbTables: 'Tables',
+    dbTable: 'Table',
+    dbBrowse: 'Browse',
+    dbQuery: 'SQL query',
+    dbRun: 'Run',
+    dbBack: 'Back',
+    dbDropTable: 'Drop table',
+    dbTruncated: 'showing first 500 rows',
+    dbEmpty: 'no rows',
     engine: 'Engine',
     dbOwner: 'Owner',
     dropDb: 'Drop database',
@@ -2961,8 +2968,15 @@ registerDict('server', {
     dbQuick: 'Novo banco:',
     dbName: 'Nome',
     dbAdvanced: 'Avançado…',
-    dbMgrHint: 'gerenciador unificado — PostgreSQL, MariaDB, MongoDB e mais',
-    dbOpenTab: 'Abrir em nova aba',
+    dbTables: 'Tabelas',
+    dbTable: 'Tabela',
+    dbBrowse: 'Ver dados',
+    dbQuery: 'Consulta SQL',
+    dbRun: 'Executar',
+    dbBack: 'Voltar',
+    dbDropTable: 'Apagar tabela',
+    dbTruncated: 'mostrando as primeiras 500 linhas',
+    dbEmpty: 'sem linhas',
     engine: 'Motor',
     dbOwner: 'Dono',
     dropDb: 'Apagar banco',
@@ -3087,8 +3101,15 @@ registerDict('server', {
     dbQuick: 'Nova base de dados:',
     dbName: 'Nome',
     dbAdvanced: 'Avançado…',
-    dbMgrHint: 'gestor unificado — PostgreSQL, MariaDB, MongoDB e mais',
-    dbOpenTab: 'Abrir num novo separador',
+    dbTables: 'Tabelas',
+    dbTable: 'Tabela',
+    dbBrowse: 'Ver dados',
+    dbQuery: 'Consulta SQL',
+    dbRun: 'Executar',
+    dbBack: 'Voltar',
+    dbDropTable: 'Eliminar tabela',
+    dbTruncated: 'a mostrar as primeiras 500 linhas',
+    dbEmpty: 'sem linhas',
     engine: 'Motor',
     dbOwner: 'Dono',
     dropDb: 'Eliminar base de dados',
@@ -3213,8 +3234,15 @@ registerDict('server', {
     dbQuick: 'Nueva base de datos:',
     dbName: 'Nombre',
     dbAdvanced: 'Avanzado…',
-    dbMgrHint: 'gestor unificado — PostgreSQL, MariaDB, MongoDB y más',
-    dbOpenTab: 'Abrir en nueva pestaña',
+    dbTables: 'Tablas',
+    dbTable: 'Tabla',
+    dbBrowse: 'Explorar',
+    dbQuery: 'Consulta SQL',
+    dbRun: 'Ejecutar',
+    dbBack: 'Volver',
+    dbDropTable: 'Eliminar tabla',
+    dbTruncated: 'mostrando las primeras 500 filas',
+    dbEmpty: 'sin filas',
     engine: 'Motor',
     dbOwner: 'Dueño',
     dropDb: 'Eliminar base de datos',
@@ -3339,8 +3367,15 @@ registerDict('server', {
     dbQuick: '新規データベース:',
     dbName: '名前',
     dbAdvanced: '詳細…',
-    dbMgrHint: '統合マネージャー — PostgreSQL、MariaDB、MongoDB など',
-    dbOpenTab: '新しいタブで開く',
+    dbTables: 'テーブル',
+    dbTable: 'テーブル',
+    dbBrowse: '参照',
+    dbQuery: 'SQLクエリ',
+    dbRun: '実行',
+    dbBack: '戻る',
+    dbDropTable: 'テーブルを削除',
+    dbTruncated: '最初の500行を表示',
+    dbEmpty: '行なし',
     engine: 'エンジン',
     dbOwner: '所有者',
     dropDb: 'データベースを削除',
@@ -3465,8 +3500,15 @@ registerDict('server', {
     dbQuick: '新建数据库:',
     dbName: '名称',
     dbAdvanced: '高级…',
-    dbMgrHint: '统一管理器 — PostgreSQL、MariaDB、MongoDB 等',
-    dbOpenTab: '在新标签页中打开',
+    dbTables: '表',
+    dbTable: '表',
+    dbBrowse: '浏览',
+    dbQuery: 'SQL 查询',
+    dbRun: '运行',
+    dbBack: '返回',
+    dbDropTable: '删除表',
+    dbTruncated: '仅显示前 500 行',
+    dbEmpty: '无数据行',
     engine: '引擎',
     dbOwner: '所有者',
     dropDb: '删除数据库',
@@ -3771,7 +3813,7 @@ function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { va
 
 
 
-Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["css"])('webos-server-apps', "\n  .wsrv-wrap { display: flex; height: 100%; width: 100%; font-family: sans-serif;\n    font-size: 13px; background: #20232a; color: #e8e8e8; }\n  .wsrv-main { flex: 1 1 auto; display: flex; flex-direction: column; min-width: 0; }\n  .wsrv-body { flex: 1 1 auto; overflow: auto; padding: 8px 10px; }\n  .wsrv-body .webos-table { margin-top: 8px; }\n  .wsrv-quick { display: flex; gap: 6px; align-items: center; flex-wrap: wrap;\n    padding: 6px 8px; background: #2a2e37; border-radius: 4px; }\n  .wsrv-h { margin: 10px 0 4px; color: #9ab; font-size: 12px;\n    text-transform: uppercase; letter-spacing: .4px; }\n  .wsrv-hint { padding: 18px; color: #9ab; }\n  .wsrv-kv { display: inline-flex; gap: 4px 14px; flex-wrap: wrap; color: #bbc;\n    font-size: 12px; padding: 4px 0; }\n  .wsrv-kv b { color: #9ab; font-weight: 600; }\n  .wsrv-mini { padding: 1px 7px; font-size: 11px; }\n  .wsrv-pre { margin: 8px 0; padding: 10px; background: #17191f; border-radius: 4px;\n    white-space: pre-wrap; font-size: 11px; color: #cde; max-height: 220px;\n    overflow: auto; user-select: text; }\n  .wsrv-frame { flex: 1 1 auto; width: 100%; border: 0; margin-top: 8px;\n    border-radius: 6px; background: #fff; }\n");
+Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["css"])('webos-server-apps', "\n  .wsrv-wrap { display: flex; height: 100%; width: 100%; font-family: sans-serif;\n    font-size: 13px; background: #20232a; color: #e8e8e8; }\n  .wsrv-main { flex: 1 1 auto; display: flex; flex-direction: column; min-width: 0; }\n  .wsrv-body { flex: 1 1 auto; overflow: auto; padding: 8px 10px; }\n  .wsrv-body .webos-table { margin-top: 8px; }\n  .wsrv-quick { display: flex; gap: 6px; align-items: center; flex-wrap: wrap;\n    padding: 6px 8px; background: #2a2e37; border-radius: 4px; }\n  .wsrv-h { margin: 10px 0 4px; color: #9ab; font-size: 12px;\n    text-transform: uppercase; letter-spacing: .4px; }\n  .wsrv-hint { padding: 18px; color: #9ab; }\n  .wsrv-kv { display: inline-flex; gap: 4px 14px; flex-wrap: wrap; color: #bbc;\n    font-size: 12px; padding: 4px 0; }\n  .wsrv-kv b { color: #9ab; font-weight: 600; }\n  .wsrv-mini { padding: 1px 7px; font-size: 11px; }\n  .wsrv-pre { margin: 8px 0; padding: 10px; background: #17191f; border-radius: 4px;\n    white-space: pre-wrap; font-size: 11px; color: #cde; max-height: 220px;\n    overflow: auto; user-select: text; }\n  .wsrv-sql { width: 100%; box-sizing: border-box; min-height: 64px;\n    background: #17191f; color: #cde; border: 1px solid #3a3f4b;\n    border-radius: 4px; font-family: monospace; font-size: 12px;\n    padding: 6px 8px; resize: vertical; }\n  .wsrv-grid { overflow: auto; max-height: 340px; margin-top: 8px; }\n  .wsrv-grid .webos-table { margin-top: 0; }\n  .wsrv-grid td { max-width: 240px; overflow: hidden;\n    text-overflow: ellipsis; white-space: nowrap; }\n");
 var serverApp = function serverApp(sectionId, dims) {
   return function (core, args, options, metadata) {
     var proc = core.make('osjs/application', {
@@ -4387,29 +4429,228 @@ var serverApp = function serverApp(sectionId, dims) {
         return sb.error(e.message);
       });
     }; // -------------------------------------------------------------- databases
-    // DbGate sidecar proxied same-origin through the authenticated
-    // /dbgate route — the OS.js session is the only login needed.
+    // Mini database manager served by the agent itself (psql/mysql CLIs):
+    // pick engine + database, browse tables and rows, run SQL.
 
 
     var db = function db() {
       body.innerHTML = '';
-      body.style.display = 'flex';
-      body.style.flexDirection = 'column';
-      var url = '/dbgate/';
-      body.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
-        "class": 'wsrv-quick'
-      }, Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('b', {}, 'DbGate'), Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('span', {
-        i18n: 'server.dbMgrHint'
-      }), Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["button"])({
-        i18n: 'server.dbOpenTab'
-      }, function () {
-        return window.open(url, '_blank');
-      })));
-      var fr = Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('iframe', {
-        "class": 'wsrv-frame'
+      body.style.display = '';
+      body.style.flexDirection = '';
+      _api_js__WEBPACK_IMPORTED_MODULE_3__["api"].get('server/db').then(function (d) {
+        if (!d.available) return hint([{
+          key: 'postgresql',
+          label: 'PostgreSQL'
+        }, {
+          key: 'mariadb',
+          label: 'MariaDB'
+        }], db);
+        var engines = ['postgres', 'mysql'].filter(function (e) {
+          return d[e];
+        });
+        var engSel = select(engines, engines[0]);
+        var dbSel = Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('select', {
+          "class": 'webos-input'
+        });
+        var nm = inp('server.dbName', '120px');
+        var view = Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div');
+
+        var fillDbs = function fillDbs() {
+          dbSel.innerHTML = '';
+          (d[engSel.value] || []).forEach(function (x) {
+            return dbSel.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('option', {
+              value: x.name
+            }, x.name));
+          });
+        };
+
+        var dataTable = function dataTable(data) {
+          var wrap = Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
+            "class": 'wsrv-grid'
+          });
+
+          if (!data.cols.length) {
+            wrap.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
+              "class": 'wsrv-hint',
+              i18n: 'server.dbEmpty'
+            }));
+            return wrap;
+          }
+
+          wrap.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["table"])(data.cols, data.rows));
+
+          if (data.truncated) {
+            wrap.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
+              "class": 'wsrv-hint',
+              i18n: 'server.dbTruncated'
+            }));
+          }
+
+          return wrap;
+        };
+
+        var showRows = function showRows(tableName) {
+          view.innerHTML = '';
+          view.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
+            "class": 'wsrv-quick'
+          }, mini('‹ ' + t('server.dbBack'), showTables), Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('b', {}, "".concat(dbSel.value, " \u203A ").concat(tableName))));
+          call('db', {
+            op: 'rows',
+            engine: engSel.value,
+            name: dbSel.value,
+            table: tableName
+          }, function (res) {
+            return view.appendChild(dataTable(res));
+          });
+        };
+
+        var showTables = function showTables() {
+          view.innerHTML = '';
+          var dbname = dbSel.value;
+          if (!dbname) return;
+          call('db', {
+            op: 'tables',
+            engine: engSel.value,
+            name: dbname
+          }, function (r) {
+            view.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
+              "class": 'wsrv-h'
+            }, "".concat(dbname, " \u2014 ").concat(r.tables.length, " ").concat(t('server.dbTables'))));
+            view.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["table"])([{
+              i18n: 'server.dbTable'
+            }, ''], r.tables.map(function (x) {
+              return [x, Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('span', {}, mini(t('server.dbBrowse'), function () {
+                return showRows(x);
+              }), ' ', mini('✕', function () {
+                return confirmDanger("".concat(t('server.dbDropTable'), " ").concat(x, "?"), function () {
+                  return call('db', {
+                    op: 'table_drop',
+                    engine: engSel.value,
+                    name: dbname,
+                    table: x
+                  }, showTables);
+                });
+              }))];
+            })));
+            var sql = Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('textarea', {
+              "class": 'wsrv-sql',
+              placeholder: 'SELECT * FROM …'
+            });
+            view.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
+              "class": 'wsrv-h',
+              i18n: 'server.dbQuery'
+            }));
+            view.appendChild(sql);
+            view.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
+              style: {
+                marginTop: '6px'
+              }
+            }, Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["button"])({
+              i18n: 'server.dbRun'
+            }, function () {
+              if (sql.value.trim()) {
+                call('db', {
+                  op: 'query',
+                  engine: engSel.value,
+                  db: dbname,
+                  sql: sql.value.trim()
+                }, function (res) {
+                  var old = view.querySelector('.wsrv-grid');
+                  if (old) old.remove();
+
+                  if (res.cols.length) {
+                    view.appendChild(dataTable(res));
+                  }
+                });
+              }
+            })));
+          });
+        };
+
+        fillDbs();
+
+        engSel.onchange = function () {
+          fillDbs();
+          showTables();
+        };
+
+        dbSel.onchange = showTables;
+        body.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
+          "class": 'wsrv-quick'
+        }, Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('span', {
+          i18n: 'server.engine'
+        }), engSel, Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('span', {
+          i18n: 'server.dbName'
+        }), dbSel, nm, Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["button"])({
+          i18n: 'server.create'
+        }, function () {
+          if (nm.value.trim()) {
+            call('db', {
+              op: 'create',
+              engine: engSel.value,
+              name: nm.value.trim()
+            }, db);
+          }
+        }), Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["button"])({
+          i18n: 'server.dbAdvanced'
+        }, function () {
+          return Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["formWindow"])(proc, {
+            title: t('server.dbAdvanced'),
+            fields: [{
+              name: 'engine',
+              label: t('server.engine'),
+              options: engines
+            }, {
+              name: 'name',
+              label: t('server.dbName')
+            }, {
+              name: 'owner',
+              label: t('server.dbOwner'),
+              placeholder: 'postgres'
+            }]
+          }, function (v) {
+            return v && call('db', _objectSpread({
+              op: 'create'
+            }, v), db);
+          });
+        })));
+        engines.forEach(function (e) {
+          body.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
+            "class": 'wsrv-h'
+          }, e));
+          body.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["table"])([{
+            i18n: 'server.dbName'
+          }, {
+            i18n: 'server.dbOwner'
+          }, ''], (d[e] || []).map(function (x) {
+            return [x.name, x.owner || '', Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('span', {}, mini('▸', function () {
+              engSel.value = e;
+              fillDbs();
+              dbSel.value = x.name;
+              showTables();
+            }), ' ', mini('✕', function () {
+              return confirmDanger("".concat(t('server.dropDb'), " ").concat(x.name, " (").concat(e, ")?"), function () {
+                return call('db', {
+                  op: 'drop',
+                  engine: e,
+                  name: x.name
+                }, db);
+              });
+            }))];
+          })));
+        });
+        body.appendChild(view);
+        ['postgres_error', 'mysql_error'].forEach(function (k) {
+          if (d[k]) {
+            body.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
+              "class": 'wsrv-hint'
+            }, "".concat(k, ": ").concat(d[k])));
+          }
+        });
+        showTables();
+      })["catch"](function (e) {
+        return sb.error(e.message);
       });
-      fr.src = url;
-      body.appendChild(fr);
     }; // ---------------------------------------------------------------- shares
 
 

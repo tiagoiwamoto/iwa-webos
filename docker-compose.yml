@@ -31,36 +31,5 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - webos-apps:/srv/webos-apps
 
-  # DbGate — unified database manager (PostgreSQL, MariaDB, MongoDB,
-  # Redis, SQLite, MSSQL…) embedded in the Databases app via iframe.
-  # NOT published on the host: reachable only through the authenticated
-  # OS.js proxy at /dbgate/, so the OS login is the only login needed.
-  dbgate:
-    image: dbgate/dbgate
-    container_name: webos-dbgate
-    restart: unless-stopped
-    volumes:
-      - dbgate-data:/root/.dbgate
-    environment:
-      WEB_ROOT: /dbgate
-      # auth is enforced by the webos-web proxy (OS.js session)
-      SKIP_ALL_AUTH: "1"
-      # preconfigured connections — 'webos' resolves to the webos
-      # service container on the compose network
-      CONNECTIONS: postgres,mariadb
-      LABEL_postgres: PostgreSQL
-      SERVER_postgres: webos
-      PORT_postgres: 5432
-      USER_postgres: postgres
-      PASSWORD_postgres: ${WEBOS_PASSWORD:-webos}
-      ENGINE_postgres: postgres@dbgate-plugin-postgres
-      LABEL_mariadb: MariaDB
-      SERVER_mariadb: webos
-      PORT_mariadb: 3306
-      USER_mariadb: webos
-      PASSWORD_mariadb: ${WEBOS_PASSWORD:-webos}
-      ENGINE_mariadb: mysql@dbgate-plugin-mysql
-
 volumes:
   webos-apps:
-  dbgate-data:

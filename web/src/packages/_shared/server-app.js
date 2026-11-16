@@ -29,8 +29,14 @@ css('webos-server-apps', `
   .wsrv-pre { margin: 8px 0; padding: 10px; background: #17191f; border-radius: 4px;
     white-space: pre-wrap; font-size: 11px; color: #cde; max-height: 220px;
     overflow: auto; user-select: text; }
-  .wsrv-frame { flex: 1 1 auto; width: 100%; border: 0; margin-top: 8px;
-    border-radius: 6px; background: #fff; }
+  .wsrv-sql { width: 100%; box-sizing: border-box; min-height: 64px;
+    background: #17191f; color: #cde; border: 1px solid #3a3f4b;
+    border-radius: 4px; font-family: monospace; font-size: 12px;
+    padding: 6px 8px; resize: vertical; }
+  .wsrv-grid { overflow: auto; max-height: 340px; margin-top: 8px; }
+  .wsrv-grid .webos-table { margin-top: 0; }
+  .wsrv-grid td { max-width: 240px; overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap; }
 `);
 
 export const serverApp = (sectionId, dims) =>
@@ -327,20 +333,142 @@ export const serverApp = (sectionId, dims) =>
     };
 
     // -------------------------------------------------------------- databases
-    // DbGate sidecar proxied same-origin through the authenticated
-    // /dbgate route — the OS.js session is the only login needed.
+    // Mini database manager served by the agent itself (psql/mysql CLIs):
+    // pick engine + database, browse tables and rows, run SQL.
     const db = () => {
       body.innerHTML = '';
-      body.style.display = 'flex';
-      body.style.flexDirection = 'column';
-      const url = '/dbgate/';
-      body.appendChild(el('div', {class: 'wsrv-quick'},
-        el('b', {}, 'DbGate'),
-        el('span', {i18n: 'server.dbMgrHint'}),
-        button({i18n: 'server.dbOpenTab'}, () => window.open(url, '_blank'))));
-      const fr = el('iframe', {class: 'wsrv-frame'});
-      fr.src = url;
-      body.appendChild(fr);
+      body.style.display = '';
+      body.style.flexDirection = '';
+      api.get('server/db').then(d => {
+        if (!d.available) return hint([
+          {key: 'postgresql', label: 'PostgreSQL'},
+          {key: 'mariadb', label: 'MariaDB'}], db);
+        const engines = ['postgres', 'mysql'].filter(e => d[e]);
+        const engSel = select(engines, engines[0]);
+        const dbSel = el('select', {class: 'webos-input'});
+        const nm = inp('server.dbName', '120px');
+        const view = el('div');
+
+        const fillDbs = () => {
+          dbSel.innerHTML = '';
+          (d[engSel.value] || []).forEach(x =>
+            dbSel.appendChild(el('option', {value: x.name}, x.name)));
+        };
+
+        const dataTable = data => {
+          const wrap = el('div', {class: 'wsrv-grid'});
+          if (!data.cols.length) {
+            wrap.appendChild(el('div', {class: 'wsrv-hint',
+              i18n: 'server.dbEmpty'}));
+            return wrap;
+          }
+          wrap.appendChild(table(data.cols, data.rows));
+          if (data.truncated) {
+            wrap.appendChild(el('div', {class: 'wsrv-hint',
+              i18n: 'server.dbTruncated'}));
+          }
+          return wrap;
+        };
+
+        const showRows = tableName => {
+          view.innerHTML = '';
+          view.appendChild(el('div', {class: 'wsrv-quick'},
+            mini('‹ ' + t('server.dbBack'), showTables),
+            el('b', {}, `${dbSel.value} › ${tableName}`)));
+          call('db', {op: 'rows', engine: engSel.value, name: dbSel.value,
+            table: tableName}, res => view.appendChild(dataTable(res)));
+        };
+
+        const showTables = () => {
+          view.innerHTML = '';
+          const dbname = dbSel.value;
+          if (!dbname) return;
+          call('db', {op: 'tables', engine: engSel.value, name: dbname},
+            r => {
+              view.appendChild(el('div', {class: 'wsrv-h'},
+                `${dbname} — ${r.tables.length} ${t('server.dbTables')}`));
+              view.appendChild(table(
+                [{i18n: 'server.dbTable'}, ''],
+                r.tables.map(x => [
+                  x,
+                  el('span', {},
+                    mini(t('server.dbBrowse'), () => showRows(x)),
+                    ' ',
+                    mini('✕', () => confirmDanger(
+                      `${t('server.dbDropTable')} ${x}?`,
+                      () => call('db', {op: 'table_drop',
+                        engine: engSel.value, name: dbname, table: x},
+                        showTables))))])));
+              const sql = el('textarea', {class: 'wsrv-sql',
+                placeholder: 'SELECT * FROM …'});
+              view.appendChild(el('div', {class: 'wsrv-h',
+                i18n: 'server.dbQuery'}));
+              view.appendChild(sql);
+              view.appendChild(el('div', {style: {marginTop: '6px'}},
+                button({i18n: 'server.dbRun'}, () => {
+                  if (sql.value.trim()) {
+                    call('db', {op: 'query', engine: engSel.value,
+                      db: dbname, sql: sql.value.trim()}, res => {
+                      const old = view.querySelector('.wsrv-grid');
+                      if (old) old.remove();
+                      if (res.cols.length) {
+                        view.appendChild(dataTable(res));
+                      }
+                    });
+                  }
+                })));
+            });
+        };
+
+        fillDbs();
+        engSel.onchange = () => { fillDbs(); showTables(); };
+        dbSel.onchange = showTables;
+
+        body.appendChild(el('div', {class: 'wsrv-quick'},
+          el('span', {i18n: 'server.engine'}), engSel,
+          el('span', {i18n: 'server.dbName'}), dbSel, nm,
+          button({i18n: 'server.create'}, () => {
+            if (nm.value.trim()) {
+              call('db', {op: 'create', engine: engSel.value,
+                name: nm.value.trim()}, db);
+            }
+          }),
+          button({i18n: 'server.dbAdvanced'}, () => formWindow(proc, {
+            title: t('server.dbAdvanced'),
+            fields: [
+              {name: 'engine', label: t('server.engine'),
+                options: engines},
+              {name: 'name', label: t('server.dbName')},
+              {name: 'owner', label: t('server.dbOwner'),
+                placeholder: 'postgres'}]
+          }, v => v && call('db', {op: 'create', ...v}, db)))));
+        engines.forEach(e => {
+          body.appendChild(el('div', {class: 'wsrv-h'}, e));
+          body.appendChild(table(
+            [{i18n: 'server.dbName'}, {i18n: 'server.dbOwner'}, ''],
+            (d[e] || []).map(x => [
+              x.name, x.owner || '',
+              el('span', {},
+                mini('▸', () => {
+                  engSel.value = e;
+                  fillDbs();
+                  dbSel.value = x.name;
+                  showTables();
+                }),
+                ' ',
+                mini('✕', () => confirmDanger(
+                  `${t('server.dropDb')} ${x.name} (${e})?`,
+                  () => call('db', {op: 'drop', engine: e, name: x.name},
+                    db))))])));
+        });
+        body.appendChild(view);
+        ['postgres_error', 'mysql_error'].forEach(k => {
+          if (d[k]) {
+            body.appendChild(el('div', {class: 'wsrv-hint'}, `${k}: ${d[k]}`));
+          }
+        });
+        showTables();
+      }).catch(e => sb.error(e.message));
     };
 
     // ---------------------------------------------------------------- shares

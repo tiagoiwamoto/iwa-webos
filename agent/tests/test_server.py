@@ -389,7 +389,7 @@ def test_db_create_drop_postgres(client, fake):
 def test_db_create_mysql(client, fake):
     assert client.post("/api/server/db", json={
         "op": "create", "engine": "mysql", "name": "shop"}).is_success
-    assert fake.called("mysql", "-e", "CREATE DATABASE `shop`")
+    assert fake.called("mysql", "-B", "-e", "CREATE DATABASE `shop`")
 
 
 def test_db_name_validated(client, fake):
@@ -400,10 +400,77 @@ def test_db_name_validated(client, fake):
 
 
 def test_db_failure_is_500(client, fake):
-    fake.add(("mysql", "-e"), rc=1, err="access denied")
+    fake.add(("mysql", "-B", "-e"), rc=1, err="access denied")
     r = client.post("/api/server/db", json={
         "op": "create", "engine": "mysql", "name": "x"})
     assert r.status_code == 500 and "access denied" in r.json()["detail"]
+
+
+def test_db_tables_postgres(client, fake):
+    fake.add(("runuser", "-u", "postgres"),
+             out="t\npublic.users\npublic.orders\n")
+    r = client.post("/api/server/db", json={
+        "op": "tables", "engine": "postgres", "name": "app"})
+    assert r.is_success
+    assert r.json()["tables"] == ["public.users", "public.orders"]
+
+
+def test_db_tables_mysql(client, fake):
+    fake.add(("mysql", "-B", "-e"), out="table_name\nusers\norders\n")
+    r = client.post("/api/server/db", json={
+        "op": "tables", "engine": "mysql", "name": "shop"})
+    assert r.is_success
+    assert r.json()["tables"] == ["users", "orders"]
+
+
+def test_db_rows_quotes_schema_table(client, fake):
+    fake.add(("runuser", "-u", "postgres"), out="id\tname\n1\tbob\n2\tal\n")
+    r = client.post("/api/server/db", json={
+        "op": "rows", "engine": "postgres", "name": "app",
+        "table": "public.users"})
+    assert r.is_success
+    d = r.json()
+    assert d["cols"] == ["id", "name"]
+    assert d["rows"] == [["1", "bob"], ["2", "al"]]
+    assert fake.called("runuser", "-u", "postgres", "--", "psql", "-d",
+                       "app", "-A", "-F", "\t", "--pset", "footer=off",
+                       "-c", 'SELECT * FROM "public"."users" LIMIT 500')
+
+
+def test_db_rows_rejects_bad_table(client, fake):
+    for table in ("x;drop", "a b", "a.b.c", "`x`"):
+        assert client.post("/api/server/db", json={
+            "op": "rows", "engine": "mysql", "name": "shop",
+            "table": table}).status_code == 400, table
+
+
+def test_db_query_returns_result_grid(client, fake):
+    fake.add(("mysql", "-B", "-e"), out="n\n3\n")
+    r = client.post("/api/server/db", json={
+        "op": "query", "engine": "mysql", "db": "shop",
+        "sql": "select count(*) n from users"})
+    assert r.is_success
+    assert r.json()["cols"] == ["n"] and r.json()["rows"] == [["3"]]
+    assert fake.called("mysql", "-B", "-e",
+                       "select count(*) n from users", "shop")
+
+
+def test_db_query_requires_sql(client, fake):
+    assert client.post("/api/server/db", json={
+        "op": "query", "engine": "mysql", "db": "shop",
+        "sql": "  "}).status_code == 400
+
+
+def test_db_table_drop(client, fake):
+    assert client.post("/api/server/db", json={
+        "op": "table_drop", "engine": "mysql", "name": "shop",
+        "table": "tmp"}).is_success
+    assert fake.called("mysql", "-B", "-e", "DROP TABLE `tmp`", "shop")
+
+
+def test_db_bad_engine(client, fake):
+    assert client.post("/api/server/db", json={
+        "op": "tables", "engine": "oracle", "name": "x"}).status_code == 400
 
 
 # --------------------------------------------------------------------------
