@@ -80,7 +80,7 @@ if (src.includes('type":"gallery"') || src.includes('type:"gallery"')) {
 const renderAnchor = ',fallback:function(t){return function(e,n){return f(G';
 const galleryRenderer = ',gallery:function(t){return function(e,n){' +
   'var dir="host:/home/images";' +
-  'var PER=10,page=0;' +
+  'var PER=4,page=0;' +
   'var sel=t.value&&(t.value.path||t.value);' +
   'var draw=function(box,imgs){' +
     'box.querySelectorAll(".webos-wallpaper-thumb,' +
