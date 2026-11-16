@@ -15,6 +15,8 @@ alternativa à UI tradicional de Cockpit/CasaOS/Webmin.
 
 ## Screenshots
 
+![Demo](docs/screenshots/demo.gif)
+
 ![Login](docs/screenshots/01-login.png)
 
 ![Desktop](docs/screenshots/02-desktop.png)
@@ -143,7 +145,7 @@ PID 1 (`privileged`, `tmpfs /run`) sobe as mesmas unidades mais
 
 | App | O que faz | Via |
 |---|---|---|
-| Files | Navega o filesystem real (`host:/` = `/`) | VFS do OS.js |
+| Files | Gerenciador estilo Dolphin: breadcrumb, sidebar de locais com discos (montar/desmontar) e favoritos, recortar/copiar/colar, upload/download, visões lista e ícones | VFS do OS.js + agente `disks` |
 | Terminal | Shell multi-abas — cada aba = 1 WS + 1 PTY com `setuid` para o usuário da sessão | agente `/ws/terminal` |
 | Tasks | Lista processos, sinal TERM/KILL/INT (protege PID1/agente) | agente `/api/processes` |
 | Services | Unidades systemd: start/stop/enable/status | `systemctl` |

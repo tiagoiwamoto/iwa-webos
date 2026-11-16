@@ -16,6 +16,8 @@ an alternative to traditional Cockpit/CasaOS/Webmin UIs.
 
 ## Screenshots
 
+![Demo](docs/screenshots/demo.gif)
+
 ![Login](docs/screenshots/01-login.png)
 
 ![Desktop](docs/screenshots/02-desktop.png)
@@ -146,7 +148,7 @@ user).
 
 | App | What it does | Via |
 |---|---|---|
-| Files | Browses the real filesystem (`host:/` = `/`) | OS.js VFS |
+| Files | Dolphin-like manager: breadcrumb, places sidebar with block devices (mount/unmount) and favorites, cut/copy/paste, upload/download, list & icon views | OS.js VFS + agent `disks` |
 | Terminal | Multi-tab shell — each tab = 1 WS + 1 PTY with `setuid` to the session user | agent `/ws/terminal` |
 | Tasks | Lists processes, TERM/KILL/INT signals (protects PID1/agent) | agent `/api/processes` |
 | Services | systemd units: start/stop/enable/status | `systemctl` |
