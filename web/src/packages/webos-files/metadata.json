@@ -1,0 +1,9 @@
+{
+  "type": "application",
+  "name": "WebOSFiles",
+  "category": "utilities",
+  "title": {"en_EN": "Files", "pt_BR": "Arquivos"},
+  "description": {"en_EN": "File manager with disks and favorites", "pt_BR": "Gerenciador de arquivos com discos e favoritos"},
+  "files": ["main.js"],
+  "mimes": ["inode/directory"]
+}

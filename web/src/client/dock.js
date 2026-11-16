@@ -12,7 +12,7 @@ const ITEMS = [
   {name: 'WebOSStore', glyph: '\u{1F6D2}', icon: 'system-software-install', label: 'App Store'},
   {name: 'WebOSDisks', glyph: '\u{1F4BD}', icon: 'drive-harddisk', label: 'Disks'},
   {name: 'WebOSUsers', glyph: '\u{1F464}', icon: 'system-users', label: 'Users'},
-  {name: 'FileManager', glyph: '\u{1F4C1}', icon: 'system-file-manager', label: 'Files'},
+  {name: 'WebOSFiles', glyph: '\u{1F4C1}', icon: 'system-file-manager', label: 'Files'},
   {name: 'WebOSEditor', glyph: '\u{1F4DD}', icon: 'text-editor', label: 'Editor'},
   {name: 'WebOSSysInfo', glyph: '\u{1F4CA}', icon: 'utilities-system-monitor', label: 'System'},
   {name: 'WebOSLogs', glyph: '\u{1F4DC}', icon: 'text-x-generic', label: 'Logs'},
