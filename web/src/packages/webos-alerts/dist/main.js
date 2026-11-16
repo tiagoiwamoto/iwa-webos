@@ -4387,16 +4387,15 @@ var serverApp = function serverApp(sectionId, dims) {
         return sb.error(e.message);
       });
     }; // -------------------------------------------------------------- databases
-    // DbGate runs as a sidecar container (docker-compose `dbgate` service,
-    // port ${DBGATE_PORT:-3000}) and gives a full unified manager:
-    // PostgreSQL, MariaDB/MySQL, MongoDB, Redis, SQLite, MSSQL…
+    // DbGate sidecar proxied same-origin through the authenticated
+    // /dbgate route — the OS.js session is the only login needed.
 
 
     var db = function db() {
       body.innerHTML = '';
       body.style.display = 'flex';
       body.style.flexDirection = 'column';
-      var url = "".concat(location.protocol, "//").concat(location.hostname, ":3000");
+      var url = '/dbgate/';
       body.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
         "class": 'wsrv-quick'
       }, Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('b', {}, 'DbGate'), Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('span', {

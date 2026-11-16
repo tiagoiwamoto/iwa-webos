@@ -14,7 +14,9 @@ for conf in /etc/postgresql/*/main/postgresql.conf; do
 done
 for hba in /etc/postgresql/*/main/pg_hba.conf; do
   [ -f "$hba" ] || continue
-  grep -q 'samenet' "$hba" \
+  # match an uncommented rule only — the stock file mentions samenet
+  # in a comment
+  grep -qE '^[^#]*samenet' "$hba" \
     || echo 'host all all samenet scram-sha-256' >> "$hba"
 done
 

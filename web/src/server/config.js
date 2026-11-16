@@ -65,7 +65,10 @@ module.exports = {
     agent: process.env.WEBOS_AGENT_URL || 'http://127.0.0.1:8765',
     agentWs: process.env.WEBOS_AGENT_WS || 'ws://127.0.0.1:8765',
     token: process.env.WEBOS_TOKEN || 'changeme',
-    authMode: process.env.WEBOS_AUTH || 'null'
+    authMode: process.env.WEBOS_AUTH || 'null',
+    // DbGate sidecar (compose service name); never published directly —
+    // reached only through the authenticated /dbgate proxy below
+    dbgate: process.env.WEBOS_DBGATE_URL || 'http://dbgate:3000'
   },
 
   // NOTE: mountpoints are merged with the defaults (osjs + home), so only

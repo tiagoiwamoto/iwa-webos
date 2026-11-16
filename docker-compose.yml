@@ -33,18 +33,18 @@ services:
 
   # DbGate — unified database manager (PostgreSQL, MariaDB, MongoDB,
   # Redis, SQLite, MSSQL…) embedded in the Databases app via iframe.
+  # NOT published on the host: reachable only through the authenticated
+  # OS.js proxy at /dbgate/, so the OS login is the only login needed.
   dbgate:
     image: dbgate/dbgate
     container_name: webos-dbgate
     restart: unless-stopped
-    ports:
-      - "${DBGATE_PORT:-3000}:3000"
     volumes:
       - dbgate-data:/root/.dbgate
     environment:
-      # web login (uses the same demo credentials as the OS login)
-      LOGIN: ${WEBOS_USER:-webos}
-      PASSWORD: ${WEBOS_PASSWORD:-webos}
+      WEB_ROOT: /dbgate
+      # auth is enforced by the webos-web proxy (OS.js session)
+      SKIP_ALL_AUTH: "1"
       # preconfigured connections — 'webos' resolves to the webos
       # service container on the compose network
       CONNECTIONS: postgres,mariadb
