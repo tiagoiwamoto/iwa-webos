@@ -2835,6 +2835,8 @@ registerDict('server', {
     dbQuick: 'New database:',
     dbName: 'Name',
     dbAdvanced: 'Advanced…',
+    dbMgrHint: 'unified manager — PostgreSQL, MariaDB, MongoDB & more',
+    dbOpenTab: 'Open in new tab',
     engine: 'Engine',
     dbOwner: 'Owner',
     dropDb: 'Drop database',
@@ -2959,6 +2961,8 @@ registerDict('server', {
     dbQuick: 'Novo banco:',
     dbName: 'Nome',
     dbAdvanced: 'Avançado…',
+    dbMgrHint: 'gerenciador unificado — PostgreSQL, MariaDB, MongoDB e mais',
+    dbOpenTab: 'Abrir em nova aba',
     engine: 'Motor',
     dbOwner: 'Dono',
     dropDb: 'Apagar banco',
@@ -3083,6 +3087,8 @@ registerDict('server', {
     dbQuick: 'Nova base de dados:',
     dbName: 'Nome',
     dbAdvanced: 'Avançado…',
+    dbMgrHint: 'gestor unificado — PostgreSQL, MariaDB, MongoDB e mais',
+    dbOpenTab: 'Abrir num novo separador',
     engine: 'Motor',
     dbOwner: 'Dono',
     dropDb: 'Eliminar base de dados',
@@ -3207,6 +3213,8 @@ registerDict('server', {
     dbQuick: 'Nueva base de datos:',
     dbName: 'Nombre',
     dbAdvanced: 'Avanzado…',
+    dbMgrHint: 'gestor unificado — PostgreSQL, MariaDB, MongoDB y más',
+    dbOpenTab: 'Abrir en nueva pestaña',
     engine: 'Motor',
     dbOwner: 'Dueño',
     dropDb: 'Eliminar base de datos',
@@ -3331,6 +3339,8 @@ registerDict('server', {
     dbQuick: '新規データベース:',
     dbName: '名前',
     dbAdvanced: '詳細…',
+    dbMgrHint: '統合マネージャー — PostgreSQL、MariaDB、MongoDB など',
+    dbOpenTab: '新しいタブで開く',
     engine: 'エンジン',
     dbOwner: '所有者',
     dropDb: 'データベースを削除',
@@ -3455,6 +3465,8 @@ registerDict('server', {
     dbQuick: '新建数据库:',
     dbName: '名称',
     dbAdvanced: '高级…',
+    dbMgrHint: '统一管理器 — PostgreSQL、MariaDB、MongoDB 等',
+    dbOpenTab: '在新标签页中打开',
     engine: '引擎',
     dbOwner: '所有者',
     dropDb: '删除数据库',
@@ -3759,7 +3771,7 @@ function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { va
 
 
 
-Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["css"])('webos-server-apps', "\n  .wsrv-wrap { display: flex; height: 100%; width: 100%; font-family: sans-serif;\n    font-size: 13px; background: #20232a; color: #e8e8e8; }\n  .wsrv-main { flex: 1 1 auto; display: flex; flex-direction: column; min-width: 0; }\n  .wsrv-body { flex: 1 1 auto; overflow: auto; padding: 8px 10px; }\n  .wsrv-body .webos-table { margin-top: 8px; }\n  .wsrv-quick { display: flex; gap: 6px; align-items: center; flex-wrap: wrap;\n    padding: 6px 8px; background: #2a2e37; border-radius: 4px; }\n  .wsrv-h { margin: 10px 0 4px; color: #9ab; font-size: 12px;\n    text-transform: uppercase; letter-spacing: .4px; }\n  .wsrv-hint { padding: 18px; color: #9ab; }\n  .wsrv-kv { display: inline-flex; gap: 4px 14px; flex-wrap: wrap; color: #bbc;\n    font-size: 12px; padding: 4px 0; }\n  .wsrv-kv b { color: #9ab; font-weight: 600; }\n  .wsrv-mini { padding: 1px 7px; font-size: 11px; }\n  .wsrv-pre { margin: 8px 0; padding: 10px; background: #17191f; border-radius: 4px;\n    white-space: pre-wrap; font-size: 11px; color: #cde; max-height: 220px;\n    overflow: auto; user-select: text; }\n");
+Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["css"])('webos-server-apps', "\n  .wsrv-wrap { display: flex; height: 100%; width: 100%; font-family: sans-serif;\n    font-size: 13px; background: #20232a; color: #e8e8e8; }\n  .wsrv-main { flex: 1 1 auto; display: flex; flex-direction: column; min-width: 0; }\n  .wsrv-body { flex: 1 1 auto; overflow: auto; padding: 8px 10px; }\n  .wsrv-body .webos-table { margin-top: 8px; }\n  .wsrv-quick { display: flex; gap: 6px; align-items: center; flex-wrap: wrap;\n    padding: 6px 8px; background: #2a2e37; border-radius: 4px; }\n  .wsrv-h { margin: 10px 0 4px; color: #9ab; font-size: 12px;\n    text-transform: uppercase; letter-spacing: .4px; }\n  .wsrv-hint { padding: 18px; color: #9ab; }\n  .wsrv-kv { display: inline-flex; gap: 4px 14px; flex-wrap: wrap; color: #bbc;\n    font-size: 12px; padding: 4px 0; }\n  .wsrv-kv b { color: #9ab; font-weight: 600; }\n  .wsrv-mini { padding: 1px 7px; font-size: 11px; }\n  .wsrv-pre { margin: 8px 0; padding: 10px; background: #17191f; border-radius: 4px;\n    white-space: pre-wrap; font-size: 11px; color: #cde; max-height: 220px;\n    overflow: auto; user-select: text; }\n  .wsrv-frame { flex: 1 1 auto; width: 100%; border: 0; margin-top: 8px;\n    border-radius: 6px; background: #fff; }\n");
 var serverApp = function serverApp(sectionId, dims) {
   return function (core, args, options, metadata) {
     var proc = core.make('osjs/application', {
@@ -4375,90 +4387,30 @@ var serverApp = function serverApp(sectionId, dims) {
         return sb.error(e.message);
       });
     }; // -------------------------------------------------------------- databases
+    // DbGate runs as a sidecar container (docker-compose `dbgate` service,
+    // port ${DBGATE_PORT:-3000}) and gives a full unified manager:
+    // PostgreSQL, MariaDB/MySQL, MongoDB, Redis, SQLite, MSSQL…
 
 
     var db = function db() {
       body.innerHTML = '';
-      _api_js__WEBPACK_IMPORTED_MODULE_3__["api"].get('server/db').then(function (d) {
-        if (!d.available) return hint([{
-          key: 'postgresql',
-          label: 'PostgreSQL'
-        }, {
-          key: 'mariadb',
-          label: 'MariaDB'
-        }], db);
-        var engines = ['postgres', 'mysql'].filter(function (e) {
-          return d[e];
-        });
-        var eng = select(engines, engines[0]);
-        var nm = inp('server.dbName', '140px');
-        body.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
-          "class": 'wsrv-quick'
-        }, Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('span', {
-          i18n: 'server.dbQuick'
-        }), eng, nm, Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["button"])({
-          i18n: 'server.create'
-        }, function () {
-          if (nm.value.trim()) {
-            call('db', {
-              op: 'create',
-              engine: eng.value,
-              name: nm.value.trim()
-            }, db);
-          }
-        }), Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["button"])({
-          i18n: 'server.dbAdvanced'
-        }, function () {
-          return Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["formWindow"])(proc, {
-            title: t('server.dbAdvanced'),
-            fields: [{
-              name: 'engine',
-              label: t('server.engine'),
-              options: engines
-            }, {
-              name: 'name',
-              label: t('server.dbName')
-            }, {
-              name: 'owner',
-              label: t('server.dbOwner'),
-              placeholder: 'postgres'
-            }]
-          }, function (v) {
-            return v && call('db', _objectSpread({
-              op: 'create'
-            }, v), db);
-          });
-        })));
-        engines.forEach(function (e) {
-          body.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
-            "class": 'wsrv-h'
-          }, e));
-          body.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["table"])([{
-            i18n: 'server.dbName'
-          }, {
-            i18n: 'server.dbOwner'
-          }, ''], (d[e] || []).map(function (x) {
-            return [x.name, x.owner || '', mini('✕', function () {
-              return confirmDanger("".concat(t('server.dropDb'), " ").concat(x.name, " (").concat(e, ")?"), function () {
-                return call('db', {
-                  op: 'drop',
-                  engine: e,
-                  name: x.name
-                }, db);
-              });
-            })];
-          })));
-        });
-        ['postgres_error', 'mysql_error'].forEach(function (k) {
-          if (d[k]) {
-            body.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
-              "class": 'wsrv-hint'
-            }, "".concat(k, ": ").concat(d[k])));
-          }
-        });
-      })["catch"](function (e) {
-        return sb.error(e.message);
+      body.style.display = 'flex';
+      body.style.flexDirection = 'column';
+      var url = "".concat(location.protocol, "//").concat(location.hostname, ":3000");
+      body.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
+        "class": 'wsrv-quick'
+      }, Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('b', {}, 'DbGate'), Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('span', {
+        i18n: 'server.dbMgrHint'
+      }), Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["button"])({
+        i18n: 'server.dbOpenTab'
+      }, function () {
+        return window.open(url, '_blank');
+      })));
+      var fr = Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('iframe', {
+        "class": 'wsrv-frame'
       });
+      fr.src = url;
+      body.appendChild(fr);
     }; // ---------------------------------------------------------------- shares
 
 
@@ -5290,8 +5242,8 @@ var _metadata_json__WEBPACK_IMPORTED_MODULE_1___namespace = /*#__PURE__*/__webpa
 
 
 osjs__WEBPACK_IMPORTED_MODULE_0___default.a.register(_metadata_json__WEBPACK_IMPORTED_MODULE_1__["name"], Object(_shared_server_app_js__WEBPACK_IMPORTED_MODULE_2__["serverApp"])('db', {
-  width: 700,
-  height: 460
+  width: 1100,
+  height: 700
 }));
 
 /***/ }),

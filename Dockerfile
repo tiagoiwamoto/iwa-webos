@@ -54,11 +54,13 @@ RUN cd web && rm -rf dist/apps dist/themes dist/icons dist/sounds \
     && npm run package:discover
 
 COPY deploy/webos-agent.service deploy/webos-web.service /etc/systemd/system/
+COPY deploy/webos-dbsetup.service /etc/systemd/system/
 COPY docker/webos-bootstrap.service /etc/systemd/system/
 COPY docker/webos-bootstrap /usr/local/bin/webos-bootstrap
-RUN chmod +x /usr/local/bin/webos-bootstrap \
+COPY docker/webos-dbsetup /usr/local/bin/webos-dbsetup
+RUN chmod +x /usr/local/bin/webos-bootstrap /usr/local/bin/webos-dbsetup \
     && mkdir -p /srv/webos-apps \
-    && systemctl enable webos-bootstrap webos-agent webos-web
+    && systemctl enable webos-bootstrap webos-dbsetup webos-agent webos-web
 
 EXPOSE 8000
 STOPSIGNAL SIGRTMIN+3

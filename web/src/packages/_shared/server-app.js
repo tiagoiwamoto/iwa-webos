@@ -29,6 +29,8 @@ css('webos-server-apps', `
   .wsrv-pre { margin: 8px 0; padding: 10px; background: #17191f; border-radius: 4px;
     white-space: pre-wrap; font-size: 11px; color: #cde; max-height: 220px;
     overflow: auto; user-select: text; }
+  .wsrv-frame { flex: 1 1 auto; width: 100%; border: 0; margin-top: 8px;
+    border-radius: 6px; background: #fff; }
 `);
 
 export const serverApp = (sectionId, dims) =>
@@ -325,45 +327,21 @@ export const serverApp = (sectionId, dims) =>
     };
 
     // -------------------------------------------------------------- databases
+    // DbGate runs as a sidecar container (docker-compose `dbgate` service,
+    // port ${DBGATE_PORT:-3000}) and gives a full unified manager:
+    // PostgreSQL, MariaDB/MySQL, MongoDB, Redis, SQLite, MSSQL…
     const db = () => {
       body.innerHTML = '';
-      api.get('server/db').then(d => {
-        if (!d.available) return hint([{key: 'postgresql', label: 'PostgreSQL'}, {key: 'mariadb', label: 'MariaDB'}], db);
-        const engines = ['postgres', 'mysql'].filter(e => d[e]);
-        const eng = select(engines, engines[0]);
-        const nm = inp('server.dbName', '140px');
-        body.appendChild(el('div', {class: 'wsrv-quick'},
-          el('span', {i18n: 'server.dbQuick'}), eng, nm,
-          button({i18n: 'server.create'}, () => {
-            if (nm.value.trim()) {
-              call('db', {op: 'create', engine: eng.value,
-                name: nm.value.trim()}, db);
-            }
-          }),
-          button({i18n: 'server.dbAdvanced'}, () => formWindow(proc, {
-            title: t('server.dbAdvanced'),
-            fields: [
-              {name: 'engine', label: t('server.engine'),
-                options: engines},
-              {name: 'name', label: t('server.dbName')},
-              {name: 'owner', label: t('server.dbOwner'),
-                placeholder: 'postgres'}]
-          }, v => v && call('db', {op: 'create', ...v}, db)))));
-        engines.forEach(e => {
-          body.appendChild(el('div', {class: 'wsrv-h'}, e));
-          body.appendChild(table(
-            [{i18n: 'server.dbName'}, {i18n: 'server.dbOwner'}, ''],
-            (d[e] || []).map(x => [x.name, x.owner || '',
-              mini('✕', () => confirmDanger(
-                `${t('server.dropDb')} ${x.name} (${e})?`,
-                () => call('db', {op: 'drop', engine: e, name: x.name}, db)))])));
-        });
-        ['postgres_error', 'mysql_error'].forEach(k => {
-          if (d[k]) {
-            body.appendChild(el('div', {class: 'wsrv-hint'}, `${k}: ${d[k]}`));
-          }
-        });
-      }).catch(e => sb.error(e.message));
+      body.style.display = 'flex';
+      body.style.flexDirection = 'column';
+      const url = `${location.protocol}//${location.hostname}:3000`;
+      body.appendChild(el('div', {class: 'wsrv-quick'},
+        el('b', {}, 'DbGate'),
+        el('span', {i18n: 'server.dbMgrHint'}),
+        button({i18n: 'server.dbOpenTab'}, () => window.open(url, '_blank'))));
+      const fr = el('iframe', {class: 'wsrv-frame'});
+      fr.src = url;
+      body.appendChild(fr);
     };
 
     // ---------------------------------------------------------------- shares

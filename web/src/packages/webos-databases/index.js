@@ -3,4 +3,4 @@ import {name as applicationName} from './metadata.json';
 import {serverApp} from '../_shared/server-app.js';
 
 osjs.register(applicationName, serverApp('db',
-  {width: 700, height: 460}));
+  {width: 1100, height: 700}));
