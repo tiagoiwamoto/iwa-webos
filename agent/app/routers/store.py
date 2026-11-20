@@ -14,6 +14,7 @@ from pathlib import Path
 
 import requests
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import FileResponse
 
 from ..main import run
 
@@ -113,7 +114,8 @@ def list_apps(category: str | None = None, q: str | None = None):
 def app_detail(app_id: str):
     app = _find(app_id)
     out = dict(app)
-    out["icon"] = _abs(app.get("icon") or "")
+    out["icon"] = (app.get("icon") or "") if app.get("local") \
+        else _abs(app.get("icon") or "")
     meta = app.get("meta_url")
     if meta:
         try:
@@ -121,6 +123,22 @@ def app_detail(app_id: str):
         except requests.RequestException:
             out["meta"] = None
     return out
+
+
+@router.get("/icon/{app_id}")
+def icon(app_id: str):
+    """Bundled-app icon, served through the OS.js auth proxy."""
+    if not _ID.match(app_id):
+        raise HTTPException(400, "invalid app id")
+    app = _find(app_id)
+    if not app.get("local"):
+        raise HTTPException(404, "not a local app")
+    d = LOCAL_STORE / str(app.get("dir") or app_id)
+    for name in ("icon.svg", "icon.png", "icon.jpg"):
+        f = d / name
+        if f.is_file():
+            return FileResponse(f)
+    raise HTTPException(404, "no icon")
 
 
 @router.post("/install")
