@@ -1,0 +1,30 @@
+services:
+  ghost:
+    image: ghost:5
+    restart: unless-stopped
+    ports:
+      - "8105:2368"
+    environment:
+      url: http://localhost:8105
+      database__client: mysql
+      database__connection__host: db
+      database__connection__user: ghost
+      database__connection__password: ghost
+      database__connection__database: ghost
+    volumes:
+      - data:/var/lib/ghost/content
+    depends_on:
+      - db
+  db:
+    image: mysql:8
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: webos-root
+      MYSQL_DATABASE: ghost
+      MYSQL_USER: ghost
+      MYSQL_PASSWORD: ghost
+    volumes:
+      - db:/var/lib/mysql
+volumes:
+  data:
+  db:

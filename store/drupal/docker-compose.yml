@@ -1,0 +1,23 @@
+services:
+  drupal:
+    image: drupal:apache
+    restart: unless-stopped
+    ports:
+      - "8107:80"
+    volumes:
+      - data:/var/www/html
+    depends_on:
+      - db
+  db:
+    image: mariadb:11
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: webos-root
+      MYSQL_DATABASE: drupal
+      MYSQL_USER: drupal
+      MYSQL_PASSWORD: drupal
+    volumes:
+      - db:/var/lib/mysql
+volumes:
+  data:
+  db:

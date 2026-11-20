@@ -1,0 +1,25 @@
+services:
+  smf:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8103:80"
+    environment:
+      APP_URL: https://download.simplemachines.org/index.php/smf_2-1-8_install.zip
+    volumes:
+      - data:/var/www/html
+    depends_on:
+      - db
+  db:
+    image: mariadb:11
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: webos-root
+      MYSQL_DATABASE: smf
+      MYSQL_USER: smf
+      MYSQL_PASSWORD: smf
+    volumes:
+      - db:/var/lib/mysql
+volumes:
+  data:
+  db:

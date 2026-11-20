@@ -1,0 +1,10 @@
+services:
+  kanboard:
+    image: kanboard/kanboard:latest
+    restart: unless-stopped
+    ports:
+      - "8111:80"
+    volumes:
+      - data:/var/www/app/data
+volumes:
+  data:

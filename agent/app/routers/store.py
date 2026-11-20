@@ -5,6 +5,7 @@ Layout: /srv/webos-apps/<appid>/docker-compose.yml, deployed as compose
 project 'webos-app-<appid>'.
 """
 
+import json
 import os
 import re
 import shutil
@@ -22,22 +23,48 @@ STORE_URL = os.environ.get(
     "WEBOS_STORE_URL",
     "https://cdn.jsdelivr.net/gh/IceWhaleTech/CasaOS-AppStore@gh-pages")
 APPS_ROOT = Path(os.environ.get("WEBOS_STORE_ROOT", "/srv/webos-apps"))
+# bundled catalog of classic hosting apps shipped in the image
+LOCAL_STORE = Path(os.environ.get("WEBOS_LOCAL_STORE", "/opt/webos/store"))
 CACHE_TTL = 300
 _ID = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9._-]{0,63}$")
 
 _cache = {"at": 0, "data": None}
 
 
-def _index() -> dict:
+def _local_index() -> dict:
+    f = LOCAL_STORE / "index.json"
+    if not f.is_file():
+        return {"apps": []}
+    try:
+        data = json.loads(f.read_text())
+    except (OSError, ValueError):
+        return {"apps": []}
+    for a in data.get("apps", []):
+        a["local"] = True
+    return data
+
+
+def _remote_index() -> dict:
     if _cache["data"] is not None and time.time() - _cache["at"] < CACHE_TTL:
         return _cache["data"]
     try:
         r = requests.get(f"{STORE_URL}/index.json", timeout=15)
         r.raise_for_status()
-    except requests.RequestException as e:
-        raise HTTPException(502, f"appstore unreachable: {e}")
+    except requests.RequestException:
+        # the remote store is optional — the local catalog still works
+        _cache.update(at=time.time(), data=_cache["data"] or {"apps": []})
+        return _cache["data"]
     _cache.update(at=time.time(), data=r.json())
     return _cache["data"]
+
+
+def _index() -> dict:
+    local = _local_index()
+    local_ids = {a.get("id") for a in local["apps"]}
+    remote = _remote_index()
+    return {"app_count": remote.get("app_count"),
+            "apps": local["apps"] + [a for a in remote.get("apps", [])
+                                     if a.get("id") not in local_ids]}
 
 
 def _find(app_id: str) -> dict:
@@ -75,7 +102,9 @@ def list_apps(category: str | None = None, q: str | None = None):
         apps.append({
             "id": a.get("id"), "title": a.get("title"),
             "tagline": a.get("tagline"), "category": a.get("category"),
-            "version": a.get("version"), "icon": _abs(a.get("icon") or ""),
+            "version": a.get("version"),
+            "icon": a.get("icon", "") if a.get("local")
+                    else _abs(a.get("icon") or ""),
         })
     return {"count": idx.get("app_count"), "apps": apps}
 
@@ -102,15 +131,25 @@ def install(body: dict):
     app = _find(app_id)
 
     target = APPS_ROOT / app_id
-    target.mkdir(parents=True, exist_ok=True)
-    try:
-        r = requests.get(_abs(app["compose_url"]), timeout=30)
-        r.raise_for_status()
-    except requests.RequestException as e:
-        raise HTTPException(502, f"compose download failed: {e}")
-    (target / "docker-compose.yml").write_text(r.text)
-
-    proc = _compose(app_id, "up", "-d")
+    if app.get("local"):
+        # bundled app: copy the whole recipe dir (compose + optional
+        # Dockerfile/boot files) and build if needed
+        src = LOCAL_STORE / str(app.get("dir") or app_id)
+        if not (src / "docker-compose.yml").is_file():
+            raise HTTPException(502, "local app files missing from image")
+        shutil.rmtree(target, ignore_errors=True)
+        target.mkdir(parents=True, exist_ok=True)
+        shutil.copytree(src, target)
+        proc = _compose(app_id, "up", "-d", "--build")
+    else:
+        target.mkdir(parents=True, exist_ok=True)
+        try:
+            r = requests.get(_abs(app["compose_url"]), timeout=30)
+            r.raise_for_status()
+        except requests.RequestException as e:
+            raise HTTPException(502, f"compose download failed: {e}")
+        (target / "docker-compose.yml").write_text(r.text)
+        proc = _compose(app_id, "up", "-d")
     if proc.returncode != 0:
         raise HTTPException(500, proc.stderr.strip() or proc.stdout.strip())
     return {"installed": app_id, "output": proc.stdout.strip()}

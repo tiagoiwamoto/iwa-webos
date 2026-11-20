@@ -1,0 +1,25 @@
+services:
+  phpbb:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8101:80"
+    environment:
+      APP_URL: https://download.phpbb.com/pub/release/3.3/3.3.19/phpBB-3.3.19.zip
+    volumes:
+      - data:/var/www/html
+    depends_on:
+      - db
+  db:
+    image: mariadb:11
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: webos-root
+      MYSQL_DATABASE: phpbb
+      MYSQL_USER: phpbb
+      MYSQL_PASSWORD: phpbb
+    volumes:
+      - db:/var/lib/mysql
+volumes:
+  data:
+  db:

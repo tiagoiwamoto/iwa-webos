@@ -1,0 +1,31 @@
+services:
+  osticket:
+    image: osticket/osticket:latest
+    restart: unless-stopped
+    ports:
+      - "8110:80"
+    environment:
+      INSTALL_SECRET: 4f8a2b9c1d7e5f603a8b2c4d6e9f1a35
+      INSTALL_EMAIL: admin@webos.local
+      INSTALL_NAME: osTicket
+      MYSQL_HOST: db
+      MYSQL_USER: osticket
+      MYSQL_PASSWORD: osticket
+      MYSQL_DATABASE: osticket
+    volumes:
+      - data:/var/www/html
+    depends_on:
+      - db
+  db:
+    image: mariadb:11
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: webos-root
+      MYSQL_DATABASE: osticket
+      MYSQL_USER: osticket
+      MYSQL_PASSWORD: osticket
+    volumes:
+      - db:/var/lib/mysql
+volumes:
+  data:
+  db:

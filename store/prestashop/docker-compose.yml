@@ -1,0 +1,31 @@
+services:
+  prestashop:
+    image: prestashop/prestashop:latest
+    restart: unless-stopped
+    ports:
+      - "8109:80"
+    environment:
+      DB_SERVER: db
+      DB_NAME: prestashop
+      DB_USER: prestashop
+      DB_PASSWD: prestashop
+      PS_INSTALL_AUTO: 1
+      ADMIN_MAIL: admin@webos.local
+      ADMIN_PASSWD: webos-admin
+    volumes:
+      - data:/var/www/html
+    depends_on:
+      - db
+  db:
+    image: mariadb:11
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: webos-root
+      MYSQL_DATABASE: prestashop
+      MYSQL_USER: prestashop
+      MYSQL_PASSWORD: prestashop
+    volumes:
+      - db:/var/lib/mysql
+volumes:
+  data:
+  db:

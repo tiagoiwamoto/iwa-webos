@@ -47,6 +47,8 @@ RUN cd web && npm ci --omit=dev && node scripts/patch-settings.js
 
 COPY agent/ agent/
 COPY web/ web/
+# bundled app-store catalog of classic hosting apps (phpBB, MyBB, SMF…)
+COPY store/ store/
 COPY docker/images/ /home/images/
 # dist/{apps,themes,icons,sounds}/* are absolute symlinks made on the host;
 # wipe and regenerate for /opt/webos (discover only cleans apps + themes)
