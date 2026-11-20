@@ -2849,9 +2849,22 @@ registerDict('server', {
     dbSave: 'Save',
     dbSaveAs: 'Query name:',
     dbNoTab: 'no query open — press +',
+    dbResult: 'Result',
     engine: 'Engine',
     dbOwner: 'Owner',
     dropDb: 'Drop database',
+    dbNewTable: 'New table…',
+    dbImport: 'Import CSV…',
+    dbImportGo: 'Import',
+    dbCsvFile: 'CSV file:',
+    dbCsvHeader: 'first line is the header',
+    dbDelim: 'delimiter',
+    dbAuto: 'auto',
+    dbExport: 'Export',
+    dbRowsCount: '{n} rows',
+    dbImportDone: '{n} rows imported',
+    dbCols: 'Columns',
+    dbDefault: 'Default',
     shareQuick: 'Share a folder:',
     shareName: 'Name',
     path: 'Path',
@@ -2987,9 +3000,22 @@ registerDict('server', {
     dbSave: 'Salvar',
     dbSaveAs: 'Nome da consulta:',
     dbNoTab: 'sem consulta aberta — pressione +',
+    dbResult: 'Resultado',
     engine: 'Motor',
     dbOwner: 'Dono',
     dropDb: 'Apagar banco',
+    dbNewTable: 'Nova tabela…',
+    dbImport: 'Importar CSV…',
+    dbImportGo: 'Importar',
+    dbCsvFile: 'Arquivo CSV:',
+    dbCsvHeader: 'primeira linha é o cabeçalho',
+    dbDelim: 'delimitador',
+    dbAuto: 'auto',
+    dbExport: 'Exportar',
+    dbRowsCount: '{n} linhas',
+    dbImportDone: '{n} linhas importadas',
+    dbCols: 'Colunas',
+    dbDefault: 'Padrão',
     shareQuick: 'Compartilhar pasta:',
     shareName: 'Nome',
     path: 'Caminho',
@@ -3125,9 +3151,22 @@ registerDict('server', {
     dbSave: 'Guardar',
     dbSaveAs: 'Nome da consulta:',
     dbNoTab: 'sem consulta aberta — prima +',
+    dbResult: 'Resultado',
     engine: 'Motor',
     dbOwner: 'Dono',
     dropDb: 'Eliminar base de dados',
+    dbNewTable: 'Nova tabela…',
+    dbImport: 'Importar CSV…',
+    dbImportGo: 'Importar',
+    dbCsvFile: 'Ficheiro CSV:',
+    dbCsvHeader: 'primeira linha é o cabeçalho',
+    dbDelim: 'delimitador',
+    dbAuto: 'auto',
+    dbExport: 'Exportar',
+    dbRowsCount: '{n} linhas',
+    dbImportDone: '{n} linhas importadas',
+    dbCols: 'Colunas',
+    dbDefault: 'Predefinido',
     shareQuick: 'Partilhar pasta:',
     shareName: 'Nome',
     path: 'Caminho',
@@ -3263,9 +3302,22 @@ registerDict('server', {
     dbSave: 'Guardar',
     dbSaveAs: 'Nombre de la consulta:',
     dbNoTab: 'sin consulta abierta — pulsa +',
+    dbResult: 'Resultado',
     engine: 'Motor',
     dbOwner: 'Dueño',
     dropDb: 'Eliminar base de datos',
+    dbNewTable: 'Nueva tabla…',
+    dbImport: 'Importar CSV…',
+    dbImportGo: 'Importar',
+    dbCsvFile: 'Archivo CSV:',
+    dbCsvHeader: 'primera línea es la cabecera',
+    dbDelim: 'delimitador',
+    dbAuto: 'auto',
+    dbExport: 'Exportar',
+    dbRowsCount: '{n} filas',
+    dbImportDone: '{n} filas importadas',
+    dbCols: 'Columnas',
+    dbDefault: 'Predeterminado',
     shareQuick: 'Compartir carpeta:',
     shareName: 'Nombre',
     path: 'Ruta',
@@ -3401,9 +3453,22 @@ registerDict('server', {
     dbSave: '保存',
     dbSaveAs: 'クエリ名:',
     dbNoTab: 'クエリが開いていません — + を押してください',
+    dbResult: '結果',
     engine: 'エンジン',
     dbOwner: '所有者',
     dropDb: 'データベースを削除',
+    dbNewTable: '新規テーブル…',
+    dbImport: 'CSV インポート…',
+    dbImportGo: 'インポート',
+    dbCsvFile: 'CSV ファイル:',
+    dbCsvHeader: '1行目はヘッダー',
+    dbDelim: '区切り文字',
+    dbAuto: '自動',
+    dbExport: 'エクスポート',
+    dbRowsCount: '{n} 行',
+    dbImportDone: '{n} 行をインポートしました',
+    dbCols: 'カラム',
+    dbDefault: 'デフォルト',
     shareQuick: 'フォルダを共有:',
     shareName: '名前',
     path: 'パス',
@@ -3539,9 +3604,22 @@ registerDict('server', {
     dbSave: '保存',
     dbSaveAs: '查询名称：',
     dbNoTab: '没有打开的查询 — 按 +',
+    dbResult: '结果',
     engine: '引擎',
     dbOwner: '所有者',
     dropDb: '删除数据库',
+    dbNewTable: '新建表…',
+    dbImport: '导入 CSV…',
+    dbImportGo: '导入',
+    dbCsvFile: 'CSV 文件:',
+    dbCsvHeader: '首行为标题',
+    dbDelim: '分隔符',
+    dbAuto: '自动',
+    dbExport: '导出',
+    dbRowsCount: '{n} 行',
+    dbImportDone: '已导入 {n} 行',
+    dbCols: '列',
+    dbDefault: '默认值',
     shareQuick: '共享文件夹:',
     shareName: '名称',
     path: '路径',
@@ -3843,7 +3921,7 @@ function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { va
 
 
 
-Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["css"])('webos-server-apps', "\n  .wsrv-wrap { display: flex; height: 100%; width: 100%; font-family: sans-serif;\n    font-size: 13px; background: #20232a; color: #e8e8e8; }\n  .wsrv-main { flex: 1 1 auto; display: flex; flex-direction: column; min-width: 0; }\n  .wsrv-body { flex: 1 1 auto; overflow: auto; padding: 8px 10px; }\n  .wsrv-body .webos-table { margin-top: 8px; }\n  .wsrv-quick { display: flex; gap: 6px; align-items: center; flex-wrap: wrap;\n    padding: 6px 8px; background: #2a2e37; border-radius: 4px; }\n  .wsrv-h { margin: 10px 0 4px; color: #9ab; font-size: 12px;\n    text-transform: uppercase; letter-spacing: .4px; }\n  .wsrv-hint { padding: 18px; color: #9ab; }\n  .wsrv-kv { display: inline-flex; gap: 4px 14px; flex-wrap: wrap; color: #bbc;\n    font-size: 12px; padding: 4px 0; }\n  .wsrv-kv b { color: #9ab; font-weight: 600; }\n  .wsrv-mini { padding: 1px 7px; font-size: 11px; }\n  .wsrv-pre { margin: 8px 0; padding: 10px; background: #17191f; border-radius: 4px;\n    white-space: pre-wrap; font-size: 11px; color: #cde; max-height: 220px;\n    overflow: auto; user-select: text; }\n  .wsrv-sql { width: 100%; box-sizing: border-box; min-height: 64px;\n    background: #17191f; color: #cde; border: 1px solid #3a3f4b;\n    border-radius: 4px; font-family: monospace; font-size: 12px;\n    padding: 6px 8px; resize: vertical; }\n  .wsrv-grid { overflow: auto; max-height: 340px; margin-top: 8px; }\n  .wsrv-grid .webos-table { margin-top: 0; }\n  .wsrv-grid td { max-width: 240px; overflow: hidden;\n    text-overflow: ellipsis; white-space: nowrap; }\n  .wsrv-split { flex: 1 1 auto; display: flex; gap: 10px; min-height: 0;\n    margin-top: 8px; }\n  .wsrv-side { flex: 0 0 200px; overflow: auto;\n    border-right: 1px solid #33363f; padding-right: 8px; }\n  .wsrv-console { flex: 1 1 auto; display: flex; flex-direction: column;\n    min-width: 0; }\n  .wsrv-tabs { display: flex; gap: 3px; flex-wrap: wrap; }\n  .wsrv-tab { padding: 2px 9px; font-size: 11px; background: #2a2e37;\n    border: 1px solid #3a3f4b; border-radius: 4px 4px 0 0; color: #bbc;\n    cursor: pointer; }\n  .wsrv-tab.active { background: #39404d; color: #fff; }\n  .wsrv-tab-x { margin-left: 4px; opacity: .55; }\n  .wsrv-tab-x:hover { opacity: 1; }\n  .wsrv-pane { flex: 1 1 auto; overflow: auto; padding-top: 6px; }\n  .wsrv-tree-item { padding: 2px 5px; border-radius: 3px; cursor: pointer;\n    color: #cde; white-space: nowrap; overflow: hidden;\n    text-overflow: ellipsis; }\n  .wsrv-tree-item:hover { background: #2a2e37; }\n  .wsrv-tree-kids { margin: 0 0 2px 14px; }\n  .wsrv-tree-kids .wsrv-tree-item { color: #9ab; font-size: 12px; }\n  .wsrv-tree-x { float: right; opacity: 0; font-size: 10px;\n    padding: 1px 3px; }\n  .wsrv-tree-item:hover .wsrv-tree-x { opacity: .6; }\n  .wsrv-tree-x:hover { opacity: 1 !important; color: #f88; }\n  .wsrv-saved { margin-top: 12px; }\n");
+Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["css"])('webos-server-apps', "\n  .wsrv-wrap { display: flex; height: 100%; width: 100%; font-family: sans-serif;\n    font-size: 13px; background: #20232a; color: #e8e8e8; }\n  .wsrv-main { flex: 1 1 auto; display: flex; flex-direction: column; min-width: 0; }\n  .wsrv-body { flex: 1 1 auto; overflow: auto; padding: 8px 10px; }\n  .wsrv-body .webos-table { margin-top: 8px; }\n  .wsrv-quick { display: flex; gap: 6px; align-items: center; flex-wrap: wrap;\n    padding: 6px 8px; background: #2a2e37; border-radius: 4px; }\n  .wsrv-h { margin: 10px 0 4px; color: #9ab; font-size: 12px;\n    text-transform: uppercase; letter-spacing: .4px; }\n  .wsrv-hint { padding: 18px; color: #9ab; }\n  .wsrv-kv { display: inline-flex; gap: 4px 14px; flex-wrap: wrap; color: #bbc;\n    font-size: 12px; padding: 4px 0; }\n  .wsrv-kv b { color: #9ab; font-weight: 600; }\n  .wsrv-mini { padding: 1px 7px; font-size: 11px; }\n  .wsrv-pre { margin: 8px 0; padding: 10px; background: #17191f; border-radius: 4px;\n    white-space: pre-wrap; font-size: 11px; color: #cde; max-height: 220px;\n    overflow: auto; user-select: text; }\n  .wsrv-sql { width: 100%; box-sizing: border-box; min-height: 64px;\n    background: #17191f; color: #cde; border: 1px solid #3a3f4b;\n    border-radius: 4px; font-family: monospace; font-size: 12px;\n    padding: 6px 8px; resize: vertical; }\n  .wsrv-grid { overflow: auto; max-height: 340px; margin-top: 8px; }\n  .wsrv-grid .webos-table { margin-top: 0; }\n  .wsrv-grid td { max-width: 240px; overflow: hidden;\n    text-overflow: ellipsis; white-space: nowrap; }\n  .wsrv-split { flex: 1 1 auto; display: flex; gap: 10px; min-height: 0;\n    margin-top: 8px; }\n  .wsrv-side { flex: 0 0 200px; overflow: auto;\n    border-right: 1px solid #33363f; padding-right: 8px; }\n  .wsrv-console { flex: 1 1 auto; display: flex; flex-direction: column;\n    min-width: 0; }\n  .wsrv-tabs { display: flex; gap: 3px; flex-wrap: wrap; }\n  .wsrv-tab { padding: 2px 9px; font-size: 11px; background: #2a2e37;\n    border: 1px solid #3a3f4b; border-radius: 4px 4px 0 0; color: #bbc;\n    cursor: pointer; }\n  .wsrv-tab.active { background: #39404d; color: #fff; }\n  .wsrv-tab-x { margin-left: 4px; opacity: .55; }\n  .wsrv-tab-x:hover { opacity: 1; }\n  .wsrv-pane { flex: 1 1 auto; display: flex; flex-direction: column;\n    min-height: 0; overflow: hidden; padding-top: 6px; }\n  .wsrv-pane .wsrv-sql { flex: 1 1 auto; min-height: 0; resize: none; }\n  .wsrv-result-win { display: flex; flex-direction: column;\n    height: 100%; width: 100%; background: #20232a; color: #e8e8e8;\n    font-family: sans-serif; font-size: 13px; }\n  .wsrv-result-win .wsrv-quick { margin: 8px 8px 0; flex: 0 0 auto; }\n  .wsrv-result-win .wsrv-grid { flex: 1 1 auto; max-height: none;\n    margin: 0 8px 8px; }\n  .wsrv-dlg { display: flex; flex-direction: column; gap: 8px;\n    height: 100%; width: 100%; box-sizing: border-box; padding: 10px;\n    overflow: auto; background: #20232a; color: #e8e8e8;\n    font-family: sans-serif; font-size: 13px; }\n  .wsrv-dlg label { display: inline-flex; gap: 4px; align-items: center; }\n  .wsrv-dlg-row { display: flex; gap: 6px; align-items: center;\n    flex-wrap: wrap; }\n  .wsrv-cols { display: flex; flex-direction: column; gap: 4px; }\n  .wsrv-colhead, .wsrv-colrow { display: grid; gap: 4px;\n    align-items: center;\n    grid-template-columns: minmax(80px, 1.2fr) minmax(70px, .9fr) 52px\n      minmax(56px, .8fr) 24px 24px 24px 20px; }\n  .wsrv-colhead { color: #9ab; font-size: 10px;\n    text-transform: uppercase; }\n  .wsrv-colrow select { width: 100%; }\n  .wsrv-tree-item { padding: 2px 5px; border-radius: 3px; cursor: pointer;\n    color: #cde; white-space: nowrap; overflow: hidden;\n    text-overflow: ellipsis; }\n  .wsrv-tree-item:hover { background: #2a2e37; }\n  .wsrv-tree-kids { margin: 0 0 2px 14px; }\n  .wsrv-tree-kids .wsrv-tree-item { color: #9ab; font-size: 12px; }\n  .wsrv-tree-x { float: right; opacity: 0; font-size: 10px;\n    padding: 1px 3px; }\n  .wsrv-tree-item:hover .wsrv-tree-x { opacity: .6; }\n  .wsrv-tree-x:hover { opacity: 1 !important; color: #f88; }\n  .wsrv-saved { margin-top: 12px; }\n");
 var serverApp = function serverApp(sectionId, dims) {
   return function (core, args, options, metadata) {
     var proc = core.make('osjs/application', {
@@ -4460,8 +4538,9 @@ var serverApp = function serverApp(sectionId, dims) {
       });
     }; // -------------------------------------------------------------- databases
     // Mini manager: engine picker on top, database/table tree on the
-    // left and a tabbed SQL console on the right. Saved queries persist
-    // per user in home:/.webos/db-queries.json.
+    // left and a tabbed full-height SQL editor on the right. Results
+    // open in separate windows (with CSV/JSON export). Saved queries
+    // persist per user in home:/.webos/db-queries.json.
 
 
     var db = function db() {
@@ -4515,6 +4594,10 @@ var serverApp = function serverApp(sectionId, dims) {
           i18n: 'server.dbNewTab'
         }, function () {
           return addTab();
+        }), Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["button"])({
+          i18n: 'server.dbNewTable'
+        }, function () {
+          return createTableWindow();
         }), Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["button"])({
           i18n: 'server.dbNewDb'
         }, function () {
@@ -4578,6 +4661,465 @@ var serverApp = function serverApp(sectionId, dims) {
           }
 
           return wrap;
+        }; // export helpers for the result window (browser download, like
+        // the logs app does)
+
+
+        var toCsv = function toCsv(data) {
+          return [data.cols].concat(_babel_runtime_helpers_toConsumableArray__WEBPACK_IMPORTED_MODULE_1___default()(data.rows)).map(function (r) {
+            return r.map(function (c) {
+              var s = String(c !== null && c !== void 0 ? c : '');
+              return /[",\n]/.test(s) ? "\"".concat(s.replace(/"/g, '""'), "\"") : s;
+            }).join(',');
+          }).join('\n');
+        };
+
+        var toJson = function toJson(data) {
+          return JSON.stringify(data.rows.map(function (r) {
+            return Object.fromEntries(data.cols.map(function (c, i) {
+              return [c, r[i]];
+            }));
+          }), null, 2);
+        };
+
+        var download = function download(fileName, text, type) {
+          var a = Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('a', {
+            download: fileName,
+            href: URL.createObjectURL(new Blob([text], {
+              type: type
+            }))
+          });
+          a.click();
+          URL.revokeObjectURL(a.href);
+        }; // query results open in their own window so the console stays
+        // a full-size editor
+
+
+        var resultWindow = function resultWindow(tb, r) {
+          var stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+          var w = proc.createWindow({
+            title: "".concat(t('server.dbResult'), " \u2014 ").concat(tb.db),
+            dimension: {
+              width: 700,
+              height: 420
+            }
+          });
+          w.render(function ($c) {
+            return $c.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
+              "class": 'wsrv-result-win'
+            }, Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
+              "class": 'wsrv-quick'
+            }, Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('span', {
+              i18n: 'server.dbExport'
+            }), Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["button"])('CSV', function () {
+              return download("".concat(tb.db, "-").concat(stamp, ".csv"), toCsv(r), 'text/csv');
+            }), Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["button"])('JSON', function () {
+              return download("".concat(tb.db, "-").concat(stamp, ".json"), toJson(r), 'application/json');
+            }), Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('span', {
+              style: {
+                marginLeft: 'auto',
+                color: '#9ab'
+              }
+            }, t('server.dbRowsCount', {
+              n: r.rows.length
+            }))), dataTable(r)));
+          });
+        }; // -------------------------------------------------- csv import
+        // RFC-4180-ish parser; empty `delim` auto-detects , ; or tab
+
+
+        var parseCsv = function parseCsv(text, delim, header) {
+          if (!delim) {
+            var first = text.slice(0, text.indexOf('\n') + 1 || undefined);
+            var counts = [[',', 0], [';', 0], ['\t', 0]];
+            first.split('').forEach(function (ch) {
+              return counts.forEach(function (c) {
+                if (c[0] === ch) c[1]++;
+              });
+            });
+            counts.sort(function (a, b) {
+              return b[1] - a[1];
+            });
+            delim = counts[0][1] ? counts[0][0] : ',';
+          }
+
+          var out = [];
+          var row = [],
+              cur = '',
+              q = false;
+
+          var eor = function eor() {
+            row.push(cur);
+            cur = '';
+            if (row.some(function (c) {
+              return c !== '';
+            })) out.push(row);
+            row = [];
+          };
+
+          for (var i = 0; i < text.length; i++) {
+            var ch = text[i];
+
+            if (q) {
+              if (ch === '"' && text[i + 1] === '"') {
+                cur += '"';
+                i++;
+              } else if (ch === '"') q = false;else cur += ch;
+            } else if (ch === '"') q = true;else if (ch === delim) {
+              row.push(cur);
+              cur = '';
+            } else if (ch === '\r') {
+              if (text[i + 1] === '\n') i++;
+              eor();
+            } else if (ch === '\n') eor();else cur += ch;
+          }
+
+          eor();
+          return header && out.length ? {
+            cols: out[0],
+            rows: out.slice(1)
+          } : {
+            cols: null,
+            rows: out
+          };
+        };
+
+        var lit = function lit(v) {
+          var s = String(v !== null && v !== void 0 ? v : '').trim();
+          if (s === '') return 'NULL';
+          if (/^-?\d+(\.\d+)?$/.test(s)) return s;
+          return "'".concat(s.replace(/'/g, "''"), "'");
+        };
+
+        var qid = function qid(engine, n) {
+          var q = engine === 'postgres' ? '"' : '`';
+          return n.split('.').map(function (p) {
+            return q + p.trim() + q;
+          }).join('.');
+        };
+
+        var insertSql = function insertSql(engine, table, cols, rows) {
+          return "INSERT INTO ".concat(qid(engine, table)) + (cols ? " (".concat(cols.map(function (c) {
+            return qid(engine, c);
+          }).join(', '), ")") : '') + ' VALUES ' + rows.map(function (r) {
+            return "(".concat(r.map(lit).join(', '), ")");
+          }).join(',\n');
+        };
+
+        var importWindow = function importWindow(tb) {
+          var w = proc.createWindow({
+            title: t('server.dbImport'),
+            dimension: {
+              width: 640,
+              height: 520
+            }
+          });
+          var file = Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('input', {
+            type: 'file',
+            accept: '.csv,text/csv'
+          });
+          var idb = select(engineDbs(), tb.db);
+          var itable = select([]);
+          var idelim = select([{
+            value: '',
+            i18n: 'server.dbAuto'
+          }, ',', ';', {
+            value: '\t',
+            label: 'tab'
+          }]);
+          var ihead = Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('input', {
+            type: 'checkbox',
+            checked: true
+          });
+          var preview = Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
+            "class": 'wsrv-grid',
+            style: {
+              maxHeight: '170px',
+              margin: 0
+            }
+          });
+          var stat = Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('span', {
+            style: {
+              color: '#9ab'
+            }
+          });
+          var text = '',
+              parsed = {
+            cols: null,
+            rows: []
+          };
+
+          var loadTables = function loadTables() {
+            return call('db', {
+              op: 'tables',
+              engine: engSel.value,
+              name: idb.value
+            }, function (r) {
+              itable.innerHTML = '';
+              r.tables.forEach(function (n) {
+                return itable.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('option', {
+                  value: n
+                }, n));
+              });
+            });
+          };
+
+          var reparse = function reparse() {
+            parsed = text ? parseCsv(text, idelim.value, ihead.checked) : {
+              cols: null,
+              rows: []
+            };
+            preview.innerHTML = '';
+
+            if (parsed.rows.length) {
+              preview.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["table"])(parsed.cols || parsed.rows[0].map(function (_, i) {
+                return "#".concat(i + 1);
+              }), parsed.rows.slice(0, 5)));
+            }
+
+            stat.textContent = parsed.rows.length ? t('server.dbRowsCount', {
+              n: parsed.rows.length
+            }) : '';
+          };
+
+          file.onchange = function () {
+            var f = file.files[0];
+            if (!f) return;
+            var rd = new FileReader();
+
+            rd.onload = function () {
+              text = String(rd.result || '');
+              reparse();
+            };
+
+            rd.readAsText(f);
+          };
+
+          idelim.onchange = reparse;
+          ihead.onchange = reparse;
+          idb.onchange = loadTables;
+
+          var run = function run() {
+            if (!itable.value || !parsed.rows.length) return;
+            var chunks = [];
+
+            for (var i = 0; i < parsed.rows.length; i += 200) {
+              chunks.push(parsed.rows.slice(i, i + 200));
+            }
+
+            var done = 0;
+            chunks.reduce(function (p, c) {
+              return p.then(function () {
+                return call('db', {
+                  op: 'query',
+                  engine: engSel.value,
+                  db: idb.value,
+                  sql: insertSql(engSel.value, itable.value, parsed.cols, c)
+                }).then(function () {
+                  done += c.length;
+                  stat.textContent = t('server.dbRowsCount', {
+                    n: done
+                  });
+                });
+              });
+            }, Promise.resolve()).then(function () {
+              sb.set(t('server.dbImportDone', {
+                n: done
+              }));
+              w.close();
+            })["catch"](function () {});
+          };
+
+          w.render(function ($c) {
+            return $c.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
+              "class": 'wsrv-dlg'
+            }, Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
+              "class": 'wsrv-dlg-row'
+            }, Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('span', {
+              i18n: 'server.dbCsvFile'
+            }), file), Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
+              "class": 'wsrv-dlg-row'
+            }, Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('span', {
+              i18n: 'server.dbName'
+            }), idb, Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('span', {
+              i18n: 'server.dbTable'
+            }), itable), Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
+              "class": 'wsrv-dlg-row'
+            }, Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('span', {
+              i18n: 'server.dbDelim'
+            }), idelim, Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('label', {}, ihead, Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('span', {
+              i18n: 'server.dbCsvHeader'
+            }))), preview, Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
+              "class": 'wsrv-dlg-row'
+            }, Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["button"])({
+              i18n: 'server.dbImportGo'
+            }, run), stat)));
+          });
+          loadTables();
+        }; // ------------------------------------------------- create table
+
+
+        var DB_TYPES = {
+          postgres: ['integer', 'bigint', 'smallint', 'serial', 'bigserial', 'varchar', 'char', 'text', 'boolean', 'numeric', 'real', 'date', 'time', 'timestamp', 'json', 'jsonb', 'uuid', 'bytea'],
+          mysql: ['INT', 'BIGINT', 'SMALLINT', 'TINYINT', 'VARCHAR', 'CHAR', 'TEXT', 'MEDIUMTEXT', 'BOOLEAN', 'DECIMAL', 'FLOAT', 'DOUBLE', 'DATE', 'TIME', 'DATETIME', 'TIMESTAMP', 'JSON', 'BLOB']
+        };
+
+        var createTableWindow = function createTableWindow() {
+          var engine = engSel.value;
+          var q = engine === 'postgres' ? '"' : '`';
+          var w = proc.createWindow({
+            title: t('server.dbNewTable'),
+            dimension: {
+              width: 720,
+              height: 460
+            }
+          });
+          var tdb = select((d[engine] || []).map(function (x) {
+            return x.name;
+          }));
+          var tname = Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('input', {
+            "class": 'webos-input',
+            placeholder: t('server.dbTable')
+          });
+          var rowsBox = Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
+            "class": 'wsrv-cols'
+          });
+
+          var colRow = function colRow() {
+            var name = Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('input', {
+              "class": 'webos-input'
+            });
+            var type = select(DB_TYPES[engine]);
+            var args = Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('input', {
+              "class": 'webos-input',
+              placeholder: '(n)'
+            });
+            var dft = Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('input', {
+              "class": 'webos-input'
+            });
+            var nn = Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('input', {
+              type: 'checkbox',
+              title: 'NOT NULL'
+            });
+            var pk = Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('input', {
+              type: 'checkbox',
+              title: 'PRIMARY KEY'
+            });
+            var ai = Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('input', {
+              type: 'checkbox',
+              title: engine === 'postgres' ? 'IDENTITY' : 'AUTO_INCREMENT'
+            });
+            var row = Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
+              "class": 'wsrv-colrow'
+            }, name, type, args, dft, nn, pk, ai, mini('✕', function () {
+              return row.remove();
+            }));
+            rowsBox.appendChild(row);
+          };
+
+          var build = function build() {
+            var cols = _babel_runtime_helpers_toConsumableArray__WEBPACK_IMPORTED_MODULE_1___default()(rowsBox.children).map(function (r) {
+              var _r$children = _babel_runtime_helpers_slicedToArray__WEBPACK_IMPORTED_MODULE_0___default()(r.children, 7),
+                  name = _r$children[0],
+                  type = _r$children[1],
+                  args = _r$children[2],
+                  dft = _r$children[3],
+                  nn = _r$children[4],
+                  pk = _r$children[5],
+                  ai = _r$children[6];
+
+              return {
+                name: name.value.trim(),
+                type: type.value,
+                args: args.value.trim(),
+                dft: dft.value.trim(),
+                nn: nn.checked,
+                pk: pk.checked,
+                ai: ai.checked
+              };
+            }).filter(function (c) {
+              return c.name;
+            });
+
+            if (!cols.length) return null;
+            var pkCols = cols.filter(function (c) {
+              return c.pk;
+            });
+            var defs = cols.map(function (c) {
+              var dfn = "".concat(q).concat(c.name).concat(q, " ").concat(c.type);
+              if (c.args && /^[\d,\s]+$/.test(c.args)) dfn += "(".concat(c.args, ")");
+
+              if (c.ai) {
+                dfn += engine === 'postgres' ? ' GENERATED ALWAYS AS IDENTITY' : ' AUTO_INCREMENT';
+              }
+
+              if (c.nn || c.pk) dfn += ' NOT NULL';
+              if (c.pk && pkCols.length === 1) dfn += ' PRIMARY KEY';
+
+              if (c.ai && engine === 'mysql' && !pkCols.length) {
+                dfn += ' PRIMARY KEY';
+              }
+
+              if (c.dft) dfn += " DEFAULT ".concat(c.dft);
+              return dfn;
+            });
+
+            if (pkCols.length > 1) {
+              defs.push('PRIMARY KEY (' + pkCols.map(function (c) {
+                return "".concat(q).concat(c.name).concat(q);
+              }).join(', ') + ')');
+            }
+
+            return "CREATE TABLE ".concat(q).concat(tname.value.trim()).concat(q, " ") + "(\n  ".concat(defs.join(',\n  '), "\n)");
+          };
+
+          var create = function create() {
+            var sql = /^\w{1,63}$/.test(tname.value.trim()) && build();
+            if (!sql) return;
+            call('db', {
+              op: 'query',
+              engine: engine,
+              db: tdb.value,
+              sql: sql
+            }, function () {
+              w.close();
+              rebuildTree();
+            });
+          };
+
+          colRow();
+          colRow();
+          w.render(function ($c) {
+            return $c.appendChild(Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
+              "class": 'wsrv-dlg'
+            }, Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
+              "class": 'wsrv-dlg-row'
+            }, Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('span', {
+              i18n: 'server.dbName'
+            }), tdb, Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('span', {
+              i18n: 'server.dbTable'
+            }), tname), Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
+              "class": 'wsrv-colhead'
+            }, Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('span', {
+              i18n: 'name'
+            }), Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('span', {
+              i18n: 'type'
+            }), Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('span', {}, '(n)'), Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('span', {
+              i18n: 'server.dbDefault'
+            }), Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('span', {
+              title: 'NOT NULL'
+            }, 'NN'), Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('span', {
+              title: 'PRIMARY KEY'
+            }, 'PK'), Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('span', {
+              title: 'AUTO INCREMENT'
+            }, 'AI'), Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('span')), rowsBox, Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
+              "class": 'wsrv-dlg-row'
+            }, mini("+ ".concat(t('server.dbCols')), colRow)), Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div', {
+              "class": 'wsrv-dlg-row'
+            }, Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["button"])({
+              i18n: 'server.create'
+            }, create))));
+          });
         };
 
         var persist = function persist() {
@@ -4592,7 +5134,6 @@ var serverApp = function serverApp(sectionId, dims) {
             name: init && init.name || "".concat(t('server.dbQuery'), " ").concat(++tabSeq),
             db: init && init.db || engineDbs()[0],
             sql: init && init.sql || '',
-            result: null,
             autorun: !!(init && init.autorun)
           });
           active = tabs.length - 1;
@@ -4666,8 +5207,6 @@ var serverApp = function serverApp(sectionId, dims) {
             tb.sql = sql.value;
           };
 
-          var out = Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["el"])('div');
-
           var run = function run() {
             tb.db = dbSel.value;
             call('db', {
@@ -4676,9 +5215,7 @@ var serverApp = function serverApp(sectionId, dims) {
               db: tb.db,
               sql: tb.sql
             }, function (r) {
-              tb.result = r;
-              out.innerHTML = '';
-              out.appendChild(dataTable(r));
+              return resultWindow(tb, r);
             });
           };
 
@@ -4696,6 +5233,10 @@ var serverApp = function serverApp(sectionId, dims) {
           }), dbSel, Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["button"])({
             i18n: 'server.dbRun'
           }, run), Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["button"])({
+            i18n: 'server.dbImport'
+          }, function () {
+            return importWindow(tb);
+          }), Object(_ui_js__WEBPACK_IMPORTED_MODULE_4__["button"])({
             i18n: 'server.dbSave'
           }, function () {
             var nm = window.prompt(t('server.dbSaveAs'), tb.name);
@@ -4711,8 +5252,6 @@ var serverApp = function serverApp(sectionId, dims) {
             }
           })));
           pane.appendChild(sql);
-          pane.appendChild(out);
-          if (tb.result) out.appendChild(dataTable(tb.result));
 
           if (tb.autorun) {
             tb.autorun = false;

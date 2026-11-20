@@ -50,7 +50,30 @@ css('webos-server-apps', `
   .wsrv-tab.active { background: #39404d; color: #fff; }
   .wsrv-tab-x { margin-left: 4px; opacity: .55; }
   .wsrv-tab-x:hover { opacity: 1; }
-  .wsrv-pane { flex: 1 1 auto; overflow: auto; padding-top: 6px; }
+  .wsrv-pane { flex: 1 1 auto; display: flex; flex-direction: column;
+    min-height: 0; overflow: hidden; padding-top: 6px; }
+  .wsrv-pane .wsrv-sql { flex: 1 1 auto; min-height: 0; resize: none; }
+  .wsrv-result-win { display: flex; flex-direction: column;
+    height: 100%; width: 100%; background: #20232a; color: #e8e8e8;
+    font-family: sans-serif; font-size: 13px; }
+  .wsrv-result-win .wsrv-quick { margin: 8px 8px 0; flex: 0 0 auto; }
+  .wsrv-result-win .wsrv-grid { flex: 1 1 auto; max-height: none;
+    margin: 0 8px 8px; }
+  .wsrv-dlg { display: flex; flex-direction: column; gap: 8px;
+    height: 100%; width: 100%; box-sizing: border-box; padding: 10px;
+    overflow: auto; background: #20232a; color: #e8e8e8;
+    font-family: sans-serif; font-size: 13px; }
+  .wsrv-dlg label { display: inline-flex; gap: 4px; align-items: center; }
+  .wsrv-dlg-row { display: flex; gap: 6px; align-items: center;
+    flex-wrap: wrap; }
+  .wsrv-cols { display: flex; flex-direction: column; gap: 4px; }
+  .wsrv-colhead, .wsrv-colrow { display: grid; gap: 4px;
+    align-items: center;
+    grid-template-columns: minmax(80px, 1.2fr) minmax(70px, .9fr) 52px
+      minmax(56px, .8fr) 24px 24px 24px 20px; }
+  .wsrv-colhead { color: #9ab; font-size: 10px;
+    text-transform: uppercase; }
+  .wsrv-colrow select { width: 100%; }
   .wsrv-tree-item { padding: 2px 5px; border-radius: 3px; cursor: pointer;
     color: #cde; white-space: nowrap; overflow: hidden;
     text-overflow: ellipsis; }
@@ -359,8 +382,9 @@ export const serverApp = (sectionId, dims) =>
 
     // -------------------------------------------------------------- databases
     // Mini manager: engine picker on top, database/table tree on the
-    // left and a tabbed SQL console on the right. Saved queries persist
-    // per user in home:/.webos/db-queries.json.
+    // left and a tabbed full-height SQL editor on the right. Results
+    // open in separate windows (with CSV/JSON export). Saved queries
+    // persist per user in home:/.webos/db-queries.json.
     const db = () => {
       body.innerHTML = '';
       body.style.display = 'flex';
@@ -388,6 +412,7 @@ export const serverApp = (sectionId, dims) =>
         body.appendChild(el('div', {class: 'wsrv-quick'},
           el('span', {i18n: 'server.engine'}), engSel,
           button({i18n: 'server.dbNewTab'}, () => addTab()),
+          button({i18n: 'server.dbNewTable'}, () => createTableWindow()),
           button({i18n: 'server.dbNewDb'}, () => formWindow(proc, {
             title: t('server.dbNewDb'),
             fields: [
@@ -418,6 +443,263 @@ export const serverApp = (sectionId, dims) =>
           }
           return wrap;
         };
+        // export helpers for the result window (browser download, like
+        // the logs app does)
+        const toCsv = data => [data.cols, ...data.rows].map(r =>
+          r.map(c => {
+            const s = String(c ?? '');
+            return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+          }).join(',')).join('\n');
+        const toJson = data => JSON.stringify(data.rows.map(r =>
+          Object.fromEntries(data.cols.map((c, i) => [c, r[i]]))), null, 2);
+        const download = (fileName, text, type) => {
+          const a = el('a', {download: fileName,
+            href: URL.createObjectURL(new Blob([text], {type}))});
+          a.click();
+          URL.revokeObjectURL(a.href);
+        };
+        // query results open in their own window so the console stays
+        // a full-size editor
+        const resultWindow = (tb, r) => {
+          const stamp = new Date().toISOString().slice(0, 19)
+            .replace(/[:T]/g, '-');
+          const w = proc.createWindow({
+            title: `${t('server.dbResult')} — ${tb.db}`,
+            dimension: {width: 700, height: 420}});
+          w.render($c => $c.appendChild(
+            el('div', {class: 'wsrv-result-win'},
+              el('div', {class: 'wsrv-quick'},
+                el('span', {i18n: 'server.dbExport'}),
+                button('CSV', () => download(`${tb.db}-${stamp}.csv`,
+                  toCsv(r), 'text/csv')),
+                button('JSON', () => download(`${tb.db}-${stamp}.json`,
+                  toJson(r), 'application/json')),
+                el('span', {style: {marginLeft: 'auto', color: '#9ab'}},
+                  t('server.dbRowsCount', {n: r.rows.length}))),
+              dataTable(r))));
+        };
+
+        // -------------------------------------------------- csv import
+        // RFC-4180-ish parser; empty `delim` auto-detects , ; or tab
+        const parseCsv = (text, delim, header) => {
+          if (!delim) {
+            const first = text.slice(0, text.indexOf('\n') + 1 || undefined);
+            const counts = [[',', 0], [';', 0], ['\t', 0]];
+            first.split('').forEach(ch => counts.forEach(c => {
+              if (c[0] === ch) c[1]++;
+            }));
+            counts.sort((a, b) => b[1] - a[1]);
+            delim = counts[0][1] ? counts[0][0] : ',';
+          }
+          const out = [];
+          let row = [], cur = '', q = false;
+          const eor = () => {
+            row.push(cur);
+            cur = '';
+            if (row.some(c => c !== '')) out.push(row);
+            row = [];
+          };
+          for (let i = 0; i < text.length; i++) {
+            const ch = text[i];
+            if (q) {
+              if (ch === '"' && text[i + 1] === '"') { cur += '"'; i++; }
+              else if (ch === '"') q = false;
+              else cur += ch;
+            } else if (ch === '"') q = true;
+            else if (ch === delim) { row.push(cur); cur = ''; }
+            else if (ch === '\r') { if (text[i + 1] === '\n') i++; eor(); }
+            else if (ch === '\n') eor();
+            else cur += ch;
+          }
+          eor();
+          return header && out.length
+            ? {cols: out[0], rows: out.slice(1)}
+            : {cols: null, rows: out};
+        };
+        const lit = v => {
+          const s = String(v ?? '').trim();
+          if (s === '') return 'NULL';
+          if (/^-?\d+(\.\d+)?$/.test(s)) return s;
+          return `'${s.replace(/'/g, "''")}'`;
+        };
+        const qid = (engine, n) => {
+          const q = engine === 'postgres' ? '"' : '`';
+          return n.split('.').map(p => q + p.trim() + q).join('.');
+        };
+        const insertSql = (engine, table, cols, rows) =>
+          `INSERT INTO ${qid(engine, table)}` +
+          (cols ? ` (${cols.map(c => qid(engine, c)).join(', ')})` : '') +
+          ' VALUES ' +
+          rows.map(r => `(${r.map(lit).join(', ')})`).join(',\n');
+
+        const importWindow = tb => {
+          const w = proc.createWindow({title: t('server.dbImport'),
+            dimension: {width: 640, height: 520}});
+          const file = el('input', {type: 'file', accept: '.csv,text/csv'});
+          const idb = select(engineDbs(), tb.db);
+          const itable = select([]);
+          const idelim = select([{value: '', i18n: 'server.dbAuto'},
+            ',', ';', {value: '\t', label: 'tab'}]);
+          const ihead = el('input', {type: 'checkbox', checked: true});
+          const preview = el('div', {class: 'wsrv-grid',
+            style: {maxHeight: '170px', margin: 0}});
+          const stat = el('span', {style: {color: '#9ab'}});
+          let text = '', parsed = {cols: null, rows: []};
+          const loadTables = () => call('db',
+            {op: 'tables', engine: engSel.value, name: idb.value}, r => {
+              itable.innerHTML = '';
+              r.tables.forEach(n => itable.appendChild(
+                el('option', {value: n}, n)));
+            });
+          const reparse = () => {
+            parsed = text ? parseCsv(text, idelim.value, ihead.checked)
+              : {cols: null, rows: []};
+            preview.innerHTML = '';
+            if (parsed.rows.length) {
+              preview.appendChild(table(
+                parsed.cols || parsed.rows[0].map((_, i) => `#${i + 1}`),
+                parsed.rows.slice(0, 5)));
+            }
+            stat.textContent = parsed.rows.length
+              ? t('server.dbRowsCount', {n: parsed.rows.length}) : '';
+          };
+          file.onchange = () => {
+            const f = file.files[0];
+            if (!f) return;
+            const rd = new FileReader();
+            rd.onload = () => { text = String(rd.result || ''); reparse(); };
+            rd.readAsText(f);
+          };
+          idelim.onchange = reparse;
+          ihead.onchange = reparse;
+          idb.onchange = loadTables;
+          const run = () => {
+            if (!itable.value || !parsed.rows.length) return;
+            const chunks = [];
+            for (let i = 0; i < parsed.rows.length; i += 200) {
+              chunks.push(parsed.rows.slice(i, i + 200));
+            }
+            let done = 0;
+            chunks.reduce((p, c) => p.then(() => call('db', {
+              op: 'query', engine: engSel.value, db: idb.value,
+              sql: insertSql(engSel.value, itable.value, parsed.cols, c)
+            }).then(() => {
+              done += c.length;
+              stat.textContent = t('server.dbRowsCount', {n: done});
+            })), Promise.resolve())
+              .then(() => {
+                sb.set(t('server.dbImportDone', {n: done}));
+                w.close();
+              })
+              .catch(() => {});
+          };
+          w.render($c => $c.appendChild(
+            el('div', {class: 'wsrv-dlg'},
+              el('div', {class: 'wsrv-dlg-row'},
+                el('span', {i18n: 'server.dbCsvFile'}), file),
+              el('div', {class: 'wsrv-dlg-row'},
+                el('span', {i18n: 'server.dbName'}), idb,
+                el('span', {i18n: 'server.dbTable'}), itable),
+              el('div', {class: 'wsrv-dlg-row'},
+                el('span', {i18n: 'server.dbDelim'}), idelim,
+                el('label', {}, ihead,
+                  el('span', {i18n: 'server.dbCsvHeader'}))),
+              preview,
+              el('div', {class: 'wsrv-dlg-row'},
+                button({i18n: 'server.dbImportGo'}, run), stat))));
+          loadTables();
+        };
+
+        // ------------------------------------------------- create table
+        const DB_TYPES = {
+          postgres: ['integer', 'bigint', 'smallint', 'serial', 'bigserial',
+            'varchar', 'char', 'text', 'boolean', 'numeric', 'real', 'date',
+            'time', 'timestamp', 'json', 'jsonb', 'uuid', 'bytea'],
+          mysql: ['INT', 'BIGINT', 'SMALLINT', 'TINYINT', 'VARCHAR', 'CHAR',
+            'TEXT', 'MEDIUMTEXT', 'BOOLEAN', 'DECIMAL', 'FLOAT', 'DOUBLE',
+            'DATE', 'TIME', 'DATETIME', 'TIMESTAMP', 'JSON', 'BLOB']};
+
+        const createTableWindow = () => {
+          const engine = engSel.value;
+          const q = engine === 'postgres' ? '"' : '`';
+          const w = proc.createWindow({title: t('server.dbNewTable'),
+            dimension: {width: 720, height: 460}});
+          const tdb = select((d[engine] || []).map(x => x.name));
+          const tname = el('input', {class: 'webos-input',
+            placeholder: t('server.dbTable')});
+          const rowsBox = el('div', {class: 'wsrv-cols'});
+          const colRow = () => {
+            const name = el('input', {class: 'webos-input'});
+            const type = select(DB_TYPES[engine]);
+            const args = el('input', {class: 'webos-input',
+              placeholder: '(n)'});
+            const dft = el('input', {class: 'webos-input'});
+            const nn = el('input', {type: 'checkbox', title: 'NOT NULL'});
+            const pk = el('input', {type: 'checkbox', title: 'PRIMARY KEY'});
+            const ai = el('input', {type: 'checkbox',
+              title: engine === 'postgres' ? 'IDENTITY' : 'AUTO_INCREMENT'});
+            const row = el('div', {class: 'wsrv-colrow'},
+              name, type, args, dft, nn, pk, ai,
+              mini('✕', () => row.remove()));
+            rowsBox.appendChild(row);
+          };
+          const build = () => {
+            const cols = [...rowsBox.children].map(r => {
+              const [name, type, args, dft, nn, pk, ai] = r.children;
+              return {name: name.value.trim(), type: type.value,
+                args: args.value.trim(), dft: dft.value.trim(),
+                nn: nn.checked, pk: pk.checked, ai: ai.checked};
+            }).filter(c => c.name);
+            if (!cols.length) return null;
+            const pkCols = cols.filter(c => c.pk);
+            const defs = cols.map(c => {
+              let dfn = `${q}${c.name}${q} ${c.type}`;
+              if (c.args && /^[\d,\s]+$/.test(c.args)) dfn += `(${c.args})`;
+              if (c.ai) {
+                dfn += engine === 'postgres'
+                  ? ' GENERATED ALWAYS AS IDENTITY' : ' AUTO_INCREMENT';
+              }
+              if (c.nn || c.pk) dfn += ' NOT NULL';
+              if (c.pk && pkCols.length === 1) dfn += ' PRIMARY KEY';
+              if (c.ai && engine === 'mysql' && !pkCols.length) {
+                dfn += ' PRIMARY KEY';
+              }
+              if (c.dft) dfn += ` DEFAULT ${c.dft}`;
+              return dfn;
+            });
+            if (pkCols.length > 1) {
+              defs.push('PRIMARY KEY (' +
+                pkCols.map(c => `${q}${c.name}${q}`).join(', ') + ')');
+            }
+            return `CREATE TABLE ${q}${tname.value.trim()}${q} ` +
+              `(\n  ${defs.join(',\n  ')}\n)`;
+          };
+          const create = () => {
+            const sql = /^\w{1,63}$/.test(tname.value.trim()) && build();
+            if (!sql) return;
+            call('db', {op: 'query', engine, db: tdb.value, sql},
+              () => { w.close(); rebuildTree(); });
+          };
+          colRow();
+          colRow();
+          w.render($c => $c.appendChild(
+            el('div', {class: 'wsrv-dlg'},
+              el('div', {class: 'wsrv-dlg-row'},
+                el('span', {i18n: 'server.dbName'}), tdb,
+                el('span', {i18n: 'server.dbTable'}), tname),
+              el('div', {class: 'wsrv-colhead'},
+                el('span', {i18n: 'name'}), el('span', {i18n: 'type'}),
+                el('span', {}, '(n)'),
+                el('span', {i18n: 'server.dbDefault'}),
+                el('span', {title: 'NOT NULL'}, 'NN'),
+                el('span', {title: 'PRIMARY KEY'}, 'PK'),
+                el('span', {title: 'AUTO INCREMENT'}, 'AI'), el('span')),
+              rowsBox,
+              el('div', {class: 'wsrv-dlg-row'},
+                mini(`+ ${t('server.dbCols')}`, colRow)),
+              el('div', {class: 'wsrv-dlg-row'},
+                button({i18n: 'server.create'}, create)))));
+        };
 
         const persist = () => vfs.mkdir(SAVED_DIR).catch(() => {})
           .then(() => vfs.writefile(SAVED_FILE, JSON.stringify(saved)))
@@ -429,7 +711,6 @@ export const serverApp = (sectionId, dims) =>
             name: (init && init.name) || `${t('server.dbQuery')} ${++tabSeq}`,
             db: (init && init.db) || engineDbs()[0],
             sql: (init && init.sql) || '',
-            result: null,
             autorun: !!(init && init.autorun)});
           active = tabs.length - 1;
           renderTabs();
@@ -473,15 +754,10 @@ export const serverApp = (sectionId, dims) =>
             placeholder: 'SELECT …'});
           sql.value = tb.sql;
           sql.oninput = () => { tb.sql = sql.value; };
-          const out = el('div');
           const run = () => {
             tb.db = dbSel.value;
             call('db', {op: 'query', engine: engSel.value, db: tb.db,
-              sql: tb.sql}, r => {
-              tb.result = r;
-              out.innerHTML = '';
-              out.appendChild(dataTable(r));
-            });
+              sql: tb.sql}, r => resultWindow(tb, r));
           };
           sql.onkeydown = ev => {
             if ((ev.ctrlKey || ev.metaKey) && ev.key === 'Enter') {
@@ -492,6 +768,7 @@ export const serverApp = (sectionId, dims) =>
           pane.appendChild(el('div', {class: 'wsrv-quick'},
             el('span', {i18n: 'server.dbName'}), dbSel,
             button({i18n: 'server.dbRun'}, run),
+            button({i18n: 'server.dbImport'}, () => importWindow(tb)),
             button({i18n: 'server.dbSave'}, () => {
               const nm = window.prompt(t('server.dbSaveAs'), tb.name);
               if (nm && nm.trim()) {
@@ -501,8 +778,6 @@ export const serverApp = (sectionId, dims) =>
               }
             })));
           pane.appendChild(sql);
-          pane.appendChild(out);
-          if (tb.result) out.appendChild(dataTable(tb.result));
           if (tb.autorun) { tb.autorun = false; run(); }
         };
 
