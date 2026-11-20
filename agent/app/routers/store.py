@@ -138,7 +138,6 @@ def install(body: dict):
         if not (src / "docker-compose.yml").is_file():
             raise HTTPException(502, "local app files missing from image")
         shutil.rmtree(target, ignore_errors=True)
-        target.mkdir(parents=True, exist_ok=True)
         shutil.copytree(src, target)
         proc = _compose(app_id, "up", "-d", "--build")
     else:
