@@ -1,7 +1,0 @@
-{
-  "name": "webos-panel",
-  "version": "0.1.0",
-  "private": true,
-  "osjs": {"type": "package"},
-  "babel": {"presets": ["@babel/preset-env"], "plugins": ["@babel/plugin-transform-runtime"]}
-}

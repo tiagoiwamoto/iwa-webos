@@ -29,6 +29,12 @@ export const DOCK_ITEMS = [
 // FileManager duplicates WebOSFiles, HTMLViewer/Preview are "open with" targets
 export const HIDDEN_APPS = ['FileManager', 'HTMLViewer', 'Preview'];
 
+/*
+ * Clean default dock: brand (launcher) + the 3 essentials; every other
+ * app lives in the launcher and can be pinned via right-click.
+ */
+export const DEFAULT_DOCK = ['WebOSFiles', 'WebOSSysInfo', 'Settings'];
+
 const itemForMeta = (core, m) => ({
   name: m.name,
   icon: m.icon,

@@ -5,7 +5,7 @@
  */
 import {useI18n, LOCALES, setLocale, getLocale, intlLocale, metaTitle}
   from '../packages/_shared/i18n.js';
-import {allDockItems, dockItemFor, DOCK_ITEMS, HIDDEN_APPS}
+import {allDockItems, dockItemFor, DEFAULT_DOCK, DOCK_ITEMS, HIDDEN_APPS}
   from './dock-items.js';
 import {pickApp, openCustomize, openDockManager, setSetting}
   from './customize.js';
@@ -29,9 +29,14 @@ const dockCfg = core => {
 const dockItems = core => {
   const all = allDockItems(core);
   const names = dockCfg(core).items;
-  // curated default: DOCK_ITEMS only — every other app lives in the
-  // launcher until the user pins it
-  const list = Array.isArray(names) ? names : DOCK_ITEMS.map(i => i.name);
+  // curated default: only the essentials — everything else lives in the
+  // launcher until the user pins it. A stored list equal to the old
+  // "pin everything" default migrates to the clean layout.
+  const oldDefault = DOCK_ITEMS.map(i => i.name);
+  const migrated = Array.isArray(names) && oldDefault.length &&
+    names.length === oldDefault.length &&
+    names.every(n => oldDefault.includes(n));
+  const list = (!Array.isArray(names) || migrated) ? DEFAULT_DOCK : names;
   return list.map(n => all.find(i => i.name === n) || dockItemFor(n));
 };
 
