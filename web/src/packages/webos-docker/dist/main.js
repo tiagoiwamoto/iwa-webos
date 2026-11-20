@@ -4333,6 +4333,212 @@ const register = (core, args, options, metadata) => {
     }).catch(e => sb.error(e.message));
   };
 
+  const recreate = () => {
+    if (tab !== 'containers' || !selected) {
+      sb.set('select a container first');
+      return;
+    }
+
+    _shared_api_js__WEBPACK_IMPORTED_MODULE_2__["api"].get(`docker/containers/${selected.id}/inspect`).then(spec => {
+      const envRows = spec.env.map(e => {
+        const i = e.indexOf('=');
+        const k = i < 0 ? e : e.slice(0, i);
+        return {
+          k,
+          v: i < 0 ? '' : e.slice(i + 1),
+          origK: k,
+          del: false,
+          orig: true
+        };
+      });
+      const portRows = spec.ports.map(p => ({
+        cp: p.container,
+        hp: p.host,
+        origCp: p.container,
+        del: false,
+        orig: true
+      }));
+
+      const input = (val, width, ph) => Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('input', {
+        class: 'webos-input',
+        value: val,
+        placeholder: ph || '',
+        style: {
+          width,
+          padding: '3px 6px',
+          fontSize: '11px'
+        }
+      });
+
+      const sec = t => Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
+        style: {
+          fontWeight: 'bold',
+          color: '#8cf',
+          marginTop: '8px'
+        }
+      }, t);
+
+      const lbl = t => Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {
+        style: {
+          color: '#9ab',
+          fontSize: '11px'
+        }
+      }, t);
+
+      const portBox = Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div');
+
+      const renderPorts = () => {
+        portBox.innerHTML = '';
+        portRows.filter(r => !r.del).forEach(r => {
+          const cp = input(r.cp, '90px', '80/tcp');
+          const hp = input(r.hp, '90px', 'host');
+
+          cp.oninput = () => {
+            r.cp = cp.value;
+          };
+
+          hp.oninput = () => {
+            r.hp = hp.value;
+          };
+
+          portBox.appendChild(Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
+            style: {
+              display: 'flex',
+              gap: '6px',
+              alignItems: 'center'
+            }
+          }, cp, lbl('→'), hp, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["button"])('✕', () => {
+            r.del = true;
+            renderPorts();
+          })));
+        });
+      };
+
+      renderPorts();
+      const envBox = Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div');
+
+      const renderEnv = () => {
+        envBox.innerHTML = '';
+        envRows.filter(r => !r.del).forEach(r => {
+          const k = input(r.k, '150px', 'NAME');
+          const v = input(r.v, '230px', 'value');
+
+          k.oninput = () => {
+            r.k = k.value;
+          };
+
+          v.oninput = () => {
+            r.v = v.value;
+          };
+
+          envBox.appendChild(Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
+            style: {
+              display: 'flex',
+              gap: '6px',
+              alignItems: 'center'
+            }
+          }, k, lbl('='), v, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["button"])('✕', () => {
+            r.del = true;
+            renderEnv();
+          })));
+        });
+      };
+
+      renderEnv();
+      const restartSel = Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('select', {
+        class: 'webos-input',
+        style: {
+          padding: '3px 6px'
+        }
+      }, ...['', 'no', 'always', 'unless-stopped', 'on-failure'].map(o => Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('option', {
+        value: o,
+        selected: o === spec.restart
+      }, o || '(keep)')));
+      const cmdIn = input(spec.command || '', '420px', 'command (blank = keep)');
+      const foot = Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
+        style: {
+          display: 'flex',
+          gap: '8px',
+          marginTop: '10px'
+        }
+      });
+      const win = proc.createWindow({
+        title: `Recreate: ${spec.name}`,
+        dimension: {
+          width: 540,
+          height: 480
+        }
+      });
+      win.render($c => {
+        foot.appendChild(Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["button"])('Recreate', () => {
+          const ports = {};
+          portRows.forEach(r => {
+            if (r.del) {
+              if (r.orig) ports[r.origCp] = null;
+            } else if (r.cp && r.hp) {
+              ports[r.cp] = r.hp;
+            }
+          });
+          const envSet = {},
+                envDel = [];
+          envRows.forEach(r => {
+            if (r.del) {
+              if (r.orig) envDel.push(r.origK);
+            } else if (r.k) {
+              envSet[r.k] = r.v;
+            }
+          });
+          const payload = {
+            ports,
+            env_set: envSet,
+            env_del: envDel,
+            restart: restartSel.value
+          };
+          if (cmdIn.value.trim() && cmdIn.value.trim() !== spec.command) payload.command = cmdIn.value.trim();
+          _shared_api_js__WEBPACK_IMPORTED_MODULE_2__["api"].post(`docker/containers/${selected.id}/recreate`, payload).then(() => {
+            win.destroy();
+            sb.set(`recreated ${spec.name}`);
+            refresh();
+          }).catch(e => sb.error(e.message));
+        }));
+        foot.appendChild(Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["button"])('Cancel', () => win.destroy()));
+        $c.appendChild(Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
+          style: {
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '6px',
+            height: '100%',
+            padding: '12px',
+            overflow: 'auto',
+            background: '#20232a',
+            color: '#e8e8e8',
+            fontSize: '12px'
+          }
+        }, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
+          style: {
+            color: '#9ab'
+          }
+        }, `${spec.image} · ${spec.network || 'bridge'} · ${spec.status}`), sec('Ports (container → host)'), portBox, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["button"])('+ add port', () => {
+          portRows.push({
+            cp: '',
+            hp: '',
+            del: false,
+            orig: false
+          });
+          renderPorts();
+        }), sec('Environment'), envBox, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["button"])('+ add var', () => {
+          envRows.push({
+            k: '',
+            v: '',
+            del: false,
+            orig: false
+          });
+          renderEnv();
+        }), sec('Restart policy'), restartSel, sec('Command'), cmdIn, foot));
+      });
+    }).catch(e => sb.error(e.message));
+  };
+
   const tb = Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
     class: 'webos-toolbar'
   }, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["button"])('Containers', () => {
@@ -4345,7 +4551,7 @@ const register = (core, args, options, metadata) => {
     style: {
       width: '12px'
     }
-  }), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["button"])('▶ Start', () => act('start')), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["button"])('■ Stop', () => act('stop')), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["button"])('↻ Restart', () => act('restart')), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["button"])('Logs', logs), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["button"])('✕ Remove', () => {
+  }), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["button"])('▶ Start', () => act('start')), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["button"])('■ Stop', () => act('stop')), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["button"])('↻ Restart', () => act('restart')), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["button"])('✎ Recreate', recreate), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["button"])('Logs', logs), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["button"])('✕ Remove', () => {
     if (!selected) {
       sb.set('select a row first');
       return;
