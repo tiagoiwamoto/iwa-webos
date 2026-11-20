@@ -5,7 +5,7 @@
  */
 import {useI18n, LOCALES, setLocale, getLocale, intlLocale, metaTitle}
   from '../packages/_shared/i18n.js';
-import {allDockItems, dockItemFor, DEFAULT_DOCK, DOCK_ITEMS, HIDDEN_APPS}
+import {allDockItems, dockItemFor, DEFAULT_DOCK, HIDDEN_APPS}
   from './dock-items.js';
 import {pickApp, openCustomize, openDockManager, setSetting}
   from './customize.js';
@@ -26,17 +26,22 @@ const dockCfg = core => {
   };
 };
 
+const DOCK_LAYOUT_V = 2; // bump to re-apply the default once per install
+
 const dockItems = core => {
   const all = allDockItems(core);
-  const names = dockCfg(core).items;
-  // curated default: only the essentials — everything else lives in the
-  // launcher until the user pins it. A stored list equal to the old
-  // "pin everything" default migrates to the clean layout.
-  const oldDefault = DOCK_ITEMS.map(i => i.name);
-  const migrated = Array.isArray(names) && oldDefault.length &&
-    names.length === oldDefault.length &&
-    names.every(n => oldDefault.includes(n));
-  const list = (!Array.isArray(names) || migrated) ? DEFAULT_DOCK : names;
+  const s = core.make('osjs/settings');
+  let names = s.get('osjs/desktop', 'webos.dock', null);
+  // one-time migration: any dock saved by an older layout (incl. the
+  // Dock Manager's "pin everything") resets to the clean default; the
+  // version flag lets later user customizations win
+  if ((s.get('osjs/desktop', 'webos.dockv', 0) || 0) < DOCK_LAYOUT_V) {
+    names = DEFAULT_DOCK;
+    s.set('osjs/desktop', 'webos.dock', DEFAULT_DOCK);
+    s.set('osjs/desktop', 'webos.dockv', DOCK_LAYOUT_V);
+    s.save();
+  }
+  const list = Array.isArray(names) ? names : DEFAULT_DOCK;
   return list.map(n => all.find(i => i.name === n) || dockItemFor(n));
 };
 
