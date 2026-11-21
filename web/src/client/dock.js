@@ -66,7 +66,7 @@ const applyAppearance = core => {
 export const createDock = core => {
   let dock = null;
   let popover = null;
-  const running = new Map(); // app name -> instance count
+  const running = new Set();
   const {t, onLocale} = useI18n(core);
 
   const themeIcon = name => {
@@ -132,12 +132,56 @@ export const createDock = core => {
     });
   };
 
+  const windowsFor = name => [...running]
+    .filter(proc => proc.metadata.name === name && !proc.destroyed)
+    .flatMap(proc => proc.windows)
+    .filter(win => !win.destroyed);
+
+  const activate = (name, ev) => {
+    const windows = windowsFor(name);
+    const focus = win => {
+      win.raise();
+      win.focus();
+    };
+    if (windows.length === 1) {
+      focus(windows[0]);
+    } else if (windows.length > 1) {
+      core.make('osjs/contextmenu').show({position: ev, menu: windows.map(win => ({
+        label: win.state.title || name,
+        onclick: () => focus(win)
+      }))});
+    } else {
+      core.run(name).catch(() => {});
+    }
+  };
+
   const paint = () => {
     if (!dock) {
       return;
     }
-    dock.querySelectorAll('.webos-dock-item').forEach(node => {
-      node.classList.toggle('running', !!running.get(node.dataset.app));
+    const shown = new Set();
+    dock.querySelectorAll('.webos-dock-item[data-app]').forEach(node => {
+      const name = node.dataset.app;
+      const hasWindows = windowsFor(name).length > 0;
+      if (node.dataset.unpinned && !hasWindows) {
+        node.remove();
+        return;
+      }
+      shown.add(name);
+      node.classList.toggle('running', hasWindows);
+    });
+    const tray = dock.querySelector('.webos-dock-tray');
+    const items = allDockItems(core);
+    running.forEach(proc => {
+      const name = proc.metadata.name;
+      if (!shown.has(name) && windowsFor(name).length) {
+        const item = items.find(item => item.name === name) || dockItemFor(name);
+        const node = appButton(item, dockCfg(core).size);
+        node.dataset.unpinned = 'true';
+        node.classList.add('running');
+        dock.insertBefore(node, tray);
+        shown.add(name);
+      }
     });
   };
 
@@ -180,9 +224,9 @@ export const createDock = core => {
           label.className = 'lbl';
           label.textContent = metaTitle(core, m);
           node.appendChild(label);
-          node.addEventListener('click', () => {
+          node.addEventListener('click', ev => {
             close();
-            core.run(m.name).catch(() => {});
+            activate(m.name, ev);
           });
           node.addEventListener('contextmenu', ev => {
             ev.preventDefault();
@@ -208,6 +252,43 @@ export const createDock = core => {
     search.focus();
   };
 
+  const appButton = (item, size, pinned = false) => {
+    const node = document.createElement('div');
+    node.className = 'webos-dock-item';
+    node.dataset.app = item.name;
+    node.title = t('shell.app.' + item.label);
+    if (node.title === 'shell.app.' + item.label) {
+      try {
+        const meta = core.make('osjs/packages')
+          .getPackages(m => m.name === item.name)[0];
+        node.title = meta ? metaTitle(core, meta) : item.label;
+      } catch (e) {
+        node.title = item.label;
+      }
+    }
+    node.appendChild(itemIcon(item));
+    node.addEventListener('click', ev => {
+      node.classList.remove('bounce');
+      void node.offsetWidth;
+      node.classList.add('bounce');
+      activate(item.name, ev);
+    });
+    sizeOf(node, size);
+    if (pinned) {
+      node.addEventListener('contextmenu', ev => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        core.make('osjs/contextmenu').show({position: ev, menu: [
+          {label: t('cust.removeDock'), onclick: () =>
+            setSetting(core, 'webos.dock',
+              dockItems(core).map(i => i.name)
+                .filter(n => n !== item.name))}
+        ]});
+      });
+    }
+    return node;
+  };
+
   const build = () => {
     const cfg = dockCfg(core);
     dock = document.createElement('div');
@@ -227,40 +308,7 @@ export const createDock = core => {
     dock.appendChild(Object.assign(document.createElement('div'),
       {className: 'webos-dock-sep'}));
 
-    dockItems(core).forEach(item => {
-      const node = document.createElement('div');
-      node.className = 'webos-dock-item';
-      node.dataset.app = item.name;
-      node.title = t('shell.app.' + item.label);
-      if (node.title === 'shell.app.' + item.label) {
-        try {
-          const meta = core.make('osjs/packages')
-            .getPackages(m => m.name === item.name)[0];
-          node.title = meta ? metaTitle(core, meta) : item.label;
-        } catch (e) {
-          node.title = item.label;
-        }
-      }
-      node.appendChild(itemIcon(item));
-      node.addEventListener('click', () => {
-        node.classList.remove('bounce');
-        void node.offsetWidth;
-        node.classList.add('bounce');
-        core.run(item.name).catch(() => {});
-      });
-      sizeOf(node, cfg.size);
-      node.addEventListener('contextmenu', ev => {
-        ev.preventDefault();
-        ev.stopPropagation();
-        core.make('osjs/contextmenu').show({position: ev, menu: [
-          {label: t('cust.removeDock'), onclick: () =>
-            setSetting(core, 'webos.dock',
-              dockItems(core).map(i => i.name)
-                .filter(n => n !== item.name))}
-        ]});
-      });
-      dock.appendChild(node);
-    });
+    dockItems(core).forEach(item => dock.appendChild(appButton(item, cfg.size, true)));
     // --- tray: appearance settings + clock ---
     const tray = document.createElement('div');
     tray.className = 'webos-dock-tray';
@@ -364,17 +412,19 @@ export const createDock = core => {
     });
   };
 
-  const bump = (proc, delta) => {
-    const name = proc && proc.metadata && proc.metadata.name;
-    if (!name) {
+  core.on('osjs/application:launched', (name, proc) => {
+    if (!proc || proc.destroyed) {
       return;
     }
-    running.set(name, Math.max(0, (running.get(name) || 0) + delta));
+    running.add(proc);
+    proc.on('create-window', paint);
     paint();
-  };
-
-  core.on('osjs/application:launched', proc => bump(proc, 1));
-  core.on('osjs/application:destroy', proc => bump(proc, -1));
+  });
+  core.on('osjs/application:destroy', proc => {
+    running.delete(proc);
+    paint();
+  });
+  core.on('osjs/window:destroy', paint);
   core.on('osjs/core:logged-in', build);
   // the packages provider only exists after boot completes; rebuild once
   // so user-pinned apps resolve their real icon/title
