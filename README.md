@@ -103,6 +103,17 @@ system; everything the panel does happens **inside the container**.
 SKIP_GIT=1 ./update.sh    # skips the pull (sources already updated/manual)
 ```
 
+If the update mechanism fails, recover over SSH — go to the source
+directory (`WEBOS_SOURCE_DIR` in `/opt/webos/.env`, or `/opt/webos-src`),
+pull and run the script as root:
+
+```bash
+cd /opt/webos-src          # or your clone dir
+sudo git pull
+sudo chmod +x update.sh
+sudo ./update.sh
+```
+
 Run it as a normal user — it re-execs itself under `sudo` and, when
 already root, pulls the repo as the `.git` owner via `runuser`. The
 System Update app triggers the same script through `systemd-run`; the

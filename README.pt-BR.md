@@ -102,6 +102,17 @@ o painel fizer acontece **dentro do container**.
 SKIP_GIT=1 ./update.sh    # pula o pull (fontes já atualizadas/manual)
 ```
 
+Se o mecanismo de update falhar, recupere via SSH — vá até a pasta do
+sistema (`WEBOS_SOURCE_DIR` em `/opt/webos/.env`, ou `/opt/webos-src`),
+faça o pull e rode o script como root:
+
+```bash
+cd /opt/webos-src          # ou a pasta do seu clone
+sudo git pull
+sudo chmod +x update.sh
+sudo ./update.sh
+```
+
 Rode como usuário normal — ele se re-executa sob `sudo` e, quando já é
 root, faz o pull do repo como o dono do `.git` via `runuser`. O app
 System Update dispara o mesmo script via `systemd-run`; o agente localiza
