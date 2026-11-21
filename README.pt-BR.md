@@ -42,6 +42,7 @@ alternativa à UI tradicional de Cockpit/CasaOS/Webmin.
 | Plataforma | Arquitetura | Modo |
 |---|---|---|
 | Docker (Ubuntu 24.04) | x86_64 | container (`--docker`) |
+| VPS Ubuntu | x86_64 | instalação nativa — produção |
 | Raspberry Pi 2 | armv7l | instalação nativa |
 | Orange Pi | armv7l/arm64 | instalação nativa |
 | Walnut Pi | armv7l/arm64 | instalação nativa |
