@@ -35,8 +35,16 @@ an alternative to traditional Cockpit/CasaOS/Webmin UIs.
 | ![Store](docs/screenshots/18-store.png) | ![Terminal](docs/screenshots/19-terminal.png) | ![FileManager](docs/screenshots/20-filemanager.png) |
 | **Settings** | **Remote Access** | **Backup** |
 | ![Settings](docs/screenshots/21-settings.png) | ![Remote](docs/screenshots/22-remote.png) | ![Backup](docs/screenshots/24-backup.png) |
-| **Navigator** | **Folder picker (Backup)** | |
-| ![Navigator](docs/screenshots/25-navigator.png) | ![Picker](docs/screenshots/26-backup-picker.png) | |
+| **Navigator** | **Folder picker (Backup)** | **Databases** |
+| ![Navigator](docs/screenshots/25-navigator.png) | ![Picker](docs/screenshots/26-backup-picker.png) | ![Databases](docs/screenshots/30-databases.png) |
+| **Packages** | **Network** | **Firewall** |
+| ![Packages](docs/screenshots/31-packages.png) | ![Network](docs/screenshots/32-network.png) | ![Firewall](docs/screenshots/33-firewall.png) |
+| **Web Sites** | **Certificates** | **Shares** |
+| ![WebSites](docs/screenshots/34-websites.png) | ![Certificates](docs/screenshots/35-certificates.png) | ![Shares](docs/screenshots/36-shares.png) |
+| **Security** | **Drive Health** | **VPN** |
+| ![Security](docs/screenshots/37-security.png) | ![Smart](docs/screenshots/38-smart.png) | ![VPN](docs/screenshots/39-vpn.png) |
+| **Alerts** | **System Update** | |
+| ![Alerts](docs/screenshots/40-alerts.png) | ![Update](docs/screenshots/41-update.png) | |
 
 ## Tested platforms
 
