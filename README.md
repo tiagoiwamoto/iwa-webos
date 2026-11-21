@@ -51,6 +51,7 @@ an alternative to traditional Cockpit/CasaOS/Webmin UIs.
 | Platform | Architecture | Mode |
 |---|---|---|
 | Docker (Ubuntu 24.04) | x86_64 | container (`--docker`) |
+| Docker (Fedora / Arch / Slackware) | x86_64 | `docker-compose.test.yml` — package-manager validation |
 | Ubuntu VPS | x86_64 | native install — production |
 | Raspberry Pi 2 | armv7l | native install |
 | Orange Pi | armv7l/arm64 | native install |
@@ -95,6 +96,14 @@ Grant access to another user:  sudo usermod -aG webos <user>
 Brings up an Ubuntu container with systemd as PID 1 — user `webos/webos`
 created at boot. Useful for trying the UI without touching the real
 system; everything the panel does happens **inside the container**.
+
+Multi-distro test rigs (Fedora, Arch and Slackware side by side, used to
+validate the package-manager detection in the Packages app):
+
+```bash
+docker compose -f docker-compose.test.yml up -d --build
+# http://localhost:8001 Fedora · :8002 Arch · :8003 Slackware — webos/webos
+```
 
 ## Updating (without losing anything)
 
@@ -184,7 +193,7 @@ user).
 | Docker | Containers/images: start/stop/logs/pull, edit env/ports/params and recreate | docker socket |
 | App Store | CasaOS index + bundled catalog (`store/`): 14 classic apps — WordPress, phpBB, MyBB, SMF, Joomla, Drupal, Ghost, MediaWiki, PrestaShop, osTicket, Kanboard, Flarum, Matomo, phpMyAdmin — works offline, icons via authenticated proxy | `docker compose` |
 | Users | User CRUD, password, lock/unlock | `useradd`/`usermod` |
-| Packages | apt search/install/remove, pending system updates, one-click install of missing admin tools | `apt` |
+| Packages | Search/install/remove, pending system updates, one-click install of missing admin tools — auto-detects the distro's package manager | `apt`, `dnf`/`yum`, `pacman`, `zypper`, `apk`, `slackpkg` |
 | Network | Interfaces, addresses, routes, listening ports | `ip`/`ss` |
 | Firewall | ufw rules: list, allow/deny, enable/disable | `ufw` |
 | Web Sites | Nginx vhosts and reverse proxies | `nginx` |

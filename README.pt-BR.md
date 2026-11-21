@@ -50,6 +50,7 @@ alternativa à UI tradicional de Cockpit/CasaOS/Webmin.
 | Plataforma | Arquitetura | Modo |
 |---|---|---|
 | Docker (Ubuntu 24.04) | x86_64 | container (`--docker`) |
+| Docker (Fedora / Arch / Slackware) | x86_64 | `docker-compose.test.yml` — validação de gerenciadores de pacotes |
 | VPS Ubuntu | x86_64 | instalação nativa — produção |
 | Raspberry Pi 2 | armv7l | instalação nativa |
 | Orange Pi | armv7l/arm64 | instalação nativa |
@@ -94,6 +95,14 @@ Dar acesso a outro usuário:  sudo usermod -aG webos <usuario>
 Sobe o container Ubuntu com systemd como PID 1 — usuário `webos/webos`
 criado no boot. Útil para testar a UI sem tocar o sistema real; tudo o que
 o painel fizer acontece **dentro do container**.
+
+Ambientes de teste multi-distro (Fedora, Arch e Slackware lado a lado,
+usados para validar a detecção de gerenciador de pacotes do app Packages):
+
+```bash
+docker compose -f docker-compose.test.yml up -d --build
+# http://localhost:8001 Fedora · :8002 Arch · :8003 Slackware — webos/webos
+```
 
 ## Atualização (sem perder nada)
 
@@ -181,7 +190,7 @@ PID 1 (`privileged`, `tmpfs /run`) sobe as mesmas unidades mais
 | Docker | Containers/imagens: start/stop/logs/pull, edita env/portas/params e recria | docker socket |
 | App Store | Índice CasaOS + catálogo embutido (`store/`): 14 apps clássicos — WordPress, phpBB, MyBB, SMF, Joomla, Drupal, Ghost, MediaWiki, PrestaShop, osTicket, Kanboard, Flarum, Matomo, phpMyAdmin — funciona offline, ícones via proxy autenticado | `docker compose` |
 | Users | CRUD de usuários, senha, lock/unlock | `useradd`/`usermod` |
-| Packages | Busca/instala/remove apt, atualizações pendentes do sistema, instalação 1-clique de ferramentas ausentes | `apt` |
+| Packages | Busca/instala/remove, atualizações pendentes do sistema, instalação 1-clique de ferramentas ausentes — detecta o gerenciador da distro automaticamente | `apt`, `dnf`/`yum`, `pacman`, `zypper`, `apk`, `slackpkg` |
 | Network | Interfaces, endereços, rotas, portas escutando | `ip`/`ss` |
 | Firewall | Regras ufw: listar, allow/deny, enable/disable | `ufw` |
 | Web Sites | Virtual hosts nginx e proxies reversos | `nginx` |
