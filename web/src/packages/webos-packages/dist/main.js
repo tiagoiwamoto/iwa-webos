@@ -4362,6 +4362,20 @@ var serverApp = function serverApp(sectionId, dims) {
 
     var packages = function packages() {
       body.innerHTML = '';
+      var PM_CMDS = {
+        apt: ['apt-get update', 'apt-get upgrade'],
+        dnf: ['dnf makecache', 'dnf upgrade'],
+        yum: ['yum makecache', 'yum update'],
+        pacman: ['pacman -Sy', 'pacman -Syu'],
+        zypper: ['zypper ref', 'zypper up'],
+        apk: ['apk update', 'apk upgrade'],
+        slackpkg: ['slackpkg update', 'slackpkg upgrade-all']
+      };
+      var mgr = 'apt';
+      _api_js__WEBPACK_IMPORTED_MODULE_3__["api"].get('server/pkgmanager').then(function (d) {
+        mgr = d.manager || mgr;
+        sb.set("".concat(mgr, " \u2014 ").concat(t('server.pkgHint')));
+      })["catch"](function () {});
       var q = inp('server.pkgSearch', '180px');
 
       var install = function install(name) {
@@ -4447,10 +4461,10 @@ var serverApp = function serverApp(sectionId, dims) {
               label: t('server.pkgInstalled')
             }, {
               value: 'update',
-              label: 'apt-get update'
+              label: (PM_CMDS[mgr] || PM_CMDS.apt)[0]
             }, {
               value: 'upgrade',
-              label: 'apt-get upgrade'
+              label: (PM_CMDS[mgr] || PM_CMDS.apt)[1]
             }]
           }, {
             name: 'q',

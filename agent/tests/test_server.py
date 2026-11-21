@@ -177,13 +177,88 @@ def test_packages_installed_filtered(client, fake):
 
 
 def test_packages_search_marks_installed(client, fake):
-    fake.add(("dpkg-query", "-W", "-f=${binary:Package}\n"), out="nginx\n")
+    fake.add(("dpkg-query", "-W"), out="nginx\t1.2\n")
     fake.add(("apt-cache", "search"), out=(
         "nginx - small web server\nnginx-extras - full build\n"))
     data = client.get("/api/server/packages?q=nginx").json()
+    assert data["manager"] == "apt"
     assert [p["name"] for p in data["packages"]] == ["nginx", "nginx-extras"]
     assert data["packages"][0]["installed"] is True
     assert data["packages"][1]["installed"] is False
+
+
+def test_pkgmanager_detects_apt(client, fake):
+    assert client.get("/api/server/pkgmanager").json() == {"manager": "apt"}
+
+
+def test_pkgmanager_none_without_tools(client, fake):
+    fake.tools = set()
+    assert client.get("/api/server/pkgmanager").json() == {"manager": None}
+    data = client.get("/api/server/packages?q=nginx").json()
+    assert data == {"manager": None, "packages": [], "updates": []}
+
+
+def test_packages_dnf_search_and_updates(client, fake):
+    fake.tools = {t for t in fake.tools
+                  if t not in ("apt", "apt-get", "apt-cache")} | {"dnf", "rpm"}
+    fake.add(("rpm", "-qa"), out="nginx\t1.2\n")
+    # dnf5 prints tab-separated rows; dnf4 uses 'name.arch : summary'
+    fake.add(("dnf", "search"), out=(
+        "nginx.x86_64 : small web server\n"
+        "nginx-core.x86_64\tcore files\n"))
+    fake.add(("dnf", "check-update"), out=(
+        "\nnginx.x86_64  1.3-1.fc40  updates\n"))
+    data = client.get("/api/server/packages?q=nginx").json()
+    assert data["manager"] == "dnf"
+    names = [p["name"] for p in data["packages"]]
+    assert names == ["nginx", "nginx-core"]
+    assert data["packages"][0]["installed"] is True
+    upd = client.get("/api/server/packages?updates=true").json()
+    assert upd["updates"] == [{"name": "nginx", "version": "1.3-1.fc40",
+                               "arch": "x86_64", "from": ""}]
+
+
+def test_packages_pacman_search_and_updates(client, fake):
+    fake.tools = {t for t in fake.tools
+                  if t not in ("apt", "apt-get", "apt-cache")} | {"pacman"}
+    fake.add(("pacman", "-Q"), out="nginx 1.2\n")
+    fake.add(("pacman", "-Ss"), out=(
+        "extra/nginx 1.2 [installed]\n    small web server\n"
+        "extra/nginx-extras 1.3\n    full build\n"))
+    fake.add(("pacman", "-Qu"), out="nginx 1.2 -> 1.3\n")
+    data = client.get("/api/server/packages?q=nginx").json()
+    assert data["manager"] == "pacman"
+    assert [p["name"] for p in data["packages"]] == ["nginx", "nginx-extras"]
+    assert data["packages"][0]["installed"] is True
+    upd = client.get("/api/server/packages?updates=true").json()
+    assert upd["updates"] == [{"name": "nginx", "from": "1.2",
+                               "version": "1.3"}]
+
+
+def test_packages_slackpkg_search_and_installed(client, fake, tmp_path,
+                                                monkeypatch):
+    fake.tools = {t for t in fake.tools
+                  if t not in ("apt", "apt-get", "apt-cache")} | {"slackpkg"}
+    pkgs = tmp_path / "packages"
+    pkgs.mkdir()
+    (pkgs / "httpd-2.4.58-x86_64-1").touch()
+    (pkgs / "aaa_base-15.0-x86_64-2").touch()
+    monkeypatch.setattr(server, "Path",
+                        lambda s: pkgs if str(s) == "/var/log/packages"
+                        else Path(s))
+    fake.add(("slackpkg", "search"), out=(
+        "[ installed ] - httpd-2.4.58-x86_64-1\n"
+        "[uninstalled] - nginx-1.25.0-x86_64-1\n"))
+    data = client.get("/api/server/packages?installed=true").json()
+    assert data["manager"] == "slackpkg"
+    names = [p["name"] for p in data["packages"]]
+    assert "httpd" in names and "aaa_base" in names
+    data = client.get("/api/server/packages?q=httpd").json()
+    assert data["packages"] == [
+        {"name": "httpd", "version": "2.4.58", "desc": "",
+         "installed": True},
+        {"name": "nginx", "version": "1.25.0", "desc": "",
+         "installed": False}]
 
 
 def test_packages_search_query_validated(client, fake):
@@ -200,13 +275,17 @@ def test_packages_ops(client, fake):
 
 
 def test_packages_name_validated(client, fake):
-    for name in ("a;rm -rf", "../evil", "UPPER", "x" * 65, ""):
+    for name in ("a;rm -rf", "../evil", "bad name", "-flag",
+                 "x" * 200, ""):
         r = client.post("/api/server/packages",
                         json={"op": "install", "name": name})
         assert r.status_code == 400, name
+    # mixed-case/underscore names are legal outside Debian (e.g. Slackware)
+    assert client.post("/api/server/packages",
+                       json={"op": "install", "name": "MPlayer_2024"}).is_success
+    assert fake.called("apt-get", "-y", "install", "MPlayer_2024")
     assert client.post("/api/server/packages",
                        json={"op": "wipe"}).status_code == 400
-    assert not fake.called("apt-get", "-y", "install")
 
 
 def test_packages_apt_failure_is_500(client, fake):

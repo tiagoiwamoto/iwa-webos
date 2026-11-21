@@ -1,0 +1,59 @@
+# Linux WebOS — Slackware test image.
+# Same stack as the Ubuntu image but on slackpkg, to exercise the
+# package-manager detection in the Packages app and tool installer.
+# Slackware ships no systemd: docker/entrypoint-sysv.sh is PID 1 and runs
+# the agent + web services directly.
+FROM node:22-bookworm AS node
+
+FROM aclemons/slackware:15.0
+
+# point slackpkg at a mirror (http: no ca-certificates in the base image
+# yet) and skip GPG checks for the test image; slackpkg exits 0 even on
+# failure, so verify the toolchain landed before continuing
+RUN echo "http://slackware.osuosl.org/slackware64-15.0/" > /etc/slackpkg/mirrors \
+    && sed -i 's/^CHECKGPG=on/CHECKGPG=off/' /etc/slackpkg/slackpkg.conf \
+    && slackpkg -batch=on -default_answer=y update \
+    && slackpkg -batch=on -default_answer=y install \
+      python3 expat pam shadow openssh openssl-solibs ca-certificates \
+      dcron git perl curl nghttp2 libssh2 brotli iproute2 procps-ng util-linux sudo \
+    && update-ca-certificates \
+    # update-ca-certificates can't run c_rehash (no run-parts): create the
+    # openssl hash links and the default bundle path ourselves
+    && openssl rehash /etc/ssl/certs \
+    && ln -sf /etc/ssl/certs/ca-certificates.crt /etc/ssl/cert.pem \
+    && which python3 git curl useradd
+
+# Node runtime (>= 20.6 required for process.loadEnvFile)
+# installed under /opt/node: /usr/local/man already exists in the base image
+COPY --from=node /usr/local/ /opt/node/
+RUN ln -sf /opt/node/bin/node /usr/bin/node \
+    && ln -sf /opt/node/bin/npm /usr/bin/npm \
+    && ln -sf /opt/node/bin/npx /usr/bin/npx
+
+WORKDIR /opt/webos
+
+COPY agent/requirements.txt agent/requirements.txt
+# slackware's python3 ships neither pip nor ensurepip: bootstrap it
+# (python's own urllib — the distro curl needs libnghttp2)
+RUN python3 -m venv --without-pip agent/.venv \
+    && agent/.venv/bin/python3 -c \
+      "import urllib.request; urllib.request.urlretrieve('https://bootstrap.pypa.io/pip/3.9/get-pip.py', '/tmp/get-pip.py')" \
+    && agent/.venv/bin/python3 /tmp/get-pip.py \
+    && agent/.venv/bin/pip install --no-cache-dir -r agent/requirements.txt
+
+COPY web/package.json web/package-lock.json web/
+COPY web/scripts/ web/scripts/
+RUN cd web && npm ci --include=dev && node scripts/patch-settings.js
+
+COPY agent/ agent/
+COPY web/ web/
+# bundled app-store catalog of classic hosting apps (phpBB, MyBB, SMF…)
+COPY store/ store/
+COPY docker/images/ /home/images/
+RUN cd web && npm run build && npm run package:discover
+
+COPY docker/entrypoint-sysv.sh /usr/local/bin/entrypoint-sysv.sh
+RUN chmod +x /usr/local/bin/entrypoint-sysv.sh
+
+EXPOSE 8000
+ENTRYPOINT ["/usr/local/bin/entrypoint-sysv.sh"]

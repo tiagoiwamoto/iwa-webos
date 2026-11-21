@@ -12,6 +12,7 @@ import shutil
 from fastapi import APIRouter, HTTPException
 
 from ..main import run
+from typing import Optional
 
 router = APIRouter(prefix="/disks", tags=["disks"])
 
@@ -37,7 +38,7 @@ def _device_ok(device: str) -> dict:
     return found
 
 
-def _find_node(nodes: list, path: str) -> dict | None:
+def _find_node(nodes: list, path: str) -> Optional[dict]:
     for n in nodes:
         if n.get("path") == path:
             return n

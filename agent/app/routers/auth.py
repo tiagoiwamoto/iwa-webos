@@ -22,6 +22,7 @@ import time
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException
+from typing import Optional
 
 try:
     import pam
@@ -69,7 +70,7 @@ def _issue_session(user: dict) -> str:
     return token
 
 
-def _resolve_session(token: str) -> dict | None:
+def _resolve_session(token: str) -> Optional[dict]:
     with _sessions_lock:
         session = _sessions.get(token)
         if not session:

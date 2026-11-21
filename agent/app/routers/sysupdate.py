@@ -15,6 +15,7 @@ from pathlib import Path
 from threading import Lock
 
 from fastapi import APIRouter, HTTPException
+from typing import Optional
 
 router = APIRouter(prefix="/sysupdate", tags=["sysupdate"])
 
@@ -31,7 +32,7 @@ def _git(*args, cwd=None, timeout=20):
                           cwd=cwd, capture_output=True, text=True, timeout=timeout)
 
 
-def _source_dir() -> str | None:
+def _source_dir() -> Optional[str]:
     src = os.environ.get("WEBOS_SOURCE_DIR")
     cands = ([src] if src else []) + \
         sorted(glob.glob("/home/*/*") + glob.glob("/root/*")) + [str(FALLBACK_SRC)]
@@ -42,7 +43,7 @@ def _source_dir() -> str | None:
     return None
 
 
-def _ensure_source() -> str | None:
+def _ensure_source() -> Optional[str]:
     src = _source_dir()
     if src:
         return src
@@ -53,12 +54,12 @@ def _ensure_source() -> str | None:
     return str(FALLBACK_SRC) if _source_dir() else None
 
 
-def _local_head(src: str) -> str | None:
+def _local_head(src: str) -> Optional[str]:
     p = _git("rev-parse", "HEAD", cwd=src, timeout=10)
     return p.stdout.strip()[:8] if p.returncode == 0 else None
 
 
-def _remote_head() -> str | None:
+def _remote_head() -> Optional[str]:
     if time.monotonic() - _remote_cache["at"] < 60:
         return _remote_cache["head"]
     try:
@@ -104,7 +105,7 @@ def status():
 
 
 @router.post("")
-def start_update(body: dict | None = None):
+def start_update(body: Optional[dict] = None):
     if not _start_lock.acquire(blocking=False):
         raise HTTPException(409, "update já em andamento")
     try:

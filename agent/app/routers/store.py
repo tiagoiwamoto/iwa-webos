@@ -17,6 +17,7 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 
 from ..main import run
+from typing import Optional
 
 router = APIRouter(prefix="/store", tags=["store"])
 
@@ -92,7 +93,7 @@ def _compose(app_id: str, *compose_args: str):
 
 
 @router.get("/apps")
-def list_apps(category: str | None = None, q: str | None = None):
+def list_apps(category: Optional[str] = None, q: Optional[str] = None):
     idx = _index()
     apps = []
     for a in idx.get("apps", []):

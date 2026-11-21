@@ -9,6 +9,7 @@ import psutil
 from fastapi import APIRouter, HTTPException
 
 from ..main import run
+from typing import Optional
 
 router = APIRouter(prefix="/system", tags=["system"])
 
@@ -28,7 +29,7 @@ def _os_release() -> dict:
     return data
 
 
-def _read_first(*paths) -> str | None:
+def _read_first(*paths) -> Optional[str]:
     for p in paths:
         try:
             value = open(p).read().strip()

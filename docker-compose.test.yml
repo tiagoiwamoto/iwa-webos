@@ -1,0 +1,63 @@
+# Multi-distro test environment — validates the package-manager detection
+# in the Packages app and the tool installer on non-apt systems.
+#
+#   docker compose -f docker-compose.test.yml up -d --build
+#
+#   http://localhost:8001  Fedora (dnf)
+#   http://localhost:8002  Arch (pacman)
+#   http://localhost:8003  Slackware (slackpkg, sysv entrypoint)
+
+x-webos-env: &webos-env
+  WEBOS_PORT: "8000"
+  WEBOS_AUTH: pam
+  WEBOS_REQUIRED_GROUPS: webos
+  WEBOS_VFS_ROOT: /home
+  WEBOS_USER: webos
+  WEBOS_PASSWORD: webos
+
+services:
+  webos-fedora:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.fedora
+    container_name: webos-fedora
+    privileged: true              # required for systemd as PID 1
+    stop_signal: SIGRTMIN+3
+    tmpfs: [/run, /run/lock, /tmp]
+    ports:
+      - "8001:8000"
+    environment:
+      <<: *webos-env
+      WEBOS_TOKEN: testtoken-fedora
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  webos-arch:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.arch
+    container_name: webos-arch
+    privileged: true
+    stop_signal: SIGRTMIN+3
+    tmpfs: [/run, /run/lock, /tmp]
+    ports:
+      - "8002:8000"
+    environment:
+      <<: *webos-env
+      WEBOS_TOKEN: testtoken-arch
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  webos-slackware:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.slackware
+    container_name: webos-slackware
+    tmpfs: [/tmp]
+    ports:
+      - "8003:8000"
+    environment:
+      <<: *webos-env
+      WEBOS_TOKEN: testtoken-slackware
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock

@@ -36,7 +36,7 @@ _DOMAIN = re.compile(r"^(\*\.)?[A-Za-z0-9]([A-Za-z0-9.-]{0,250}[A-Za-z0-9])?$")
 _IP = re.compile(r"^[0-9a-fA-F:.,/%]{1,45}$")        # v4/v6/CIDR, commas for lists
 _IFACE = re.compile(r"^[A-Za-z0-9_.@-]{1,32}$")
 _PATH = re.compile(r"^/[A-Za-z0-9_./~ -]{0,254}$")
-_PKG = re.compile(r"^[a-z0-9][a-z0-9+.:-]{0,63}$")
+_PKG = re.compile(r"^[A-Za-z0-9][A-Za-z0-9+._:-]{0,127}$")
 _PUBKEY = re.compile(r"^[A-Za-z0-9+/]{43}=$")
 _JAIL = re.compile(r"^[A-Za-z0-9_-]{1,40}$")
 _EMAIL = re.compile(r"^[^@\s]{1,64}@[^@\s]{1,128}\.[^@\s]{1,24}$")
@@ -79,7 +79,8 @@ def _run(cmd, timeout=30, check=True, **kw):
 
 @router.get("/capabilities")
 def capabilities():
-    tools = ("ufw", "ip", "ss", "apt-get", "apt-cache", "dpkg-query", "nginx",
+    tools = ("ufw", "ip", "ss", "apt-get", "apt-cache", "dpkg-query", "dnf",
+             "yum", "pacman", "zypper", "apk", "slackpkg", "rpm", "nginx",
              "certbot", "openssl", "testparm", "exportfs", "psql", "mysql",
              "runuser", "fail2ban-client", "sshd", "smartctl", "lsblk",
              "wg", "wg-quick", "hostnamectl", "systemctl", "crontab")
@@ -87,21 +88,58 @@ def capabilities():
 
 
 # ---------------------------------------------------------------------------
-# tool installation — lets the UI offer one-click install for missing tools
+# package manager detection — the panel works on apt, dnf/yum, pacman,
+# zypper, apk and slackpkg systems
 
+def _pm():
+    """Detect the system package manager from the binaries on PATH."""
+    for pm, bins in (("apt", ("apt-get", "apt-cache")),
+                     ("dnf", ("dnf",)),
+                     ("yum", ("yum",)),
+                     ("pacman", ("pacman",)),
+                     ("zypper", ("zypper",)),
+                     ("apk", ("apk",)),
+                     ("slackpkg", ("slackpkg",))):
+        if all(_has(b) for b in bins):
+            return pm
+    return None
+
+
+@router.get("/pkgmanager")
+def pkgmanager():
+    return {"manager": _pm()}
+
+
+_PM_INSTALL = {
+    "apt":      ["apt-get", "install", "-y", "--no-install-recommends"],
+    "dnf":      ["dnf", "install", "-y"],
+    "yum":      ["yum", "install", "-y"],
+    "pacman":   ["pacman", "-S", "--noconfirm", "--needed"],
+    "zypper":   ["zypper", "-n", "install", "-y"],
+    "apk":      ["apk", "add"],
+    "slackpkg": ["slackpkg", "-batch=on", "-default_answer=y", "install"],
+}
+
+# tool → package name per manager ("default" is the fallback)
 TOOL_PKGS = {
-    "ufw": "ufw",
-    "iproute2": "iproute2",
-    "openssh": "openssh-server",
-    "nginx": "nginx",
-    "certbot": "certbot",
-    "postgresql": "postgresql",
-    "mariadb": "mariadb-server",
-    "samba": "samba",
-    "nfs": "nfs-kernel-server",
-    "fail2ban": "fail2ban",
-    "smartmontools": "smartmontools",
-    "wireguard": "wireguard-tools",
+    "ufw":           {"default": "ufw"},
+    "iproute2":      {"default": "iproute2"},
+    "openssh":       {"apt": "openssh-server", "dnf": "openssh-server",
+                      "yum": "openssh-server", "zypper": "openssh",
+                      "default": "openssh"},
+    "nginx":         {"default": "nginx"},
+    "certbot":       {"default": "certbot"},
+    "postgresql":    {"dnf": "postgresql-server", "yum": "postgresql-server",
+                      "zypper": "postgresql-server", "default": "postgresql"},
+    "mariadb":       {"apt": "mariadb-server", "dnf": "mariadb-server",
+                      "yum": "mariadb-server", "zypper": "mariadb",
+                      "default": "mariadb"},
+    "samba":         {"default": "samba"},
+    "nfs":           {"apt": "nfs-kernel-server", "zypper": "nfs-kernel-server",
+                      "default": "nfs-utils"},
+    "fail2ban":      {"default": "fail2ban"},
+    "smartmontools": {"default": "smartmontools"},
+    "wireguard":     {"default": "wireguard-tools"},
 }
 
 
@@ -109,14 +147,16 @@ TOOL_PKGS = {
 def tool_install(body: dict):
     tool = str(body.get("tool") or "")
     _req(tool in TOOL_PKGS, "unknown tool")
-    _req(_has("apt-get"), "apt-get not found")
-    pkg = TOOL_PKGS[tool]
-    proc = _run(["apt-get", "install", "-y", "--no-install-recommends", pkg],
-                timeout=600, check=False)
-    if proc.returncode != 0:
+    pm = _pm()
+    _req(pm, "no supported package manager")
+    pkg = TOOL_PKGS[tool].get(pm, TOOL_PKGS[tool]["default"])
+    env = {**os.environ, "DEBIAN_FRONTEND": "noninteractive"}
+    proc = _run(_PM_INSTALL[pm] + [pkg], timeout=600, check=False, env=env)
+    if proc.returncode != 0 and pm == "apt":
         run(["apt-get", "update"], timeout=300)
-        proc = _run(["apt-get", "install", "-y", "--no-install-recommends",
-                     pkg], timeout=600)
+        proc = _run(_PM_INSTALL[pm] + [pkg], timeout=600, env=env)
+    _req(proc.returncode == 0,
+         (proc.stderr or proc.stdout).strip()[:300] or "install failed")
     return {"ok": True, "package": pkg, "output": proc.stdout[-2000:]}
 
 
@@ -250,17 +290,55 @@ def network_op(body: dict):
 
 
 # ---------------------------------------------------------------------------
-# packages (apt)
+# packages (apt / dnf / yum / pacman / zypper / apk / slackpkg)
 
-def _installed_set():
-    proc = run(["dpkg-query", "-W", "-f=${binary:Package}\n"], timeout=60)
-    return set(proc.stdout.split()) if proc.returncode == 0 else set()
+_SLACK_PKG = re.compile(r"^(.+)-([^-]+)-([^-]+)-([^-]+)$")
+_APK_PKG = re.compile(r"^(.+)-(\d[^-]*-r\d+.*)$")
+_RPM_ARCHES = ("x86_64", "noarch", "aarch64", "ppc64le", "s390x", "i386",
+               "i486", "i586", "i686", "armv6hl", "armv7hl", "armhfp", "src")
 
 
-@router.get("/packages")
-def packages(q: str = "", updates: bool = False, installed: bool = False):
-    _req(_has("apt-get") or _has("apt"), "apt not found")
-    if updates:
+def _slack_split(s):
+    """'name-version-arch-build' → (name, version)."""
+    m = _SLACK_PKG.match(s)
+    return (m.group(1), m.group(2)) if m else (s, "")
+
+
+def _apk_split(s):
+    """'name-1.2.3-r4' → (name, version)."""
+    m = _APK_PKG.match(s)
+    return (m.group(1), m.group(2)) if m else (s, "")
+
+
+def _pm_installed(pm):
+    """Return {name: version} for every installed package."""
+    if pm == "apt":
+        proc = run(["dpkg-query", "-W", "-f=${binary:Package}\t${Version}\n"],
+                   timeout=60)
+        rows = (l.split("\t", 1) for l in proc.stdout.splitlines())
+    elif pm in ("dnf", "yum", "zypper") and _has("rpm"):
+        proc = run(["rpm", "-qa", "--qf", "%{NAME}\t%{VERSION}\n"],
+                   timeout=60)
+        rows = (l.split("\t", 1) for l in proc.stdout.splitlines())
+    elif pm == "pacman":
+        proc = run(["pacman", "-Q"], timeout=60)
+        rows = (l.split(None, 1) for l in proc.stdout.splitlines())
+    elif pm == "apk":
+        proc = run(["apk", "info", "-v"], timeout=60)
+        rows = (_apk_split(l) for l in proc.stdout.splitlines())
+    elif pm == "slackpkg":
+        try:
+            rows = (_slack_split(f.name)
+                    for f in Path("/var/log/packages").iterdir())
+        except OSError:
+            rows = ()
+    else:
+        rows = ()
+    return {r[0]: (r[1] if len(r) > 1 else "") for r in rows if r and r[0]}
+
+
+def _pm_updates(pm):
+    if pm == "apt":
         proc = run(["apt", "list", "--upgradable"], timeout=90)
         out = []
         for line in proc.stdout.splitlines():
@@ -269,46 +347,194 @@ def packages(q: str = "", updates: bool = False, installed: bool = False):
             if m:
                 out.append({"name": m.group(1), "version": m.group(2),
                             "arch": m.group(3), "from": m.group(4)})
-        return {"updates": out}
+        return out
+    if pm in ("dnf", "yum"):
+        proc = run([pm, "check-update", "-q"], timeout=300)
+        out = []
+        for line in proc.stdout.splitlines():
+            cols = line.split()
+            if len(cols) == 3 and "." in cols[0]:
+                name, _, arch = cols[0].rpartition(".")
+                out.append({"name": name, "version": cols[1],
+                            "arch": arch, "from": ""})
+        return out
+    if pm == "pacman":
+        proc = run(["pacman", "-Qu"], timeout=30)
+        out = []
+        for line in proc.stdout.splitlines():
+            m = re.match(r"^(\S+)\s+(\S+)\s+->\s+(\S+)", line)
+            if m:
+                out.append({"name": m.group(1), "from": m.group(2),
+                            "version": m.group(3)})
+        return out
+    if pm == "zypper":
+        proc = run(["zypper", "-n", "lu"], timeout=120)
+        out = []
+        for line in proc.stdout.splitlines():
+            cols = [c.strip() for c in line.split("|")]
+            if len(cols) >= 5 and cols[0] == "v":
+                out.append({"name": cols[2], "from": cols[3],
+                            "version": cols[4],
+                            "arch": cols[5] if len(cols) > 5 else ""})
+        return out
+    if pm == "apk":
+        proc = run(["apk", "version", "-l", "<"], timeout=30)
+        out = []
+        for line in proc.stdout.splitlines():
+            m = re.match(r"^(\S+)\s+<\s+(\S+)", line)
+            if m:
+                name, cur = _apk_split(m.group(1))
+                out.append({"name": name, "from": cur,
+                            "version": m.group(2)})
+        return out
+    return []
+
+
+def _pm_search(pm, q, have):
+    if pm == "apt":
+        proc = run(["apt-cache", "search", "--names-only", q], timeout=30)
+        return [{"name": n.strip(), "desc": d.strip()[:80],
+                 "installed": n.strip() in have}
+                for n, _, d in (l.partition(" - ")
+                                for l in proc.stdout.splitlines()[:200])
+                if n]
+    if pm in ("dnf", "yum"):
+        proc = run([pm, "search", q], timeout=120)
+        out, seen = [], set()
+        arch_re = r"\.(" + "|".join(_RPM_ARCHES) + r")$"
+        for line in proc.stdout.splitlines():
+            name, sep, desc = line.partition(" : ")      # dnf4
+            if not sep:
+                name, sep, desc = line.partition("\t")  # dnf5
+            name = re.sub(arch_re, "", name.strip()) if sep else ""
+            if sep and name and name not in seen:
+                seen.add(name)
+                out.append({"name": name, "desc": desc.strip()[:80],
+                            "installed": name in have})
+            if len(out) >= 200:
+                break
+        return out
+    if pm == "pacman":
+        proc = run(["pacman", "-Ss", q], timeout=30)
+        out, cur = [], None
+        for line in proc.stdout.splitlines()[:400]:
+            m = re.match(r"^(\S+)/(\S+)\s+(\S+)(.*)$", line)
+            if m:
+                cur = {"name": m.group(2), "version": m.group(3),
+                       "desc": "",
+                       "installed": "[installed" in m.group(4)}
+                out.append(cur)
+            elif cur is not None and line.startswith((" ", "\t")):
+                cur["desc"] = line.strip()[:80]
+        for p in out:
+            p["installed"] = p["installed"] or p["name"] in have
+        return out
+    if pm == "zypper":
+        proc = run(["zypper", "-n", "se", q], timeout=60)
+        out = []
+        for line in proc.stdout.splitlines():
+            cols = [c.strip() for c in line.split("|")]
+            if len(cols) >= 4 and cols[0].lower() not in ("s", "") \
+                    and cols[1] != "Name":
+                out.append({"name": cols[1], "desc": cols[2][:80],
+                            "installed": "i" in cols[0]})
+        return out
+    if pm == "apk":
+        proc = run(["apk", "search", q], timeout=30)
+        out = []
+        for line in proc.stdout.splitlines()[:200]:
+            name, ver = _apk_split(line.strip())
+            if name:
+                out.append({"name": name, "version": ver,
+                            "desc": "", "installed": name in have})
+        return out
+    if pm == "slackpkg":
+        proc = run(["slackpkg", "search", q], timeout=60)
+        out = []
+        for line in proc.stdout.splitlines():
+            m = re.match(r"^\[\s*(\w+)\s*\]\s+-\s+(\S+)", line)
+            if m:
+                name, ver = _slack_split(m.group(2))
+                out.append({"name": name, "version": ver, "desc": "",
+                            "installed": m.group(1) == "installed"})
+        return out[:200]
+    return []
+
+
+@router.get("/packages")
+def packages(q: str = "", updates: bool = False, installed: bool = False):
+    pm = _pm()
+    if not pm:
+        return {"manager": None, "packages": [], "updates": []}
+    if updates:
+        return {"manager": pm, "updates": _pm_updates(pm)}
+    have = _pm_installed(pm)
     if installed:
-        proc = run(["dpkg-query", "-W", "-f=${binary:Package}\t${Version}\n"],
-                   timeout=60)
-        pk = [{"name": c[0], "version": c[1] if len(c) > 1 else ""}
-              for c in (l.split("\t", 1) for l in proc.stdout.splitlines())
-              if c and c[0] and (not q or q.lower() in c[0].lower())]
-        return {"packages": pk[:500], "truncated": len(pk) > 500}
+        pk = [{"name": n, "version": v, "installed": True}
+              for n, v in have.items()
+              if not q or q.lower() in n.lower()]
+        return {"manager": pm, "packages": pk[:500],
+                "truncated": len(pk) > 500}
     q = q.strip()
     _req(2 <= len(q) <= 64 and "\n" not in q, "bad query")
-    have = _installed_set()
-    proc = run(["apt-cache", "search", "--names-only", q], timeout=30)
-    out = []
-    for line in proc.stdout.splitlines()[:200]:
-        name, _, desc = line.partition(" - ")
-        if name:
-            out.append({"name": name.strip(), "desc": desc.strip()[:80],
-                        "installed": name.strip() in have})
-    return {"packages": out}
+    return {"manager": pm, "packages": _pm_search(pm, q, have)}
+
+
+# user-facing installs pull recommends (unlike tool installs above)
+_PM_PKG_INSTALL = dict(_PM_INSTALL, apt=["apt-get", "-y", "install"])
+
+_PM_REMOVE = {
+    "apt":      ["apt-get", "-y", "remove"],
+    "dnf":      ["dnf", "-y", "remove"],
+    "yum":      ["yum", "-y", "remove"],
+    "pacman":   ["pacman", "-R", "--noconfirm"],
+    "zypper":   ["zypper", "-n", "remove"],
+    "apk":      ["apk", "del"],
+    "slackpkg": ["slackpkg", "-batch=on", "-default_answer=y", "remove"],
+}
+
+_PM_REFRESH = {
+    "apt":      ["apt-get", "update"],
+    "dnf":      ["dnf", "makecache"],
+    "yum":      ["yum", "makecache"],
+    "pacman":   ["pacman", "-Sy"],
+    "zypper":   ["zypper", "-n", "ref"],
+    "apk":      ["apk", "update"],
+    "slackpkg": ["slackpkg", "update"],
+}
+
+_PM_UPGRADE = {
+    "apt":      ["apt-get", "-y", "upgrade"],
+    "dnf":      ["dnf", "-y", "upgrade"],
+    "yum":      ["yum", "-y", "update"],
+    "pacman":   ["pacman", "-Syu", "--noconfirm"],
+    "zypper":   ["zypper", "-n", "up", "-y"],
+    "apk":      ["apk", "upgrade"],
+    "slackpkg": ["slackpkg", "-batch=on", "-default_answer=y", "upgrade-all"],
+}
 
 
 @router.post("/packages")
 def packages_op(body: dict):
-    _req(_has("apt-get"), "apt-get not found")
+    pm = _pm()
+    _req(pm, "no supported package manager")
     op = body.get("op", "")
     env = {**os.environ, "DEBIAN_FRONTEND": "noninteractive"}
     if op in ("install", "remove"):
         name = str(body.get("name") or "").strip()
         _req(_PKG.match(name), "invalid package name")
-        proc = run(["apt-get", "-y", op, name], timeout=600)
+        base = _PM_PKG_INSTALL[pm] if op == "install" else _PM_REMOVE[pm]
+        proc = run(base + [name], timeout=600, env=env)
     elif op == "update":
-        proc = run(["apt-get", "update"], timeout=300)
+        proc = run(_PM_REFRESH[pm], timeout=300, env=env)
     elif op == "upgrade":
-        proc = run(["apt-get", "-y", "upgrade"], timeout=600)
+        proc = run(_PM_UPGRADE[pm], timeout=1800, env=env)
     else:
         raise HTTPException(400, "bad op")
     tail = "\n".join((proc.stdout + "\n" + proc.stderr).splitlines()[-15:])
     if proc.returncode != 0:
-        raise HTTPException(500, tail or f"apt-get {op} failed")
-    return {"ok": True, "output": tail}
+        raise HTTPException(500, tail or f"{pm} {op} failed")
+    return {"ok": True, "manager": pm, "output": tail}
 
 
 # ---------------------------------------------------------------------------

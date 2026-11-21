@@ -9,6 +9,7 @@ import re
 from fastapi import APIRouter, HTTPException
 
 from ..main import run
+from typing import Optional
 
 router = APIRouter(prefix="/cron", tags=["cron"])
 
@@ -36,7 +37,7 @@ def _write(user: str, lines: list[str]):
         raise HTTPException(500, proc.stderr.strip() or "crontab write failed")
 
 
-def _user(name: str | None) -> str:
+def _user(name: Optional[str]) -> str:
     u = (name or "root").strip()
     if not _USER.match(u):
         raise HTTPException(400, "invalid user")
@@ -101,7 +102,7 @@ def _get(lines: list[str], idx: int) -> str:
 
 
 @router.get("")
-def list_jobs(user: str | None = None):
+def list_jobs(user: Optional[str] = None):
     u = _user(user)
     lines = _crontab(u)
     return {"user": u, "entries": [_parse(l, i) for i, l in enumerate(lines)]}
@@ -143,7 +144,7 @@ def toggle_job(idx: int, body: dict):
 
 
 @router.delete("/{idx}")
-def delete_job(idx: int, user: str | None = None):
+def delete_job(idx: int, user: Optional[str] = None):
     u = _user(user)
     lines = _crontab(u)
     _get(lines, idx)

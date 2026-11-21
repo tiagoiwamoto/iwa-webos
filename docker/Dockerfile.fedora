@@ -1,0 +1,49 @@
+# Linux WebOS — Fedora test image.
+# Same stack as the Ubuntu image but on dnf/rpm, to exercise the
+# package-manager detection in the Packages app and tool installer.
+FROM node:22-bookworm AS node
+
+FROM fedora:latest
+
+RUN dnf -y install \
+      systemd \
+      python3 python3-pip \
+      pam shadow-utils passwd util-linux procps-ng \
+      iproute openssh-server sudo git curl cronie openssl findutils \
+    && dnf clean all \
+    && systemctl mask docker.service docker.socket containerd.service
+
+# Node runtime (>= 20.6 required for process.loadEnvFile)
+# installed under /opt/node: /usr/local/man already exists in the base image
+COPY --from=node /usr/local/ /opt/node/
+RUN ln -sf /opt/node/bin/node /usr/bin/node \
+    && ln -sf /opt/node/bin/npm /usr/bin/npm \
+    && ln -sf /opt/node/bin/npx /usr/bin/npx
+
+WORKDIR /opt/webos
+
+COPY agent/requirements.txt agent/requirements.txt
+RUN python3 -m venv agent/.venv \
+    && agent/.venv/bin/pip install --no-cache-dir -r agent/requirements.txt
+
+COPY web/package.json web/package-lock.json web/
+COPY web/scripts/ web/scripts/
+RUN cd web && npm ci --include=dev && node scripts/patch-settings.js
+
+COPY agent/ agent/
+COPY web/ web/
+# bundled app-store catalog of classic hosting apps (phpBB, MyBB, SMF…)
+COPY store/ store/
+COPY docker/images/ /home/images/
+RUN cd web && npm run build && npm run package:discover
+
+COPY deploy/webos-agent.service deploy/webos-web.service /etc/systemd/system/
+COPY docker/webos-bootstrap.service /etc/systemd/system/
+COPY docker/webos-bootstrap /usr/local/bin/webos-bootstrap
+RUN chmod +x /usr/local/bin/webos-bootstrap \
+    && mkdir -p /srv/webos-apps \
+    && systemctl enable webos-bootstrap webos-agent webos-web
+
+EXPOSE 8000
+STOPSIGNAL SIGRTMIN+3
+ENTRYPOINT ["/sbin/init"]

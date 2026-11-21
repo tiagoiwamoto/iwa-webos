@@ -6,6 +6,7 @@ import re
 from fastapi import APIRouter, HTTPException
 
 from ..main import run
+from typing import Optional
 
 router = APIRouter(prefix="/logs", tags=["logs"])
 
@@ -14,8 +15,8 @@ _MAX_LINES = 2000
 
 
 @router.get("")
-def logs(unit: str | None = None, priority: str | None = None,
-         q: str | None = None, lines: int = 300, since: str | None = None):
+def logs(unit: Optional[str] = None, priority: Optional[str] = None,
+         q: Optional[str] = None, lines: int = 300, since: Optional[str] = None):
     """Recent journal entries, newest last. Filters map to journalctl flags."""
     lines = max(1, min(lines, _MAX_LINES))
     cmd = ["journalctl", "--no-pager", "-o", "json", "-n", str(lines)]

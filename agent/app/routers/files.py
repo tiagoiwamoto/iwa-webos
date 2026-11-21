@@ -3,13 +3,14 @@
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException
+from typing import Optional
 
 router = APIRouter(prefix="/files", tags=["files"])
 
 _MAX = 10 * 1024 * 1024  # 10 MiB
 
 
-def _path(p: str | None) -> Path:
+def _path(p: Optional[str]) -> Path:
     if not p or not p.startswith("/"):
         raise HTTPException(400, "absolute path required")
     return Path(p)

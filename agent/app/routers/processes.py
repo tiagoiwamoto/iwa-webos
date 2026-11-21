@@ -5,6 +5,7 @@ import signal
 
 import psutil
 from fastapi import APIRouter, HTTPException
+from typing import Optional
 
 router = APIRouter(prefix="/processes", tags=["processes"])
 
@@ -29,7 +30,7 @@ def _protected(pid: int) -> bool:
 
 
 @router.get("")
-def list_processes(user: str | None = None, sample_ms: int = 400):
+def list_processes(user: Optional[str] = None, sample_ms: int = 400):
     attrs = ["pid", "ppid", "name", "username", "status", "cmdline",
              "cpu_percent", "memory_percent", "num_threads", "create_time"]
 

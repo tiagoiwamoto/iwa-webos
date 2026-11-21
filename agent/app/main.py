@@ -10,6 +10,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Header, HTTPException, WebSocket, WebSocketException, status
+from typing import Optional
 
 load_dotenv(Path(__file__).resolve().parents[2] / ".env")
 
@@ -32,11 +33,11 @@ def require_ws_token(websocket: WebSocket):
         raise WebSocketException(code=status.WS_1008_POLICY_VIOLATION)
 
 
-def run(cmd: list[str], timeout: int = 30, input_text: str | None = None) -> subprocess.CompletedProcess:
+def run(cmd: list[str], timeout: int = 30, input_text: Optional[str] = None, env: Optional[dict] = None) -> subprocess.CompletedProcess:
     try:
         return subprocess.run(
             cmd, capture_output=True, text=True, timeout=timeout,
-            input=input_text
+            input=input_text, env=env
         )
     except FileNotFoundError:
         # tool not installed: degrade to rc=127 instead of a 500

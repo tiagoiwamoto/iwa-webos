@@ -248,6 +248,19 @@ export const serverApp = (sectionId, dims) =>
     // ------------------------------------------------------------- packages
     const packages = () => {
       body.innerHTML = '';
+      const PM_CMDS = {
+        apt:      ['apt-get update', 'apt-get upgrade'],
+        dnf:      ['dnf makecache', 'dnf upgrade'],
+        yum:      ['yum makecache', 'yum update'],
+        pacman:   ['pacman -Sy', 'pacman -Syu'],
+        zypper:   ['zypper ref', 'zypper up'],
+        apk:      ['apk update', 'apk upgrade'],
+        slackpkg: ['slackpkg update', 'slackpkg upgrade-all']
+      };
+      let mgr = 'apt';
+      api.get('server/pkgmanager')
+        .then(d => { mgr = d.manager || mgr; sb.set(`${mgr} — ${t('server.pkgHint')}`); })
+        .catch(() => {});
       const q = inp('server.pkgSearch', '180px');
       const install = name => call('packages', {op: 'install', name}, packages);
       const remove = name => confirmDanger(`${t('server.pkgRemove')} ${name}?`,
@@ -275,8 +288,8 @@ export const serverApp = (sectionId, dims) =>
           fields: [
             {name: 'op', label: t('server.action'), options: [
               {value: 'installed', label: t('server.pkgInstalled')},
-              {value: 'update', label: 'apt-get update'},
-              {value: 'upgrade', label: 'apt-get upgrade'}]},
+              {value: 'update', label: (PM_CMDS[mgr] || PM_CMDS.apt)[0]},
+              {value: 'upgrade', label: (PM_CMDS[mgr] || PM_CMDS.apt)[1]}]},
             {name: 'q', label: t('server.pkgFilter')}]
         }, v => {
           if (!v) return;
