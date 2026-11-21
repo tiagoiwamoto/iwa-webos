@@ -54,8 +54,8 @@ def _ensure_source() -> str | None:
 
 
 def _local_head(src: str) -> str | None:
-    p = _git("rev-parse", "--short", "HEAD", cwd=src, timeout=10)
-    return p.stdout.strip() if p.returncode == 0 else None
+    p = _git("rev-parse", "HEAD", cwd=src, timeout=10)
+    return p.stdout.strip()[:8] if p.returncode == 0 else None
 
 
 def _remote_head() -> str | None:
@@ -129,16 +129,7 @@ def _start_update(pull: bool):
     (
         set -e
         cd "$1"
-        if [ "$4" = 1 ]; then
-            if [ -e .git ]; then
-                echo "==> Buscando atualizações no Git"
-                git -c 'safe.directory=*' fetch --progress origin main
-                git -c 'safe.directory=*' reset --hard FETCH_HEAD
-            else
-                echo "fonte sem .git — usando fontes locais"
-            fi
-        fi
-        SKIP_GIT=1 sh ./update.sh
+        GIT_TERMINAL_PROMPT=0 SKIP_GIT="$4" sh ./update.sh --main
     )
     rc=$?
     printf '\\n==> Código de saída: %s\\n' "$rc"
@@ -148,8 +139,9 @@ def _start_update(pull: bool):
     try:
         proc = subprocess.run(
             ["systemd-run", "--unit=webos-manual-update", "--collect", "--quiet",
+             "--no-ask-password",
              "sh", "-c", script, "webos-update", src, str(_LOG), str(_RC),
-             "1" if pull else "0"],
+             "0" if pull else "1"],
             capture_output=True, text=True,
         )
     except OSError as exc:

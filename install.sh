@@ -308,8 +308,9 @@ install_host() {
   log "Escrevendo .env e PAM"
   # porta do painel: pergunta (interativo) ou WEBOS_PORT/-y/default
   cur_port=""
-  [ -f "$PREFIX/.env" ] && \
-    cur_port="$($SUDO grep -oE '^WEBOS_PORT=[0-9]+' "$PREFIX/.env" | cut -d= -f2)"
+  if [ -f "$PREFIX/.env" ]; then
+    cur_port="$($SUDO awk -F= '/^WEBOS_PORT=[0-9]+$/ { port=$2 } END { print port }' "$PREFIX/.env")"
+  fi
   PORT="${WEBOS_PORT:-$(ask 'Porta do painel web' "${cur_port:-8000}")}"
   if [ -f "$PREFIX/.env" ]; then
     ok ".env existente preservado (token/config mantidos)"

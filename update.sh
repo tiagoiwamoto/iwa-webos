@@ -22,39 +22,48 @@
 set -e
 cd "$(dirname "$0")"
 
-SUDO=""
-if [ "$(id -u)" -ne 0 ]; then
-  command -v sudo >/dev/null 2>&1 || { echo "precisa de root ou sudo"; exit 1; }
-  # pré-autentica sudo de uma vez — a senha é digitada sem eco na tela
-  echo "==> este update precisa de privilégios de administrador"
-  if ! sudo -v; then
-    # fallback sem tty: lê a senha escondida e autentica via stdin
-    printf 'senha para %s: ' "$USER"
-    read -rs _PW; echo
-    printf '%s\n' "$_PW" | sudo -S -v 2>/dev/null || { echo "autenticação sudo falhou"; exit 1; }
-    unset _PW
-  fi
-  # mantém a credencial viva durante builds longos (npm)
-  (while :; do sudo -n true 2>/dev/null; sleep 60; kill -0 "$$" || exit; done) &
-  SUDO="sudo"
-fi
 PREFIX=/opt/webos
 STATE_BACKUP=/opt/webos-state-backup
 
 echo "==> Malta OS update (preserva estado)"
 
 # 1) fontes novas
-if [ "${SKIP_GIT:-0}" != "1" ] && [ -d .git ]; then
-  echo "==> git pull"
-  git -c safe.directory='*' pull --ff-only || echo "  ! git pull falhou — seguindo com as fontes locais"
+if [ "${SKIP_GIT:-0}" != "1" ] && [ -e .git ]; then
+  echo "==> git pull --ff-only"
+  if [ "${1:-}" = "--main" ]; then
+    set -- origin main
+  else
+    set --
+  fi
+  if [ "$(id -u)" -eq 0 ]; then
+    owner="$(stat -c %u -- .git)"
+    if [ "$owner" -ne 0 ]; then
+      runuser -u "$(id -nu "$owner")" -- git pull --ff-only "$@"
+    else
+      git pull --ff-only "$@"
+    fi
+  else
+    git pull --ff-only "$@"
+  fi
+fi
+
+if [ "$(id -u)" -ne 0 ]; then
+  command -v sudo >/dev/null 2>&1 || { echo "precisa de privilégios de administrador (sudo)" >&2; exit 1; }
+  if [ -n "${WEBOS_PORT:-}" ]; then
+    exec sudo SKIP_GIT=1 "WEBOS_PORT=$WEBOS_PORT" sh ./update.sh
+  fi
+  exec sudo SKIP_GIT=1 sh ./update.sh
 fi
 
 # 2) backup de segurança do estado (cópia, não move nada)
 if [ -d "$PREFIX" ]; then
   echo "==> backup do estado em $STATE_BACKUP"
-  $SUDO mkdir -p "$STATE_BACKUP"
+  install -d -m 0700 "$STATE_BACKUP"
+  chmod 0700 "$STATE_BACKUP"
   for f in .env rclone.conf .backup-jobs.json .remote-connections.json .remote-known-hosts; do
-    [ -f "$PREFIX/$f" ] && $SUDO cp -a "$PREFIX/$f" "$STATE_BACKUP/$f" || true
+    if [ -f "$PREFIX/$f" ]; then
+      cp -a "$PREFIX/$f" "$STATE_BACKUP/$f"
+    fi
   done
 fi
 
