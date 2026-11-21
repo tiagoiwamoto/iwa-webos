@@ -274,6 +274,7 @@ install_host() {
     --exclude '.git' --exclude 'web/node_modules' --exclude 'web/dist' \
     --exclude 'agent/.venv' --exclude '.env' --exclude 'web/vfs' \
     --exclude 'node' \
+    --exclude '/.update.log' --exclude '/.update.rc' \
     --exclude 'rclone.conf' --exclude '.backup-jobs.json' \
     --exclude '.remote-connections.json' --exclude '.remote-known-hosts' \
     ./ "$PREFIX/" 2>/dev/null \
@@ -346,7 +347,9 @@ EOF
   $SUDO sed "s|ExecStart=/usr/bin/node|ExecStart=$NODE_BIN|" \
     deploy/webos-web.service | $SUDO tee /etc/systemd/system/webos-web.service >/dev/null
   $SUDO systemctl daemon-reload
-  $SUDO systemctl enable --now webos-agent webos-web
+  $SUDO systemctl enable webos-agent webos-web
+  log "Reiniciando serviços do Malta OS"
+  $SUDO systemctl restart webos-agent webos-web
   sleep 3
   $SUDO systemctl is-active --quiet webos-agent webos-web \
     || die "serviços não subiram — veja: journalctl -u webos-agent -u webos-web"

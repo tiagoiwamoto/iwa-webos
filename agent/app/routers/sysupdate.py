@@ -8,9 +8,11 @@ POST /api/sysupdate -> inicia (409 se já rodando; body {"pull": true})
 
 import glob
 import os
+import re
 import subprocess
 import time
 from pathlib import Path
+from threading import Lock
 
 from fastapi import APIRouter, HTTPException
 
@@ -20,7 +22,8 @@ REPO = "https://github.com/tiagoiwamoto/iwa-webos.git"
 FALLBACK_SRC = Path("/opt/webos-src")
 _LOG = Path("/opt/webos/.update.log")
 _RC = Path("/opt/webos/.update.rc")
-_remote_cache = {"at": 0.0, "head": None}
+_remote_cache = {"at": float("-inf"), "head": None}
+_start_lock = Lock()
 
 
 def _git(*args, cwd=None, timeout=20):
@@ -56,20 +59,21 @@ def _local_head(src: str) -> str | None:
 
 
 def _remote_head() -> str | None:
-    if time.time() - _remote_cache["at"] < 60 and _remote_cache["head"]:
+    if time.monotonic() - _remote_cache["at"] < 60:
         return _remote_cache["head"]
     try:
         p = _git("ls-remote", REPO, "main", timeout=15)
         _remote_cache["head"] = p.stdout.split()[0][:8] if p.returncode == 0 and p.stdout else None
     except Exception:
         _remote_cache["head"] = None
-    _remote_cache["at"] = time.time()
+    _remote_cache["at"] = time.monotonic()
     return _remote_cache["head"]
 
 
 def _tail(n: int = 250) -> str:
     try:
-        return "".join(_LOG.read_text(errors="replace").splitlines(keepends=True)[-n:])
+        lines = _LOG.read_text(errors="replace").splitlines()
+        return re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", "\n".join(lines[-n:]))
     except FileNotFoundError:
         return ""
 
@@ -83,12 +87,16 @@ def _recent() -> bool:
 
 @router.get("")
 def status():
-    rc = _RC.read_text().strip() if _RC.exists() else None
+    try:
+        rc = _RC.read_text().strip() or None
+    except FileNotFoundError:
+        rc = None
+    running = rc is None and _recent()
     src = _source_dir()
     local = _local_head(src) if src else None
-    remote = _remote_head()
+    remote = _remote_cache["head"] if running else _remote_head()
     return {
-        "running": rc is None and _recent(),
+        "running": running,
         "rc": rc, "log": _tail(), "source": src,
         "local": local, "remote": remote,
         "update_available": bool(remote and local != remote),
@@ -97,6 +105,15 @@ def status():
 
 @router.post("")
 def start_update(body: dict | None = None):
+    if not _start_lock.acquire(blocking=False):
+        raise HTTPException(409, "update já em andamento")
+    try:
+        return _start_update((body or {}).get("pull", True))
+    finally:
+        _start_lock.release()
+
+
+def _start_update(pull: bool):
     if not _RC.exists() and _recent():
         raise HTTPException(409, "update já em andamento")
     src = _ensure_source()
@@ -107,14 +124,43 @@ def start_update(body: dict | None = None):
     _RC.unlink(missing_ok=True)
     _LOG.write_text(f"=== Malta OS update ===\nfonte:  {src}\n"
                     f"local:  {local or 'desconhecido'}\nremoto: {remote or '?'}\n\n")
-    sync = "true"
-    if (body or {}).get("pull", True):
-        sync = ("git -c safe.directory='*' fetch origin main && "
-                "git -c safe.directory='*' reset --hard FETCH_HEAD") \
-            if Path(src, ".git").exists() else "echo 'fonte sem .git — usando fontes locais'"
-    cmd = ("systemd-run --unit=webos-manual-update --collect --quiet sh -c "
-           f"'cd {src} && {sync} && sh ./update.sh >> {_LOG} 2>&1; echo $? > {_RC}'")
-    proc = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    script = """
+    exec >> "$2" 2>&1
+    (
+        set -e
+        cd "$1"
+        if [ "$4" = 1 ]; then
+            if [ -e .git ]; then
+                echo "==> Buscando atualizações no Git"
+                git -c 'safe.directory=*' fetch --progress origin main
+                git -c 'safe.directory=*' reset --hard FETCH_HEAD
+            else
+                echo "fonte sem .git — usando fontes locais"
+            fi
+        fi
+        SKIP_GIT=1 sh ./update.sh
+    )
+    rc=$?
+    printf '\\n==> Código de saída: %s\\n' "$rc"
+    printf '%s\\n' "$rc" > "$3"
+    exit "$rc"
+    """
+    try:
+        proc = subprocess.run(
+            ["systemd-run", "--unit=webos-manual-update", "--collect", "--quiet",
+             "sh", "-c", script, "webos-update", src, str(_LOG), str(_RC),
+             "1" if pull else "0"],
+            capture_output=True, text=True,
+        )
+    except OSError as exc:
+        _record_launch_failure(str(exc), 1)
     if proc.returncode != 0:
-        raise HTTPException(500, proc.stderr.strip() or "systemd-run failed")
+        _record_launch_failure(proc.stderr.strip() or "systemd-run failed", proc.returncode)
     return {"ok": True, "source": src, "local": local, "remote": remote}
+
+
+def _record_launch_failure(message: str, rc: int):
+    with _LOG.open("a") as log:
+        log.write(f"\n{message}\n")
+    _RC.write_text(f"{rc}\n")
+    raise HTTPException(500, message)

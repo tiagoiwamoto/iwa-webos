@@ -43,17 +43,14 @@ RUN python3 -m venv agent/.venv \
 
 COPY web/package.json web/package-lock.json web/
 COPY web/scripts/ web/scripts/
-RUN cd web && npm ci --omit=dev && node scripts/patch-settings.js
+RUN cd web && npm ci --include=dev && node scripts/patch-settings.js
 
 COPY agent/ agent/
 COPY web/ web/
 # bundled app-store catalog of classic hosting apps (phpBB, MyBB, SMF…)
 COPY store/ store/
 COPY docker/images/ /home/images/
-# dist/{apps,themes,icons,sounds}/* are absolute symlinks made on the host;
-# wipe and regenerate for /opt/webos (discover only cleans apps + themes)
-RUN cd web && rm -rf dist/apps dist/themes dist/icons dist/sounds \
-    && npm run package:discover
+RUN cd web && npm run build && npm run package:discover
 
 COPY deploy/webos-agent.service deploy/webos-web.service /etc/systemd/system/
 COPY docker/webos-bootstrap.service /etc/systemd/system/

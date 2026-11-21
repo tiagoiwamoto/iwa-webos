@@ -3,6 +3,8 @@
 agent/.venv
 **/__pycache__
 web/node_modules
+web/dist
+web/packages.json
 web/session-store.db
 session-store.db
 Dockerfile
