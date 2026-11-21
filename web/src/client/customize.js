@@ -31,12 +31,18 @@ export const installedApps = core =>
 const iconUrl = (core, meta) => {
   const item = allDockItems(core).find(i => i.name === meta.name);
   const names = [];
-  if (item && item.icon) names.push(item.icon);
-  if (typeof meta.icon === 'string') names.push(meta.icon);
+  if (item && item.icon) {
+    names.push(item.icon);
+  }
+  if (typeof meta.icon === 'string') {
+    names.push(meta.icon);
+  }
   for (const name of names) {
     try {
       const url = core.make('osjs/theme').icon(name);
-      if (url) return url;
+      if (url) {
+        return url;
+      }
     } catch (e) { /* try next name */ }
   }
   return (meta.icon && meta.icon.src) || null;
@@ -151,6 +157,7 @@ export const removeAppShortcut = (core, filename) => {
 // desktop context-menu entries — registered once per session
 
 export const setupDesktopExtras = core => {
+  document.addEventListener('webos:manage-dock', () => openDockManager(core));
   const {t, onLocale} = useI18n(core);
   let added = false;
 

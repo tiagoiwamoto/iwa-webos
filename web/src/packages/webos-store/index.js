@@ -2,6 +2,7 @@ import osjs from 'osjs';
 import {name as applicationName} from './metadata.json';
 import {api} from '../_shared/api.js';
 import {el, css, button, statusbar, layout, confirmDialog} from '../_shared/ui.js';
+import {createLocalizedWindow} from '../_shared/i18n.js';
 
 css('webos-store', `
   .wstore-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -49,7 +50,9 @@ const register = (core, args, options, metadata) => {
       }
       grid.appendChild(el('div', {class: 'wstore-card'},
         el('img', {src: a.icon, loading: 'lazy',
-          onerror: ev => { ev.target.style.visibility = 'hidden'; }}),
+          onerror: ev => {
+            ev.target.style.visibility = 'hidden';
+          }}),
         el('div', {class: 'info'},
           el('div', {class: 't'}, a.title),
           el('div', {class: 'tag'}, a.tagline || ''),
@@ -85,14 +88,18 @@ const register = (core, args, options, metadata) => {
   const install = a => {
     sb.set(`installing ${a.title}...`);
     api.post('store/install', {id: a.id})
-      .then(() => { sb.set(`${a.title} installed`); refresh(); })
+      .then(() => {
+        sb.set(`${a.title} installed`); refresh();
+      })
       .catch(e => sb.error(e.message));
   };
 
   const act = (a, action) => {
     sb.set(`${action} ${a.title}...`);
     api.post('store/action', {id: a.id, action})
-      .then(() => { sb.set('ok'); refresh(); })
+      .then(() => {
+        sb.set('ok'); refresh();
+      })
       .catch(e => sb.error(e.message));
   };
 
@@ -100,7 +107,9 @@ const register = (core, args, options, metadata) => {
     confirmDialog(core, 'Uninstall app',
       `Remove ${a.title}? Runs 'docker compose down' and deletes its config.`)
       .then(ok => ok && api.del(`store/${a.id}`)
-        .then(() => { sb.set(`${a.title} removed`); refresh(); })
+        .then(() => {
+          sb.set(`${a.title} removed`); refresh();
+        })
         .catch(e => sb.error(e.message)));
   };
 
@@ -121,9 +130,8 @@ const register = (core, args, options, metadata) => {
     el('span', {style: {flex: '1'}}),
     button('Refresh', refresh));
 
-  proc.createWindow({
+  createLocalizedWindow(proc, {
     id: 'WebOSStoreWindow',
-    title: metadata.title.en_EN,
     dimension: {width: 820, height: 500}
   })
     .on('destroy', () => proc.destroy())

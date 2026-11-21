@@ -1,6 +1,7 @@
 import osjs from 'osjs';
 import {name as applicationName} from './metadata.json';
 import {el, css} from '../_shared/ui.js';
+import {createLocalizedWindow} from '../_shared/i18n.js';
 
 css('webos-browser', `
   .nn-root { display: flex; flex-direction: column; height: 100%; width: 100%;
@@ -65,12 +66,18 @@ const register = (core, args, options, metadata) => {
 
   const back = el('button', {class: 'nn-btn'}, el('span', {class: 'ic'}, '⬅'), 'Back');
   const fwd = el('button', {class: 'nn-btn'}, el('span', {class: 'ic'}, '➡'), 'Forward');
-  const state = () => { back.disabled = hi <= 0; fwd.disabled = hi >= hist.length - 1; };
+  const state = () => {
+    back.disabled = hi <= 0; fwd.disabled = hi >= hist.length - 1;
+  };
 
   const normalize = u => {
     u = (u || '').trim();
-    if (!u) return '';
-    if (!/^[a-z]+:/i.test(u)) u = (u.includes('.') && !u.includes(' ') ? 'https://' : 'https://lite.duckduckgo.com/lite/?q=') + (u.includes('.') && !u.includes(' ') ? u : encodeURIComponent(u));
+    if (!u) {
+      return '';
+    }
+    if (!/^[a-z]+:/i.test(u)) {
+      u = (u.includes('.') && !u.includes(' ') ? 'https://' : 'https://lite.duckduckgo.com/lite/?q=') + (u.includes('.') && !u.includes(' ') ? u : encodeURIComponent(u));
+    }
     return u;
   };
 
@@ -85,7 +92,9 @@ const register = (core, args, options, metadata) => {
 
   const nav = u => {
     u = normalize(u);
-    if (!u) return;
+    if (!u) {
+      return;
+    }
     hist.splice(hi + 1);
     hist.push(u);
     hi = hist.length - 1;
@@ -94,16 +103,32 @@ const register = (core, args, options, metadata) => {
     load(u);
   };
 
-  back.onclick = () => { if (hi > 0) { hi--; url.value = hist[hi]; state(); load(hist[hi]); } };
-  fwd.onclick = () => { if (hi < hist.length - 1) { hi++; url.value = hist[hi]; state(); load(hist[hi]); } };
+  back.onclick = () => {
+    if (hi > 0) {
+      hi--; url.value = hist[hi]; state(); load(hist[hi]);
+    }
+  };
+  fwd.onclick = () => {
+    if (hi < hist.length - 1) {
+      hi++; url.value = hist[hi]; state(); load(hist[hi]);
+    }
+  };
 
   frame.addEventListener('load', () => {
     throb.classList.remove('on');
     msg.textContent = 'Document: Done';
   });
-  url.addEventListener('keydown', e => { if (e.key === 'Enter') nav(url.value); });
+  url.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      nav(url.value);
+    }
+  });
 
-  const onMsg = e => { if (e.data && e.data.webosNav) nav(e.data.webosNav); };
+  const onMsg = e => {
+    if (e.data && e.data.webosNav) {
+      nav(e.data.webosNav);
+    }
+  };
   window.addEventListener('message', onMsg);
 
   const home = () => {
@@ -113,25 +138,36 @@ const register = (core, args, options, metadata) => {
     msg.textContent = 'Document: Done';
   };
 
-  proc.createWindow({
+  createLocalizedWindow(proc, {
     id: 'WebOSBrowserWindow',
-    title: 'Netscape Navigator — Malta OS',
     dimension: {width: 920, height: 560}
   })
-    .on('destroy', () => { window.removeEventListener('message', onMsg); proc.destroy(); })
+    .on('destroy', () => {
+      window.removeEventListener('message', onMsg); proc.destroy();
+    })
     .render($c => {
       $c.appendChild(el('div', {class: 'nn-root'},
         el('div', {class: 'nn-menus'}, ...MENUS.map(m => el('span', {}, m))),
         el('div', {class: 'nn-toolbar'},
           back, fwd,
-          (() => { const b = el('button', {class: 'nn-btn'}, el('span', {class: 'ic'}, '⟳'), 'Reload'); b.onclick = () => load(url.value || hist[hi] || ''); return b; })(),
-          (() => { const b = el('button', {class: 'nn-btn'}, el('span', {class: 'ic'}, '⌂'), 'Home'); b.onclick = home; return b; })(),
-          (() => { const b = el('button', {class: 'nn-btn'}, el('span', {class: 'ic'}, '✕'), 'Stop'); b.onclick = () => { frame.src = 'about:blank'; throb.classList.remove('on'); msg.textContent = 'Stopped.'; }; return b; })(),
+          (() => {
+            const b = el('button', {class: 'nn-btn'}, el('span', {class: 'ic'}, '⟳'), 'Reload'); b.onclick = () => load(url.value || hist[hi] || ''); return b;
+          })(),
+          (() => {
+            const b = el('button', {class: 'nn-btn'}, el('span', {class: 'ic'}, '⌂'), 'Home'); b.onclick = home; return b;
+          })(),
+          (() => {
+            const b = el('button', {class: 'nn-btn'}, el('span', {class: 'ic'}, '✕'), 'Stop'); b.onclick = () => {
+              frame.src = 'about:blank'; throb.classList.remove('on'); msg.textContent = 'Stopped.';
+            }; return b;
+          })(),
           throb),
         el('div', {class: 'nn-locbar'},
           el('label', {}, 'Location:'), url,
           el('label', {class: 'nn-proxy'}, proxy, 'proxy'),
-          (() => { const b = el('button', {class: 'nn-btn', style: 'min-width:40px'}, 'Go'); b.onclick = () => nav(url.value); return b; })()),
+          (() => {
+            const b = el('button', {class: 'nn-btn', style: 'min-width:40px'}, 'Go'); b.onclick = () => nav(url.value); return b;
+          })()),
         frame,
         el('div', {class: 'nn-status'}, '🔒', msg)));
       state();

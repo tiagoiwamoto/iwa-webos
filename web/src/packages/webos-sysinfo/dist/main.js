@@ -1309,7 +1309,7 @@ var formatBytes = function formatBytes(n) {
 /*!**************************************!*\
   !*** ./src/packages/_shared/i18n.js ***!
   \**************************************/
-/*! exports provided: LOCALES, intlLocale, getLocale, setLocale, watchLocale, useI18n, metaTitle */
+/*! exports provided: LOCALES, intlLocale, getLocale, setLocale, watchLocale, useI18n, metaTitle, createLocalizedWindow */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -1321,6 +1321,18 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "watchLocale", function() { return watchLocale; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "useI18n", function() { return useI18n; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "metaTitle", function() { return metaTitle; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "createLocalizedWindow", function() { return createLocalizedWindow; });
+/* harmony import */ var _babel_runtime_helpers_slicedToArray__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @babel/runtime/helpers/slicedToArray */ "./node_modules/@babel/runtime/helpers/slicedToArray.js");
+/* harmony import */ var _babel_runtime_helpers_slicedToArray__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_babel_runtime_helpers_slicedToArray__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _babel_runtime_helpers_defineProperty__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @babel/runtime/helpers/defineProperty */ "./node_modules/@babel/runtime/helpers/defineProperty.js");
+/* harmony import */ var _babel_runtime_helpers_defineProperty__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_babel_runtime_helpers_defineProperty__WEBPACK_IMPORTED_MODULE_1__);
+
+
+
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) { symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); } keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { _babel_runtime_helpers_defineProperty__WEBPACK_IMPORTED_MODULE_1___default()(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+
 /*
  * Local i18n — user-chosen language stored in osjs/settings ('webos.locale'),
  * independent of the browser language. Dictionaries are namespaced per app
@@ -1369,7 +1381,14 @@ var intlLocale = function intlLocale(id) {
 };
 var getLocale = function getLocale(core) {
   try {
-    return core.make('osjs/settings').get('webos', 'locale') || 'en';
+    var settings = core.make('osjs/settings');
+    return settings.get('webos', 'locale') || {
+      pt_BR: 'pt_BR',
+      pt_PT: 'pt_PT',
+      es_ES: 'es',
+      ja_JP: 'ja',
+      zh_CN: 'zh'
+    }[settings.get('osjs/locale', 'language')] || 'en';
   } catch (e) {
     return 'en';
   }
@@ -1378,6 +1397,7 @@ var getLocale = function getLocale(core) {
 var OSJS_LOCALE = {
   en: 'en_EN',
   pt_BR: 'pt_BR',
+  pt_PT: 'pt_BR',
   zh: 'zh_CN'
 };
 var setLocale = function setLocale(core, id) {
@@ -1448,9 +1468,115 @@ var META_LOCALE = {
   zh: 'zh_CN'
 };
 var metaTitle = function metaTitle(core, m) {
+  if (m && m.name === 'Settings') return useI18n(core).t('shell.app.Settings');
   var title = m && m.title || {};
   return title[META_LOCALE[getLocale(core)]] || title.en_EN || m && m.name || '';
-}; // ---------------------------------------------------------------------------
+};
+var createLocalizedWindow = function createLocalizedWindow(proc, options) {
+  var title = function title() {
+    return metaTitle(proc.core, proc.metadata);
+  };
+
+  var win = proc.createWindow(_objectSpread(_objectSpread({}, options), {}, {
+    title: title()
+  }));
+
+  var _useI18n = useI18n(proc.core),
+      onLocale = _useI18n.onLocale;
+
+  win.on('destroy', onLocale(function () {
+    return win.setTitle(title());
+  }));
+  return win;
+}; // Labels used by the OS.js Settings package and its Malta OS controls.
+
+var preferences = {
+  Background: ['Plano de fundo', 'Fundo', 'Fondo', '背景', '背景'],
+  Themes: ['Temas', 'Temas', 'Temas', 'テーマ', '主题'],
+  Desktop: ['Área de trabalho', 'Ambiente de trabalho', 'Escritorio', 'デスクトップ', '桌面'],
+  Dock: ['Dock', 'Dock', 'Dock', 'ドック', '程序坞'],
+  Locales: ['Idioma', 'Idioma', 'Idioma', '言語', '语言'],
+  Settings: ['Configurações', 'Definições', 'Configuración', '設定', '设置'],
+  Save: ['Salvar', 'Guardar', 'Guardar', '保存', '保存'],
+  Language: ['Idioma', 'Idioma', 'Idioma', '言語', '语言'],
+  Image: ['Imagem', 'Imagem', 'Imagen', '画像', '图像'],
+  Style: ['Estilo', 'Estilo', 'Estilo', 'スタイル', '样式'],
+  Color: ['Cor', 'Cor', 'Color', '色', '颜色'],
+  Cover: ['Preencher', 'Preencher', 'Cubrir', '全体を覆う', '覆盖'],
+  Contain: ['Ajustar', 'Ajustar', 'Ajustar', '収める', '适应'],
+  Repeat: ['Repetir', 'Repetir', 'Repetir', '繰り返す', '平铺'],
+  Wallpapers: ['Papéis de parede', 'Imagens de fundo', 'Fondos de pantalla', '壁紙', '壁纸'],
+  Icons: ['Ícones', 'Ícones', 'Iconos', 'アイコン', '图标'],
+  Sounds: ['Sons', 'Sons', 'Sonidos', 'サウンド', '声音'],
+  None: ['Nenhum', 'Nenhum', 'Ninguno', 'なし', '无'],
+  Standard: ['Padrão', 'Predefinido', 'Estándar', '標準', '标准'],
+  Yes: ['Sim', 'Sim', 'Sí', 'はい', '是'],
+  No: ['Não', 'Não', 'No', 'いいえ', '否'],
+  System: ['Sistema', 'Sistema', 'Sistema', 'システム', '系统'],
+  Custom: ['Personalizada', 'Personalizada', 'Personalizado', 'カスタム', '自定义'],
+  'Enable desktop icons': ['Exibir ícones na área de trabalho', 'Mostrar ícones no ambiente de trabalho', 'Mostrar iconos del escritorio', 'デスクトップアイコンを表示', '显示桌面图标'],
+  'Font color Style': ['Estilo da cor do texto', 'Estilo da cor do texto', 'Estilo del color del texto', '文字色のスタイル', '文字颜色样式'],
+  'Custom font color': ['Cor personalizada do texto', 'Cor personalizada do texto', 'Color de texto personalizado', 'カスタム文字色', '自定义文字颜色'],
+  'Inverted background color': ['Cor de fundo invertida', 'Cor de fundo invertida', 'Color de fondo invertido', '背景色を反転', '反转背景颜色'],
+  'Custom color': ['Cor personalizada', 'Cor personalizada', 'Color personalizado', 'カスタム色', '自定义颜色'],
+  'Window style': ['Estilo das janelas', 'Estilo das janelas', 'Estilo de ventanas', 'ウィンドウのスタイル', '窗口样式'],
+  'Titlebar button size': ['Tamanho dos botões da barra de título', 'Tamanho dos botões da barra de título', 'Tamaño de los botones de la barra de título', 'タイトルバーのボタンサイズ', '标题栏按钮大小'],
+  'Select background': ['Selecionar fundo', 'Selecionar fundo', 'Seleccionar fondo', '背景を選択', '选择背景'],
+  'Upload image': ['Enviar imagem', 'Carregar imagem', 'Subir imagen', '画像をアップロード', '上传图像'],
+  'Image upload failed': ['Falha ao enviar a imagem', 'Falha ao carregar a imagem', 'Error al subir la imagen', '画像のアップロードに失敗しました', '图像上传失败']
+};
+
+var registerTranslations = function registerTranslations(ns, locales, labels) {
+  return registerDict(ns, Object.fromEntries(locales.map(function (locale, index) {
+    return [locale, Object.fromEntries(Object.entries(labels).map(function (_ref) {
+      var _ref2 = _babel_runtime_helpers_slicedToArray__WEBPACK_IMPORTED_MODULE_0___default()(_ref, 2),
+          key = _ref2[0],
+          translations = _ref2[1];
+
+      return [key, translations[index]];
+    }))];
+  })));
+};
+
+registerTranslations('preferences', ['pt_BR', 'pt_PT', 'es', 'ja', 'zh'], preferences);
+registerTranslations('mounts', LOCALES.map(function (_ref3) {
+  var id = _ref3.id;
+  return id;
+}), {
+  home: ['Home', 'Pasta pessoal', 'Pasta pessoal', 'Carpeta personal', 'ホーム', '主目录'],
+  host: ['Filesystem', 'Sistema de arquivos', 'Sistema de ficheiros', 'Sistema de archivos', 'ファイルシステム', '文件系统']
+});
+registerTranslations('sysinfo', LOCALES.map(function (_ref4) {
+  var id = _ref4.id;
+  return id;
+}), {
+  cores: ['{n} cores', '{n} núcleos', '{n} núcleos', '{n} núcleos', '{n} コア', '{n} 核'],
+  diskFree: ['Disk / · {size} free', 'Disco / · {size} livres', 'Disco / · {size} livres', 'Disco / · {size} libres', 'ディスク / · 空き {size}', '磁盘 / · 可用 {size}'],
+  netIO: ['Network I/O', 'E/S de rede', 'E/S de rede', 'E/S de red', 'ネットワーク I/O', '网络 I/O'],
+  diskIO: ['Disk I/O', 'E/S de disco', 'E/S de disco', 'E/S de disco', 'ディスク I/O', '磁盘 I/O'],
+  cpuTemp: ['CPU temperature', 'Temperatura da CPU', 'Temperatura do CPU', 'Temperatura de la CPU', 'CPU 温度', 'CPU 温度'],
+  model: ['Model', 'Modelo', 'Modelo', 'Modelo', 'モデル', '型号'],
+  machineId: ['Machine ID', 'ID da máquina', 'ID da máquina', 'ID de la máquina', 'マシン ID', '机器 ID'],
+  os: ['OS', 'Sistema operacional', 'Sistema operativo', 'Sistema operativo', 'OS', '操作系统'],
+  uptime: ['Uptime', 'Tempo de atividade', 'Tempo de atividade', 'Tiempo de actividad', '稼働時間', '运行时间'],
+  loadAvg: ['Load average', 'Carga média', 'Carga média', 'Carga media', '平均負荷', '平均负载'],
+  hostConfig: ['Host configuration', 'Configuração do host', 'Configuração do anfitrião', 'Configuración del host', 'ホスト設定', '主机设置'],
+  domain: ['Domain', 'Domínio', 'Domínio', 'Dominio', 'ドメイン', '域名'],
+  none: ['None', 'Nenhum', 'Nenhum', 'Ninguno', 'なし', '无'],
+  hostnamePrompt: ['New hostname (short name or FQDN):', 'Novo nome do host (nome curto ou FQDN):', 'Novo nome do anfitrião (nome curto ou FQDN):', 'Nuevo nombre del host (nombre corto o FQDN):', '新しいホスト名（短縮名または FQDN）:', '新主机名（短名称或 FQDN）：'],
+  hostnameSet: ['Hostname set to {name}', 'Nome do host alterado para {name}', 'Nome do anfitrião alterado para {name}', 'Nombre del host cambiado a {name}', 'ホスト名を {name} に設定しました', '主机名已设为 {name}'],
+  frequency: ['Frequency', 'Frequência', 'Frequência', 'Frecuencia', '周波数', '频率'],
+  processes: ['Processes', 'Processos', 'Processos', 'Procesos', 'プロセス', '进程'],
+  processCount: ['{total} total · {running} running', '{total} no total · {running} em execução', '{total} no total · {running} em execução', '{total} en total · {running} en ejecución', '合計 {total} · 実行中 {running}', '共 {total} 个 · 运行中 {running} 个'],
+  core: ['Core {n}', 'Núcleo {n}', 'Núcleo {n}', 'Núcleo {n}', 'コア {n}', '核心 {n}'],
+  receive: ['Receive', 'Recebimento', 'Receção', 'Recepción', '受信', '接收'],
+  transmit: ['Transmit', 'Envio', 'Envio', 'Transmisión', '送信', '发送'],
+  tcp: ['TCP connections', 'Conexões TCP', 'Ligações TCP', 'Conexiones TCP', 'TCP 接続', 'TCP 连接'],
+  memory: ['Memory', 'Memória', 'Memória', 'Memoria', 'メモリ', '内存'],
+  storage: ['Storage', 'Armazenamento', 'Armazenamento', 'Almacenamiento', 'ストレージ', '存储'],
+  updated: ['Updated at {time}', 'Atualizado às {time}', 'Atualizado às {time}', 'Actualizado a las {time}', '更新時刻 {time}', '更新时间 {time}'],
+  autoRefresh: ['Refreshes every 2 s', 'Atualiza a cada 2 s', 'Atualiza a cada 2 s', 'Se actualiza cada 2 s', '2 秒ごとに更新', '每 2 秒刷新']
+}); // ---------------------------------------------------------------------------
 
 registerDict('common', {
   en: {
@@ -4223,6 +4349,8 @@ __webpack_require__.r(__webpack_exports__);
 var _metadata_json__WEBPACK_IMPORTED_MODULE_1___namespace = /*#__PURE__*/__webpack_require__.t(/*! ./metadata.json */ "./src/packages/webos-sysinfo/metadata.json", 1);
 /* harmony import */ var _shared_api_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../_shared/api.js */ "./src/packages/_shared/api.js");
 /* harmony import */ var _shared_ui_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../_shared/ui.js */ "./src/packages/_shared/ui.js");
+/* harmony import */ var _shared_i18n_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../_shared/i18n.js */ "./src/packages/_shared/i18n.js");
+
 
 
 
@@ -4318,6 +4446,10 @@ const register = (core, args, options, metadata) => {
     options,
     metadata
   });
+  const {
+    t,
+    locale
+  } = Object(_shared_i18n_js__WEBPACK_IMPORTED_MODULE_4__["useI18n"])(core);
   const body = Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div');
   const sb = Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["statusbar"])();
   let timer = null;
@@ -4351,7 +4483,10 @@ const register = (core, args, options, metadata) => {
     });
 
     const mk = (pct, label, value) => {
-      const c = Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('canvas');
+      const c = Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('canvas', {
+        role: 'img',
+        'aria-label': `${label}: ${value}`
+      });
       gauge(c, pct, label, value);
       return Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
         class: 'wsi-gauge'
@@ -4362,10 +4497,14 @@ const register = (core, args, options, metadata) => {
 
     const mb = 1024 * 1024;
     const temp = (i.cpu.temps || []).reduce((m, t) => Math.max(m, t.temp || 0), 0);
-    gauges.append(mk(i.cpu.percent, `CPU · ${i.cpu.count} cores`, `${i.cpu.percent.toFixed(0)}%`), mk(i.memory.percent, `RAM · ${Object(_shared_api_js__WEBPACK_IMPORTED_MODULE_2__["formatBytes"])(i.memory.used)}/${Object(_shared_api_js__WEBPACK_IMPORTED_MODULE_2__["formatBytes"])(i.memory.total)}`, `${i.memory.percent.toFixed(0)}%`), mk(i.root_disk.percent, `Disk / · ${Object(_shared_api_js__WEBPACK_IMPORTED_MODULE_2__["formatBytes"])(i.root_disk.total - i.root_disk.used)} free`, `${i.root_disk.percent.toFixed(0)}%`), mk(logPct(netRate.rx + netRate.tx, 100 * mb), 'Network I/O', `\u2193${Object(_shared_api_js__WEBPACK_IMPORTED_MODULE_2__["formatBytes"])(netRate.rx)}/s \u2191${Object(_shared_api_js__WEBPACK_IMPORTED_MODULE_2__["formatBytes"])(netRate.tx)}/s`), mk(logPct(dioRate.r + dioRate.w, 500 * mb), 'Disk I/O', `R ${Object(_shared_api_js__WEBPACK_IMPORTED_MODULE_2__["formatBytes"])(dioRate.r)}/s W ${Object(_shared_api_js__WEBPACK_IMPORTED_MODULE_2__["formatBytes"])(dioRate.w)}/s`));
+    gauges.append(mk(i.cpu.percent, `CPU · ${t('sysinfo.cores', {
+      n: i.cpu.count
+    })}`, `${i.cpu.percent.toFixed(0)}%`), mk(i.memory.percent, `RAM · ${Object(_shared_api_js__WEBPACK_IMPORTED_MODULE_2__["formatBytes"])(i.memory.used)}/${Object(_shared_api_js__WEBPACK_IMPORTED_MODULE_2__["formatBytes"])(i.memory.total)}`, `${i.memory.percent.toFixed(0)}%`), mk(i.root_disk.percent, t('sysinfo.diskFree', {
+      size: Object(_shared_api_js__WEBPACK_IMPORTED_MODULE_2__["formatBytes"])(i.root_disk.total - i.root_disk.used)
+    }), `${i.root_disk.percent.toFixed(0)}%`), mk(logPct(netRate.rx + netRate.tx, 100 * mb), t('sysinfo.netIO'), `\u2193${Object(_shared_api_js__WEBPACK_IMPORTED_MODULE_2__["formatBytes"])(netRate.rx)}/s \u2191${Object(_shared_api_js__WEBPACK_IMPORTED_MODULE_2__["formatBytes"])(netRate.tx)}/s`), mk(logPct(dioRate.r + dioRate.w, 500 * mb), t('sysinfo.diskIO'), `R ${Object(_shared_api_js__WEBPACK_IMPORTED_MODULE_2__["formatBytes"])(dioRate.r)}/s W ${Object(_shared_api_js__WEBPACK_IMPORTED_MODULE_2__["formatBytes"])(dioRate.w)}/s`));
 
     if (temp > 0) {
-      gauges.appendChild(mk(Math.min(100, temp), 'CPU temp', `${temp.toFixed(1)}\u00b0C`));
+      gauges.appendChild(mk(Math.min(100, temp), t('sysinfo.cpuTemp'), `${temp.toFixed(1)}\u00b0C`));
     }
 
     body.appendChild(gauges);
@@ -4376,36 +4515,40 @@ const register = (core, args, options, metadata) => {
     });
     cards.append(Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
       class: 'wsi-card'
-    }, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('h3', {}, 'System'), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
+    }, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('h3', {}, t('shell.app.System')), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
       class: 'wsi-kv'
-    }, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('b', {}, 'Model'), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {}, i.model || '-'), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('b', {}, 'Machine ID'), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {}, i.machine_id || '-'), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('b', {}, 'OS'), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {}, i.os), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('b', {}, 'Kernel'), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {}, i.kernel), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('b', {}, 'Uptime'), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {}, fmtUptime(i.uptime_seconds)), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('b', {}, 'Load avg'), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {}, i.cpu.loadavg ? i.cpu.loadavg.map(x => x.toFixed(2)).join('  ') : '-'))), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
+    }, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('b', {}, t('sysinfo.model')), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {}, i.model || '-'), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('b', {}, t('sysinfo.machineId')), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {}, i.machine_id || '-'), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('b', {}, t('sysinfo.os')), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {}, i.os), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('b', {}, 'Kernel'), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {}, i.kernel), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('b', {}, t('sysinfo.uptime')), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {}, fmtUptime(i.uptime_seconds)), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('b', {}, t('sysinfo.loadAvg')), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {}, i.cpu.loadavg ? i.cpu.loadavg.map(x => x.toFixed(2)).join('  ') : '-'))), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
       class: 'wsi-card'
-    }, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('h3', {}, 'Host config'), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
+    }, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('h3', {}, t('sysinfo.hostConfig')), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
       class: 'wsi-kv'
-    }, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('b', {}, 'Hostname'), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {}, host || i.hostname || '-'), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('b', {}, 'Domain'), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {}, dom || '(none)')), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
+    }, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('b', {}, t('server.hostname')), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {}, host || i.hostname || '-'), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('b', {}, t('sysinfo.domain')), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {}, dom || t('sysinfo.none'))), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
       style: {
         marginTop: '12px',
         display: 'flex',
         gap: '8px',
         flexWrap: 'wrap'
       }
-    }, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["button"])('Set hostname', () => Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["promptText"])(core, 'Set hostname', 'New hostname (short name or FQDN host.domain):', host || '').then(v => v && Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["confirmDialog"])(core, 'Set hostname', `hostnamectl set-hostname ${v}?`).then(ok => ok && _shared_api_js__WEBPACK_IMPORTED_MODULE_2__["api"].post('system/hostname', {
+    }, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["button"])(t('server.setHostname'), () => Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["promptText"])(core, t('server.setHostname'), t('sysinfo.hostnamePrompt'), host || '').then(v => v && Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["confirmDialog"])(core, t('server.setHostname'), `hostnamectl set-hostname ${v}?`).then(ok => ok && _shared_api_js__WEBPACK_IMPORTED_MODULE_2__["api"].post('system/hostname', {
       hostname: v
     }).then(() => {
-      sb.set(`hostname set to ${v}`);
+      sb.set(t('sysinfo.hostnameSet', {
+        name: v
+      }));
       refresh();
     }).catch(e => sb.error(e.message))))))), // --- CPU: frequency, per-core usage, sensor temperatures ---
     Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
       class: 'wsi-card'
     }, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('h3', {}, 'CPU'), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
       class: 'wsi-kv'
-    }, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('b', {}, 'Frequency'), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {}, i.cpu.freq_mhz ? `${(i.cpu.freq_mhz / 1000).toFixed(2)} GHz` : '-'), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('b', {}, 'Processes'), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {}, `${i.processes.total} total · ${i.processes.running} running`)), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
+    }, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('b', {}, t('sysinfo.frequency')), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {}, i.cpu.freq_mhz ? `${(i.cpu.freq_mhz / 1000).toFixed(2)} GHz` : '-'), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('b', {}, t('sysinfo.processes')), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {}, t('sysinfo.processCount', i.processes))), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
       class: 'wsi-cores'
     }, ...(i.cpu.per_cpu || []).map((p, idx) => Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
       class: 'wsi-bar'
     }, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {
       class: 'n'
-    }, `core ${idx}`), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
+    }, t('sysinfo.core', {
+      n: idx
+    })), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
       class: 'tr'
     }, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
       class: 'f',
@@ -4423,17 +4566,17 @@ const register = (core, args, options, metadata) => {
     }, ...(i.cpu.temps || []).map(t => [Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('b', {}, t.sensor), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {}, `${(t.temp || 0).toFixed(1)}°C${t.critical ? ` (crit ${t.critical.toFixed(0)}°)` : ''}`)]).flat()) : null), // --- network: throughput + open TCP connections ---
     Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
       class: 'wsi-card'
-    }, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('h3', {}, 'Network'), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
+    }, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('h3', {}, t('server.network')), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
       class: 'wsi-kv'
-    }, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('b', {}, 'Receive'), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {}, `${Object(_shared_api_js__WEBPACK_IMPORTED_MODULE_2__["formatBytes"])(netRate.rx)}/s`), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('b', {}, 'Transmit'), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {}, `${Object(_shared_api_js__WEBPACK_IMPORTED_MODULE_2__["formatBytes"])(netRate.tx)}/s`), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('b', {}, 'Total rx/tx'), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {}, `${Object(_shared_api_js__WEBPACK_IMPORTED_MODULE_2__["formatBytes"])(i.network_io.rx_bytes)} / ${Object(_shared_api_js__WEBPACK_IMPORTED_MODULE_2__["formatBytes"])(i.network_io.tx_bytes)}`), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('b', {}, 'TCP conns'), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {}, i.network_io.connections == null ? '-' : String(i.network_io.connections)))), // --- memory: swap detail ---
+    }, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('b', {}, t('sysinfo.receive')), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {}, `${Object(_shared_api_js__WEBPACK_IMPORTED_MODULE_2__["formatBytes"])(netRate.rx)}/s`), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('b', {}, t('sysinfo.transmit')), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {}, `${Object(_shared_api_js__WEBPACK_IMPORTED_MODULE_2__["formatBytes"])(netRate.tx)}/s`), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('b', {}, 'Total rx/tx'), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {}, `${Object(_shared_api_js__WEBPACK_IMPORTED_MODULE_2__["formatBytes"])(i.network_io.rx_bytes)} / ${Object(_shared_api_js__WEBPACK_IMPORTED_MODULE_2__["formatBytes"])(i.network_io.tx_bytes)}`), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('b', {}, t('sysinfo.tcp')), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {}, typeof i.network_io.connections === 'number' ? String(i.network_io.connections) : '-'))), // --- memory: swap detail ---
     Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
       class: 'wsi-card'
-    }, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('h3', {}, 'Memory'), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
+    }, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('h3', {}, t('sysinfo.memory')), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
       class: 'wsi-kv'
-    }, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('b', {}, 'RAM'), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {}, `${Object(_shared_api_js__WEBPACK_IMPORTED_MODULE_2__["formatBytes"])(i.memory.used)} / ${Object(_shared_api_js__WEBPACK_IMPORTED_MODULE_2__["formatBytes"])(i.memory.total)}`), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('b', {}, 'Swap'), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {}, i.memory.swap_total ? `${Object(_shared_api_js__WEBPACK_IMPORTED_MODULE_2__["formatBytes"])(i.memory.swap_used)} / ${Object(_shared_api_js__WEBPACK_IMPORTED_MODULE_2__["formatBytes"])(i.memory.swap_total)} (${i.memory.swap_percent.toFixed(0)}%)` : 'none'))), // --- storage: every mounted filesystem ---
+    }, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('b', {}, 'RAM'), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {}, `${Object(_shared_api_js__WEBPACK_IMPORTED_MODULE_2__["formatBytes"])(i.memory.used)} / ${Object(_shared_api_js__WEBPACK_IMPORTED_MODULE_2__["formatBytes"])(i.memory.total)}`), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('b', {}, 'Swap'), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {}, i.memory.swap_total ? `${Object(_shared_api_js__WEBPACK_IMPORTED_MODULE_2__["formatBytes"])(i.memory.swap_used)} / ${Object(_shared_api_js__WEBPACK_IMPORTED_MODULE_2__["formatBytes"])(i.memory.swap_total)} (${i.memory.swap_percent.toFixed(0)}%)` : t('sysinfo.none')))), // --- storage: every mounted filesystem ---
     Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
       class: 'wsi-card'
-    }, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('h3', {}, 'Storage'), ...(i.mounts || []).map(m => Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
+    }, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('h3', {}, t('sysinfo.storage')), ...(i.mounts || []).map(m => Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
       class: 'wsi-bar'
     }, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {
       class: 'n',
@@ -4451,12 +4594,13 @@ const register = (core, args, options, metadata) => {
       title: m.device
     }, `${Object(_shared_api_js__WEBPACK_IMPORTED_MODULE_2__["formatBytes"])(m.used)}/${Object(_shared_api_js__WEBPACK_IMPORTED_MODULE_2__["formatBytes"])(m.total)}`)))));
     body.appendChild(cards);
-    sb.set('updated ' + new Date().toLocaleTimeString());
+    sb.set(t('sysinfo.updated', {
+      time: new Date().toLocaleTimeString(Object(_shared_i18n_js__WEBPACK_IMPORTED_MODULE_4__["intlLocale"])(locale()))
+    }));
   }).catch(e => sb.error(e.message));
 
-  proc.createWindow({
+  Object(_shared_i18n_js__WEBPACK_IMPORTED_MODULE_4__["createLocalizedWindow"])(proc, {
     id: 'WebOSSysInfoWindow',
-    title: metadata.title.en_EN,
     dimension: {
       width: 780,
       height: 640
@@ -4468,15 +4612,18 @@ const register = (core, args, options, metadata) => {
     $content.appendChild(Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["layout"])(Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
       class: 'webos-toolbar'
     }, Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {
+      i18n: 'sysinfo.autoRefresh',
       style: {
         color: '#889',
         fontSize: '11px'
       }
-    }, 'auto-refresh 2s'), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {
+    }), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('span', {
       style: {
         flex: '1'
       }
-    }), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["button"])('Refresh', refresh)), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
+    }), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["button"])({
+      i18n: 'refresh'
+    }, refresh)), Object(_shared_ui_js__WEBPACK_IMPORTED_MODULE_3__["el"])('div', {
       style: {
         overflow: 'auto'
       }

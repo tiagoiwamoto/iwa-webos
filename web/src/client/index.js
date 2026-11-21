@@ -56,10 +56,26 @@ import {createDock} from './dock.js';
 import {createWidgets} from './widgets.js';
 import {createNotifyWidget} from './notify.js';
 import {setupDesktopExtras} from './customize.js';
+import {getLocale, LOCALES, setLocale, useI18n} from '../packages/_shared/i18n.js';
 import './index.scss';
 
 const init = () => {
   const osjs = new Core(config, {});
+  const {t, onLocale} = useI18n(osjs);
+  osjs.singleton('webos/preferences', () => ({
+    translate: label => {
+      if (label.startsWith('cust.')) {
+        return t(label);
+      }
+      const key = 'preferences.' + label;
+      const translated = t(key);
+      return translated === key ? label : translated;
+    },
+    locales: LOCALES.map(({id, label}) => ({value: id, label})),
+    locale: () => getLocale(osjs),
+    setLocale: id => setLocale(osjs, id),
+    onLocale
+  }));
 
   // Register your service providers
   osjs.register(CoreServiceProvider);

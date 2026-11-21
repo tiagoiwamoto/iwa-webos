@@ -2,6 +2,7 @@ import osjs from 'osjs';
 import {name as applicationName} from './metadata.json';
 import {api} from '../_shared/api.js';
 import {el, css, button, statusbar, layout} from '../_shared/ui.js';
+import {createLocalizedWindow} from '../_shared/i18n.js';
 
 css('webos-logs', `
   .wlog-list { font-family: monospace; font-size: 11.5px; }
@@ -117,12 +118,13 @@ const register = (core, args, options, metadata) => {
   });
   liveCb.addEventListener('change', () => setLive(liveCb.checked));
 
-  proc.createWindow({
+  createLocalizedWindow(proc, {
     id: 'WebOSLogsWindow',
-    title: metadata.title.en_EN,
     dimension: {width: 880, height: 520}
   })
-    .on('destroy', () => { setLive(false); proc.destroy(); })
+    .on('destroy', () => {
+      setLive(false); proc.destroy();
+    })
     .render($content => {
       $content.appendChild(layout(
         el('div', {class: 'webos-toolbar'},

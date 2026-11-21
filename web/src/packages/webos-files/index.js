@@ -7,7 +7,7 @@ import osjs from 'osjs';
 import {name as applicationName} from './metadata.json';
 import {api, formatBytes} from '../_shared/api.js';
 import {el, css, statusbar, confirmDialog, promptText, baseStyles} from '../_shared/ui.js';
-import {useI18n, metaTitle, getLocale, intlLocale} from '../_shared/i18n.js';
+import {useI18n, metaTitle, getLocale, intlLocale, watchLocale} from '../_shared/i18n.js';
 
 css('webos-files', `
   .wf-wrap { display: flex; height: 100%; min-height: 0; }
@@ -58,7 +58,7 @@ css('webos-files', `
 `);
 
 const tbtn = (label, onclick, title, cls = '') =>
-  el('button', {class: 'webos-btn wf-toolbarbtn' + cls, onclick, title}, label);
+  el('button', {class: 'webos-btn wf-toolbarbtn' + cls, onclick, i18nTitle: title}, label);
 
 const join = (dir, name) => dir.replace(/\/?$/, '/') + name;
 const parent = path => {
@@ -70,19 +70,35 @@ const mountOf = path => path.slice(0, path.indexOf(':') + 1);
 const innerOf = path => path.slice(path.indexOf(':') + 1);
 const fmtDate = (it, core) => {
   const d = it.stat && (it.stat.mtime || it.stat.ctime);
-  if (!d) return '';
+  if (!d) {
+    return '';
+  }
   try {
     return new Date(d).toLocaleString(intlLocale(getLocale(core)));
-  } catch (e) { return ''; }
+  } catch (e) {
+    return '';
+  }
 };
 const glyph = it => {
-  if (it.isDirectory) return '📁';
+  if (it.isDirectory) {
+    return '📁';
+  }
   const m = it.mime || '';
-  if (m.startsWith('image/')) return '🖼️';
-  if (m.startsWith('video/')) return '🎬';
-  if (m.startsWith('audio/')) return '🎵';
-  if (m === 'application/pdf') return '📕';
-  if (/zip|tar|gzip|compress|archive/.test(m)) return '📦';
+  if (m.startsWith('image/')) {
+    return '🖼️';
+  }
+  if (m.startsWith('video/')) {
+    return '🎬';
+  }
+  if (m.startsWith('audio/')) {
+    return '🎵';
+  }
+  if (m === 'application/pdf') {
+    return '📕';
+  }
+  if (/zip|tar|gzip|compress|archive/.test(m)) {
+    return '📦';
+  }
   return '📄';
 };
 
@@ -90,6 +106,12 @@ const register = (core, args, options, metadata) => {
   const proc = core.make('osjs/application', {args, options, metadata});
   const vfs = core.make('osjs/vfs');
   const {t} = useI18n(core);
+  const mountLabel = mount => {
+    if (mount.name === 'home' || mount.name === 'host') {
+      return t('mounts.' + mount.name);
+    }
+    return mount.label || mount.name;
+  };
   const sb = statusbar();
   const sideBox = el('div', {class: 'wf-side'});
   const listBox = el('div', {class: 'wf-list'});
@@ -98,7 +120,9 @@ const register = (core, args, options, metadata) => {
   const fileInput = el('input', {type: 'file', multiple: true, style: {display: 'none'}});
 
   let cwd = (args.path && (args.path.path || args.path)) || 'home:/';
-  if (!/^[a-z]+:/.test(cwd)) cwd = 'host:' + cwd;
+  if (!/^[a-z]+:/.test(cwd)) {
+    cwd = 'host:' + cwd;
+  }
   let items = [];
   let sel = null;
   let sort = {key: 'name', dir: 1};
@@ -110,18 +134,30 @@ const register = (core, args, options, metadata) => {
   let devices = [];
   let crumbsEdit = false;
   const favorites = () => proc.settings.favorites || [];
-  const saveFavs = favs => { proc.settings.favorites = favs; proc.saveSettings(); };
+  const saveFavs = favs => {
+    proc.settings.favorites = favs; proc.saveSettings();
+  };
 
   // ---------- navigation ----------
 
   const nav = (path, push = true) => {
-    if (push && cwd !== path) { backStack.push(cwd); fwdStack = []; }
+    if (push && cwd !== path) {
+      backStack.push(cwd); fwdStack = [];
+    }
     cwd = path;
     sel = null;
     load();
   };
-  const goBack = () => { if (backStack.length) { fwdStack.push(cwd); nav(backStack.pop(), false); } };
-  const goFwd = () => { if (fwdStack.length) { backStack.push(cwd); nav(fwdStack.pop(), false); } };
+  const goBack = () => {
+    if (backStack.length) {
+      fwdStack.push(cwd); nav(backStack.pop(), false);
+    }
+  };
+  const goFwd = () => {
+    if (fwdStack.length) {
+      backStack.push(cwd); nav(fwdStack.pop(), false);
+    }
+  };
 
   const load = () => {
     sb.set(t('loading') + ' ' + cwd);
@@ -134,13 +170,17 @@ const register = (core, args, options, metadata) => {
         sb.set(t('files.items', {n: items.length}) + ' · ' +
           t('files.folders', {n: dirs}) + ' — ' + cwd);
       })
-      .catch(e => { items = []; renderAll(); sb.error(e.message || e); });
+      .catch(e => {
+        items = []; renderAll(); sb.error(e.message || e);
+      });
   };
 
   const sortItems = () => {
     const k = sort.key;
     items.sort((a, b) => {
-      if (a.isDirectory !== b.isDirectory) return a.isDirectory ? -1 : 1;
+      if (a.isDirectory !== b.isDirectory) {
+        return a.isDirectory ? -1 : 1;
+      }
       const va = k === 'size' ? (a.size || 0) : k === 'mtime'
         ? String((a.stat && a.stat.mtime) || '')
         : a.filename.toLowerCase();
@@ -160,7 +200,9 @@ const register = (core, args, options, metadata) => {
   // ---------- file ops ----------
 
   const open = it => {
-    if (it.isDirectory) { nav(it.path); return; }
+    if (it.isDirectory) {
+      nav(it.path); return;
+    }
     const mime = it.mime || '';
     const app = /^(image|video)\//.test(mime) ? 'Preview' : 'WebOSEditor';
     core.run(app, {file: it}).catch(e => sb.error(e.message));
@@ -183,16 +225,22 @@ const register = (core, args, options, metadata) => {
     t('files.deleteMsg', {name: it.filename}))
     .then(ok => ok && vfs.unlink(it).then(load).catch(e => sb.error(e.message)));
 
-  const doCopy = (it, cut) => { clipboard = {items: [it], cut}; renderStatus(); };
+  const doCopy = (it, cut) => {
+    clipboard = {items: [it], cut}; renderStatus();
+  };
   const doPaste = () => {
     const {items: src, cut} = clipboard;
-    if (!src.length) return;
+    if (!src.length) {
+      return;
+    }
     Promise.all(src.map(it => {
       const dest = {path: join(cwd, it.filename)};
       return (cut ? vfs.rename(it, dest) : vfs.copy(it, dest))
         .catch(e => sb.error(`${it.filename}: ${e.message}`));
     })).then(() => {
-      if (cut) clipboard = {items: [], cut: false};
+      if (cut) {
+        clipboard = {items: [], cut: false};
+      }
       load();
     });
   };
@@ -220,7 +268,9 @@ const register = (core, args, options, metadata) => {
     [...files].forEach(f => {
       sb.set(t('files.uploading', {name: f.name}));
       vfs.writefile({path: join(cwd, f.name)}, f)
-        .then(() => { sb.set(t('files.uploaded', {name: f.name})); load(); })
+        .then(() => {
+          sb.set(t('files.uploaded', {name: f.name})); load();
+        })
         .catch(e => sb.error(`${f.name}: ${e.message}`));
     });
   };
@@ -275,15 +325,19 @@ const register = (core, args, options, metadata) => {
       title: sub || path,
       onclick: () => extra.onclick ? extra.onclick() : nav(path)
     },
-      el('span', {class: 'ic'}, icon),
-      el('span', {class: 'nm'}, name),
-      sub ? el('span', {class: 'sub'}, sub) : null,
-      extra.x ? el('span', {
-        class: 'x', title: t('files.removeFav'),
-        onclick: ev => { ev.stopPropagation(); extra.x(); }
-      }, '✕') : null);
+    el('span', {class: 'ic'}, icon),
+    el('span', {class: 'nm'}, name),
+    sub ? el('span', {class: 'sub'}, sub) : null,
+    extra.x ? el('span', {
+      class: 'x', title: t('files.removeFav'),
+      onclick: ev => {
+        ev.stopPropagation(); extra.x();
+      }
+    }, '✕') : null);
     if (extra.menu) {
-      node.addEventListener('contextmenu', ev => { ev.preventDefault(); extra.menu(ev); });
+      node.addEventListener('contextmenu', ev => {
+        ev.preventDefault(); extra.menu(ev);
+      });
     }
     return node;
   };
@@ -301,7 +355,7 @@ const register = (core, args, options, metadata) => {
         (b.name in order ? order[b.name] : 9))
       .forEach(m => sideBox.appendChild(place(
         m.name === 'home' ? '🏠' : m.name === 'host' ? '💻' : '💾',
-        m.label || m.name, '', m.name + ':/')));
+        mountLabel(m), '', m.name + ':/')));
 
     sec(t('files.devices'));
     if (!devices.length) {
@@ -354,7 +408,9 @@ const register = (core, args, options, metadata) => {
   const loadDevices = () =>
     api.get('disks').then(data => {
       const flat = [];
-      const walk = n => (n.children || []).forEach(c => { flat.push(c); walk(c); });
+      const walk = n => (n.children || []).forEach(c => {
+        flat.push(c); walk(c);
+      });
       (data.blockdevices || []).forEach(d => walk(d));
       devices = flat.filter(n => n.type === 'part' || n.type === 'rom');
       renderSidebar();
@@ -371,7 +427,8 @@ const register = (core, args, options, metadata) => {
     }
     const mount = mountOf(cwd);
     const mounts = core.make('osjs/fs').mountpoints() || [];
-    const mlabel = (mounts.find(m => m.name + ':' === mount.slice(0, -1)) || {}).label || mount;
+    const entry = mounts.find(m => m.name + ':' === mount);
+    const mlabel = entry ? mountLabel(entry) : mount;
     crumbsBox.appendChild(el('span', {class: 'wf-crumb', onclick: () => nav(mount)}, mlabel));
     const parts = innerOf(cwd).split('/').filter(Boolean);
     let acc = mount;
@@ -401,10 +458,14 @@ const register = (core, args, options, metadata) => {
         const c = el('div', {
           class: 'wf-cell' + (sel === it ? ' sel' : ''),
           title: `${it.filename}\n${formatBytes(it.size)}`,
-          onclick: () => { sel = it; renderList(); renderStatus(); },
+          onclick: () => {
+            sel = it; renderList(); renderStatus();
+          },
           ondblclick: () => open(it)
         }, el('span', {class: 'g'}, glyph(it)), el('span', {class: 'n'}, it.filename));
-        c.addEventListener('contextmenu', ev => { ev.preventDefault(); sel = it; menu(ev, it); });
+        c.addEventListener('contextmenu', ev => {
+          ev.preventDefault(); sel = it; menu(ev, it);
+        });
         g.appendChild(c);
       });
       listBox.appendChild(g);
@@ -420,9 +481,13 @@ const register = (core, args, options, metadata) => {
         el('td', {}, it.isDirectory ? '' : formatBytes(it.size)),
         el('td', {}, fmtDate(it, core)),
         el('td', {}, it.isDirectory ? t('files.folder') : (it.mime || t('files.file'))));
-      tr.addEventListener('click', () => { sel = it; renderList(); renderStatus(); });
+      tr.addEventListener('click', () => {
+        sel = it; renderList(); renderStatus();
+      });
       tr.addEventListener('dblclick', () => open(it));
-      tr.addEventListener('contextmenu', ev => { ev.preventDefault(); sel = it; menu(ev, it); });
+      tr.addEventListener('contextmenu', ev => {
+        ev.preventDefault(); sel = it; menu(ev, it);
+      });
       return tr;
     }));
     listBox.appendChild(el('table', {class: 'webos-table'},
@@ -436,12 +501,12 @@ const register = (core, args, options, metadata) => {
       : '';
     sb.set(sel
       ? t('files.selInfo', {name: sel.filename,
-          info: sel.isDirectory ? t('files.folder')
-            : formatBytes(sel.size) + ' · ' + (sel.mime || '')}) + clip
+        info: sel.isDirectory ? t('files.folder')
+          : formatBytes(sel.size) + ' · ' + (sel.mime || '')}) + clip
       : t('files.items', {n: items.length}) + ' — ' + cwd + clip);
   };
 
-  const favBtn = tbtn('☆', () => toggleFav(cwd), t('files.favTitle'));
+  const favBtn = tbtn('☆', () => toggleFav(cwd), 'files.favTitle');
   const renderFavBtn = () => {
     favBtn.textContent = isFav(cwd) ? '★' : '☆';
     favBtn.classList.toggle('faved', isFav(cwd));
@@ -454,17 +519,19 @@ const register = (core, args, options, metadata) => {
     proc.saveSettings();
     viewBtn.textContent = view === 'grid' ? '☰' : '⊞';
     renderList();
-  }, t('files.viewToggle'));
+  }, 'files.viewToggle');
 
   const hiddenBtn = tbtn('.', () => {
     showHidden = !showHidden;
     hiddenBtn.classList.toggle('on', showHidden);
     load();
-  }, t('files.showHidden'));
+  }, 'files.showHidden');
   hiddenBtn.classList.toggle('on', showHidden);
 
-  const renderAll = () => {
-    renderCrumbs();
+  const renderAll = (preservePathEdit = false) => {
+    if (!preservePathEdit || !crumbsEdit) {
+      renderCrumbs();
+    }
     renderSidebar();
     renderList();
     renderStatus();
@@ -479,10 +546,18 @@ const register = (core, args, options, metadata) => {
       const v = pathEdit.value.trim();
       crumbsEdit = false;
       nav(/^[a-z]+:/.test(v) ? v : 'host:' + (v.startsWith('/') ? v : '/' + v));
-    } else if (ev.key === 'Escape') { crumbsEdit = false; renderCrumbs(); }
+    } else if (ev.key === 'Escape') {
+      crumbsEdit = false; renderCrumbs();
+    }
   });
-  pathEdit.addEventListener('blur', () => { if (crumbsEdit) { crumbsEdit = false; renderCrumbs(); } });
-  fileInput.addEventListener('change', () => { doUpload(fileInput.files); fileInput.value = ''; });
+  pathEdit.addEventListener('blur', () => {
+    if (crumbsEdit) {
+      crumbsEdit = false; renderCrumbs();
+    }
+  });
+  fileInput.addEventListener('change', () => {
+    doUpload(fileInput.files); fileInput.value = '';
+  });
   listBox.addEventListener('contextmenu', ev => {
     if (ev.target === listBox || ev.target.classList.contains('wf-grid') ||
         ev.target.classList.contains('wf-empty')) {
@@ -492,16 +567,18 @@ const register = (core, args, options, metadata) => {
     }
   });
 
-  const editBtn = tbtn('✎', () => { crumbsEdit = true; renderCrumbs(); },
-    t('files.editPath'));
+  const editBtn = tbtn('✎', () => {
+    crumbsEdit = true; renderCrumbs();
+  },
+  'files.editPath');
 
   const toolbar = el('div', {class: 'webos-toolbar'},
-    tbtn('←', goBack, t('files.back')), tbtn('→', goFwd, t('files.forward')),
-    tbtn('↑', () => nav(parent(cwd)), t('files.up')),
-    tbtn('⟳', load, t('files.refresh')),
+    tbtn('←', goBack, 'files.back'), tbtn('→', goFwd, 'files.forward'),
+    tbtn('↑', () => nav(parent(cwd)), 'files.up'),
+    tbtn('⟳', load, 'files.refresh'),
     crumbsBox, editBtn,
-    tbtn('📁+', doMkdir, t('files.newFolder')),
-    tbtn('⬆', () => fileInput.click(), t('files.upload')),
+    tbtn('📁+', doMkdir, 'files.newFolder'),
+    tbtn('⬆', () => fileInput.click(), 'files.upload'),
     favBtn, hiddenBtn, viewBtn);
 
   const win = proc.createWindow({
@@ -511,17 +588,30 @@ const register = (core, args, options, metadata) => {
   });
 
   win.on('destroy', () => proc.destroy());
+  watchLocale(proc, () => renderAll(true));
   win.on('keydown', (ev, w) => {
-    if (ev.target.tagName === 'INPUT') return;
-    if (ev.key === 'Backspace') { ev.preventDefault(); nav(parent(cwd)); }
-    else if (ev.key === 'Delete' && sel) { ev.preventDefault(); doDelete(sel); }
-    else if (ev.key === 'F2' && sel) { ev.preventDefault(); doRename(sel); }
-    else if (ev.key === 'Enter' && sel) { ev.preventDefault(); open(sel); }
-    else if (ev.ctrlKey && ev.key === 'l') { ev.preventDefault(); crumbsEdit = true; renderCrumbs(); }
-    else if (ev.ctrlKey && ev.key === 'c' && sel) { doCopy(sel, false); }
-    else if (ev.ctrlKey && ev.key === 'x' && sel) { doCopy(sel, true); }
-    else if (ev.ctrlKey && ev.key === 'v') { doPaste(); }
-    else if (ev.ctrlKey && ev.key === 'h') { ev.preventDefault(); hiddenBtn.click(); }
+    if (ev.target.tagName === 'INPUT') {
+      return;
+    }
+    if (ev.key === 'Backspace') {
+      ev.preventDefault(); nav(parent(cwd));
+    } else if (ev.key === 'Delete' && sel) {
+      ev.preventDefault(); doDelete(sel);
+    } else if (ev.key === 'F2' && sel) {
+      ev.preventDefault(); doRename(sel);
+    } else if (ev.key === 'Enter' && sel) {
+      ev.preventDefault(); open(sel);
+    } else if (ev.ctrlKey && ev.key === 'l') {
+      ev.preventDefault(); crumbsEdit = true; renderCrumbs();
+    } else if (ev.ctrlKey && ev.key === 'c' && sel) {
+      doCopy(sel, false);
+    } else if (ev.ctrlKey && ev.key === 'x' && sel) {
+      doCopy(sel, true);
+    } else if (ev.ctrlKey && ev.key === 'v') {
+      doPaste();
+    } else if (ev.ctrlKey && ev.key === 'h') {
+      ev.preventDefault(); hiddenBtn.click();
+    }
   });
 
   win.render($content => {

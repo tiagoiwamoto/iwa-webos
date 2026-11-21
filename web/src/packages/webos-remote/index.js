@@ -2,7 +2,7 @@ import osjs from 'osjs';
 import {name as applicationName} from './metadata.json';
 import {api, formatBytes} from '../_shared/api.js';
 import {el, css, button, table, statusbar, layout, confirmDialog} from '../_shared/ui.js';
-import {useI18n, metaTitle} from '../_shared/i18n.js';
+import {useI18n, createLocalizedWindow} from '../_shared/i18n.js';
 
 css('webos-remote', `
   .wr-form { margin: 8px; padding: 10px; background: #1d212b; display: none;
@@ -304,9 +304,8 @@ const register = (core, args, options, metadata) => {
       });
     }));
 
-  proc.createWindow({
+  createLocalizedWindow(proc, {
     id: 'WebOSRemoteWindow',
-    title: metaTitle(core, metadata),
     dimension: {width: 780, height: 520}
   })
     .on('destroy', () => proc.destroy())

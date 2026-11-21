@@ -2,7 +2,7 @@ import osjs from 'osjs';
 import {name as applicationName} from './metadata.json';
 import {api} from '../_shared/api.js';
 import {el, css, button, table, statusbar, layout, confirmDialog} from '../_shared/ui.js';
-import {useI18n, metaTitle} from '../_shared/i18n.js';
+import {useI18n, createLocalizedWindow} from '../_shared/i18n.js';
 
 css('webos-backup', `
   .wb-card { margin: 8px; padding: 12px; background: #1d212b;
@@ -97,7 +97,9 @@ const register = (core, args, options, metadata) => {
       statusCard.appendChild(button(t('backup.manualToken'),
         () => tokenBox.classList.toggle('open')));
     }
-    if (r.running) { setRunning(true); }
+    if (r.running) {
+      setRunning(true);
+    }
   }).catch(e => sb.error(e.message));
 
   // ---------- auth flow ----------
@@ -123,8 +125,10 @@ const register = (core, args, options, metadata) => {
       authBox.appendChild(el('div', {},
         button(t('backup.finish'), () => {
           api.post('backup/auth/finish', {sid: authSid, url: urlIn.value})
-            .then(() => { authBox.classList.remove('open');
-              sb.set(t('backup.connectedMsg')); refresh(); })
+            .then(() => {
+              authBox.classList.remove('open');
+              sb.set(t('backup.connectedMsg')); refresh();
+            })
             .catch(e => sb.error(e.message));
         }),
         button(t('cancel'), () => {
@@ -140,7 +144,9 @@ const register = (core, args, options, metadata) => {
   tokenBox.appendChild(tokIn);
   tokenBox.appendChild(button(t('backup.saveToken'), () => {
     api.post('backup/auth/token', {token: tokIn.value})
-      .then(() => { tokenBox.classList.remove('open'); refresh(); })
+      .then(() => {
+        tokenBox.classList.remove('open'); refresh();
+      })
       .catch(e => sb.error(e.message));
   }));
 
@@ -165,7 +171,7 @@ const register = (core, args, options, metadata) => {
           el('div', {class: 'wb-pick-dir',
             onclick: () => go(cur === '/' || cur === ''
               ? cur + d : cur + '/' + d)},
-            el('span', {class: 'ic'}, '📁'), d)));
+          el('span', {class: 'ic'}, '📁'), d)));
       }).catch(e => {
         listBox.textContent = '';
         listBox.appendChild(el('div', {class: 'wb-pick-empty'},
@@ -186,7 +192,9 @@ const register = (core, args, options, metadata) => {
         listBox,
         el('div', {class: 'wb-pick-foot'},
           button(t('cancel'), () => win.destroy()),
-          button(t('backup.selThis'), () => { cb(cur); win.destroy(); }))));
+          button(t('backup.selThis'), () => {
+            cb(cur); win.destroy();
+          }))));
       go(cur);
     });
   };
@@ -221,7 +229,9 @@ const register = (core, args, options, metadata) => {
           button(j.enabled ? 'Off' : 'On', () =>
             api.post(`backup/jobs/${j.id}/toggle`).then(loadJobs)),
           button('Sync', () => api.post('backup/sync', {id: j.id})
-            .then(() => { setRunning(true); sb.set(t('backup.syncStarted')); })
+            .then(() => {
+              setRunning(true); sb.set(t('backup.syncStarted'));
+            })
             .catch(e => sb.error(e.message))),
           button(t('del'), () =>
             api.del(`backup/jobs/${j.id}`).then(loadJobs)))
@@ -236,25 +246,36 @@ const register = (core, args, options, metadata) => {
   jobsCard.appendChild(el('div', {style: {marginTop: '8px'}},
     localIn,
     button('📁', () => dirPicker(t('backup.pickLocal'), localDirs,
-      p => { localIn.value = p; }), false),
+      p => {
+        localIn.value = p;
+      }), false),
     remoteIn,
     button('☁️', () => dirPicker(t('backup.pickRemote'), remoteDirs,
-      p => { remoteIn.value = p; }, true)),
+      p => {
+        remoteIn.value = p;
+      }, true)),
     button(t('add'), () => {
       api.post('backup/jobs', {local: localIn.value, remote: remoteIn.value})
-        .then(() => { localIn.value = remoteIn.value = ''; loadJobs(); })
+        .then(() => {
+          localIn.value = remoteIn.value = ''; loadJobs();
+        })
         .catch(e => sb.error(e.message));
     }),
     button(t('backup.syncAll'), () => api.post('backup/sync', {})
-      .then(() => { setRunning(true); sb.set(t('backup.syncStarted')); })
+      .then(() => {
+        setRunning(true); sb.set(t('backup.syncStarted'));
+      })
       .catch(e => sb.error(e.message)))));
 
-  proc.createWindow({
+  createLocalizedWindow(proc, {
     id: 'WebOSBackupWindow',
-    title: metaTitle(core, metadata),
     dimension: {width: 760, height: 540}
   })
-    .on('destroy', () => { if (polling) { clearInterval(polling); } proc.destroy(); })
+    .on('destroy', () => {
+      if (polling) {
+        clearInterval(polling);
+      } proc.destroy();
+    })
     .render($content => {
       $content.appendChild(layout(
         el('div', {class: 'webos-toolbar'},

@@ -26,14 +26,17 @@ export const intlLocale = id =>
 
 export const getLocale = core => {
   try {
-    return core.make('osjs/settings').get('webos', 'locale') || 'en';
+    const settings = core.make('osjs/settings');
+    return settings.get('webos', 'locale') ||
+      ({pt_BR: 'pt_BR', pt_PT: 'pt_PT', es_ES: 'es', ja_JP: 'ja', zh_CN: 'zh'})[
+        settings.get('osjs/locale', 'language')] || 'en';
   } catch (e) {
     return 'en';
   }
 };
 
 // OS.js core only ships these translations — dialogs fall back to en_EN
-const OSJS_LOCALE = {en: 'en_EN', pt_BR: 'pt_BR', zh: 'zh_CN'};
+const OSJS_LOCALE = {en: 'en_EN', pt_BR: 'pt_BR', pt_PT: 'pt_BR', zh: 'zh_CN'};
 
 export const setLocale = (core, id) => {
   const s = core.make('osjs/settings');
@@ -77,10 +80,94 @@ const META_LOCALE = {en: 'en_EN', pt_BR: 'pt_BR', pt_PT: 'pt_PT',
   es: 'es_ES', ja: 'ja_JP', zh: 'zh_CN'};
 
 export const metaTitle = (core, m) => {
+  if (m && m.name === 'Settings') return useI18n(core).t('shell.app.Settings');
   const title = (m && m.title) || {};
   return title[META_LOCALE[getLocale(core)]] || title.en_EN ||
     (m && m.name) || '';
 };
+
+export const createLocalizedWindow = (proc, options) => {
+  const title = () => metaTitle(proc.core, proc.metadata);
+  const win = proc.createWindow({...options, title: title()});
+  const {onLocale} = useI18n(proc.core);
+  win.on('destroy', onLocale(() => win.setTitle(title())));
+  return win;
+};
+
+// Labels used by the OS.js Settings package and its Malta OS controls.
+const preferences = {
+  Background: ['Plano de fundo', 'Fundo', 'Fondo', '背景', '背景'],
+  Themes: ['Temas', 'Temas', 'Temas', 'テーマ', '主题'],
+  Desktop: ['Área de trabalho', 'Ambiente de trabalho', 'Escritorio', 'デスクトップ', '桌面'],
+  Dock: ['Dock', 'Dock', 'Dock', 'ドック', '程序坞'],
+  Locales: ['Idioma', 'Idioma', 'Idioma', '言語', '语言'],
+  Settings: ['Configurações', 'Definições', 'Configuración', '設定', '设置'],
+  Save: ['Salvar', 'Guardar', 'Guardar', '保存', '保存'],
+  Language: ['Idioma', 'Idioma', 'Idioma', '言語', '语言'],
+  Image: ['Imagem', 'Imagem', 'Imagen', '画像', '图像'],
+  Style: ['Estilo', 'Estilo', 'Estilo', 'スタイル', '样式'],
+  Color: ['Cor', 'Cor', 'Color', '色', '颜色'],
+  Cover: ['Preencher', 'Preencher', 'Cubrir', '全体を覆う', '覆盖'],
+  Contain: ['Ajustar', 'Ajustar', 'Ajustar', '収める', '适应'],
+  Repeat: ['Repetir', 'Repetir', 'Repetir', '繰り返す', '平铺'],
+  Wallpapers: ['Papéis de parede', 'Imagens de fundo', 'Fondos de pantalla', '壁紙', '壁纸'],
+  Icons: ['Ícones', 'Ícones', 'Iconos', 'アイコン', '图标'],
+  Sounds: ['Sons', 'Sons', 'Sonidos', 'サウンド', '声音'],
+  None: ['Nenhum', 'Nenhum', 'Ninguno', 'なし', '无'],
+  Standard: ['Padrão', 'Predefinido', 'Estándar', '標準', '标准'],
+  Yes: ['Sim', 'Sim', 'Sí', 'はい', '是'],
+  No: ['Não', 'Não', 'No', 'いいえ', '否'],
+  System: ['Sistema', 'Sistema', 'Sistema', 'システム', '系统'],
+  Custom: ['Personalizada', 'Personalizada', 'Personalizado', 'カスタム', '自定义'],
+  'Enable desktop icons': ['Exibir ícones na área de trabalho', 'Mostrar ícones no ambiente de trabalho', 'Mostrar iconos del escritorio', 'デスクトップアイコンを表示', '显示桌面图标'],
+  'Font color Style': ['Estilo da cor do texto', 'Estilo da cor do texto', 'Estilo del color del texto', '文字色のスタイル', '文字颜色样式'],
+  'Custom font color': ['Cor personalizada do texto', 'Cor personalizada do texto', 'Color de texto personalizado', 'カスタム文字色', '自定义文字颜色'],
+  'Inverted background color': ['Cor de fundo invertida', 'Cor de fundo invertida', 'Color de fondo invertido', '背景色を反転', '反转背景颜色'],
+  'Custom color': ['Cor personalizada', 'Cor personalizada', 'Color personalizado', 'カスタム色', '自定义颜色'],
+  'Window style': ['Estilo das janelas', 'Estilo das janelas', 'Estilo de ventanas', 'ウィンドウのスタイル', '窗口样式'],
+  'Titlebar button size': ['Tamanho dos botões da barra de título', 'Tamanho dos botões da barra de título', 'Tamaño de los botones de la barra de título', 'タイトルバーのボタンサイズ', '标题栏按钮大小'],
+  'Select background': ['Selecionar fundo', 'Selecionar fundo', 'Seleccionar fondo', '背景を選択', '选择背景'],
+  'Upload image': ['Enviar imagem', 'Carregar imagem', 'Subir imagen', '画像をアップロード', '上传图像'],
+  'Image upload failed': ['Falha ao enviar a imagem', 'Falha ao carregar a imagem', 'Error al subir la imagen', '画像のアップロードに失敗しました', '图像上传失败']
+};
+const registerTranslations = (ns, locales, labels) =>
+  registerDict(ns, Object.fromEntries(locales.map((locale, index) => [locale, Object.fromEntries(
+    Object.entries(labels).map(([key, translations]) => [key, translations[index]]))])));
+registerTranslations('preferences', ['pt_BR', 'pt_PT', 'es', 'ja', 'zh'], preferences);
+
+registerTranslations('mounts', LOCALES.map(({id}) => id), {
+  home: ['Home', 'Pasta pessoal', 'Pasta pessoal', 'Carpeta personal', 'ホーム', '主目录'],
+  host: ['Filesystem', 'Sistema de arquivos', 'Sistema de ficheiros', 'Sistema de archivos', 'ファイルシステム', '文件系统']
+});
+
+registerTranslations('sysinfo', LOCALES.map(({id}) => id), {
+  cores: ['{n} cores', '{n} núcleos', '{n} núcleos', '{n} núcleos', '{n} コア', '{n} 核'],
+  diskFree: ['Disk / · {size} free', 'Disco / · {size} livres', 'Disco / · {size} livres', 'Disco / · {size} libres', 'ディスク / · 空き {size}', '磁盘 / · 可用 {size}'],
+  netIO: ['Network I/O', 'E/S de rede', 'E/S de rede', 'E/S de red', 'ネットワーク I/O', '网络 I/O'],
+  diskIO: ['Disk I/O', 'E/S de disco', 'E/S de disco', 'E/S de disco', 'ディスク I/O', '磁盘 I/O'],
+  cpuTemp: ['CPU temperature', 'Temperatura da CPU', 'Temperatura do CPU', 'Temperatura de la CPU', 'CPU 温度', 'CPU 温度'],
+  model: ['Model', 'Modelo', 'Modelo', 'Modelo', 'モデル', '型号'],
+  machineId: ['Machine ID', 'ID da máquina', 'ID da máquina', 'ID de la máquina', 'マシン ID', '机器 ID'],
+  os: ['OS', 'Sistema operacional', 'Sistema operativo', 'Sistema operativo', 'OS', '操作系统'],
+  uptime: ['Uptime', 'Tempo de atividade', 'Tempo de atividade', 'Tiempo de actividad', '稼働時間', '运行时间'],
+  loadAvg: ['Load average', 'Carga média', 'Carga média', 'Carga media', '平均負荷', '平均负载'],
+  hostConfig: ['Host configuration', 'Configuração do host', 'Configuração do anfitrião', 'Configuración del host', 'ホスト設定', '主机设置'],
+  domain: ['Domain', 'Domínio', 'Domínio', 'Dominio', 'ドメイン', '域名'],
+  none: ['None', 'Nenhum', 'Nenhum', 'Ninguno', 'なし', '无'],
+  hostnamePrompt: ['New hostname (short name or FQDN):', 'Novo nome do host (nome curto ou FQDN):', 'Novo nome do anfitrião (nome curto ou FQDN):', 'Nuevo nombre del host (nombre corto o FQDN):', '新しいホスト名（短縮名または FQDN）:', '新主机名（短名称或 FQDN）：'],
+  hostnameSet: ['Hostname set to {name}', 'Nome do host alterado para {name}', 'Nome do anfitrião alterado para {name}', 'Nombre del host cambiado a {name}', 'ホスト名を {name} に設定しました', '主机名已设为 {name}'],
+  frequency: ['Frequency', 'Frequência', 'Frequência', 'Frecuencia', '周波数', '频率'],
+  processes: ['Processes', 'Processos', 'Processos', 'Procesos', 'プロセス', '进程'],
+  processCount: ['{total} total · {running} running', '{total} no total · {running} em execução', '{total} no total · {running} em execução', '{total} en total · {running} en ejecución', '合計 {total} · 実行中 {running}', '共 {total} 个 · 运行中 {running} 个'],
+  core: ['Core {n}', 'Núcleo {n}', 'Núcleo {n}', 'Núcleo {n}', 'コア {n}', '核心 {n}'],
+  receive: ['Receive', 'Recebimento', 'Receção', 'Recepción', '受信', '接收'],
+  transmit: ['Transmit', 'Envio', 'Envio', 'Transmisión', '送信', '发送'],
+  tcp: ['TCP connections', 'Conexões TCP', 'Ligações TCP', 'Conexiones TCP', 'TCP 接続', 'TCP 连接'],
+  memory: ['Memory', 'Memória', 'Memória', 'Memoria', 'メモリ', '内存'],
+  storage: ['Storage', 'Armazenamento', 'Armazenamento', 'Almacenamiento', 'ストレージ', '存储'],
+  updated: ['Updated at {time}', 'Atualizado às {time}', 'Atualizado às {time}', 'Actualizado a las {time}', '更新時刻 {time}', '更新时间 {time}'],
+  autoRefresh: ['Refreshes every 2 s', 'Atualiza a cada 2 s', 'Atualiza a cada 2 s', 'Se actualiza cada 2 s', '2 秒ごとに更新', '每 2 秒刷新']
+});
 
 // ---------------------------------------------------------------------------
 

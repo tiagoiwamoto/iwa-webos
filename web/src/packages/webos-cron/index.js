@@ -2,6 +2,7 @@ import osjs from 'osjs';
 import {name as applicationName} from './metadata.json';
 import {api} from '../_shared/api.js';
 import {el, css, button, table, statusbar, layout, confirmDialog} from '../_shared/ui.js';
+import {createLocalizedWindow} from '../_shared/i18n.js';
 
 css('webos-cron', `
   .wcron-card { display: flex; align-items: center; gap: 10px; margin: 8px 12px;
@@ -188,9 +189,8 @@ const register = (core, args, options, metadata) => {
     }).catch(e => sb.error(e.message));
   };
 
-  proc.createWindow({
+  createLocalizedWindow(proc, {
     id: 'WebOSCronWindow',
-    title: metadata.title.en_EN,
     dimension: {width: 720, height: 460}
   })
     .on('destroy', () => proc.destroy())

@@ -1,10 +1,11 @@
 /*
  * Injects Malta OS appearance items into the Settings app:
- *  - Themes: "Window style" + "Titlebar button size" selects
+ *  - Themes: window style and titlebar button size
  *    (saved under osjs/desktop -> webos.{wm,wbtn} — only `desktop.*` and
  *    `locale.*` paths survive the app's save()).
  *  - Background: "Wallpapers" gallery item rendered as clickable thumbnails
  *    via an injected `gallery` renderer.
+ *  - Dock: size, position, hover magnification and pinned apps.
  * The settings package ships only minified dist, so we patch it in place;
  * idempotent — safe to run after every npm ci.
  */
@@ -36,15 +37,35 @@ const themesInject = ',{label:"Window style",path:"desktop.webos.wm",' +
   'type:"select",defaultValue:"win11",choices:function(){return{' +
   '"":"Standard","macos":"macOS","win11":"Windows 11",' +
   '"kde":"KDE Breeze","gnome":"GNOME"}}},' +
-  '{label:"Titlebar button size",path:"desktop.webos.wbtn",type:"select",' +
-  'defaultValue:"14",choices:function(){return{' +
-  '"10":"small","14":"normal","18":"large","24":"huge"}}}' +
+  '{label:"Titlebar button size",path:"desktop.webos.wbtn",type:"webosRange",' +
+  'defaultValue:14,min:10,max:24}' +
   themesAnchor;
 if (!src.includes('desktop.webos.wm')) {
   if (!src.includes(themesAnchor)) {
     fail('themes anchor not found');
   }
   src = src.replace(themesAnchor, themesInject);
+}
+
+// Upgrade earlier runs of this patch as well as fresh package installs.
+src = src
+  .replace(/type:"select",defaultValue:"14",choices:function\(\)\{return\{"10":"small","14":"normal","18":"large","24":"huge"\}\}\}/,
+    'type:"webosRange",defaultValue:14,min:10,max:24}')
+  .replace('{label:"Appearance and dock",path:"desktop",type:"webosCustomize"},', '')
+  .replace(/,webosCustomize:function\(\)\{.*?(?=,webosLanguage:function|,gallery:function)/, '');
+
+const dockAnchor = ']},{title:"Locales"';
+const dockItems = ']},{title:"Dock",items:[' +
+  '{label:"cust.dockSize",path:"desktop.webos.docksize",type:"webosRange",defaultValue:48,min:32,max:72},' +
+  '{label:"cust.dockPos",path:"desktop.webos.dockpos",type:"select",defaultValue:"bottom",' +
+  'choices:function(){return{bottom:"cust.posBottom",left:"cust.posLeft",right:"cust.posRight"}}},' +
+  '{label:"cust.magnify",path:"desktop.webos.magnify",type:"webosToggle",defaultValue:true},' +
+  '{path:"desktop",type:"webosManageDock"}';
+if (!src.includes('title:"Dock",items:[')) {
+  if (!src.includes(dockAnchor)) {
+    fail('dock anchor not found');
+  }
+  src = src.replace(dockAnchor, dockItems + dockAnchor);
 }
 
 // --- wallpapers gallery item in the Background section ---
@@ -65,8 +86,8 @@ const galleryItem = JSON.stringify({
 });
 if (src.includes('type":"gallery"') || src.includes('type:"gallery"')) {
   // already injected — refresh the images list in place
-  src = src.replace(/("?images"?\s*:\s*)\[[^\]]*\]/,
-    '$1[' + JSON.stringify(GALLERY_IMAGES) + ']');
+  src = src.replace(/("?images"?\s*:\s*)\[+[^\]]*\]+/,
+    '$1' + JSON.stringify(GALLERY_IMAGES));
 } else {
   if (!src.includes(bgAnchor)) {
     fail('background anchor not found');
@@ -99,7 +120,7 @@ const galleryRenderer = ',gallery:function(t){return function(e,n){' +
       'box.appendChild(im)});' +
     'var up=document.createElement("div");' +
     'up.className="webos-wallpaper-upload";' +
-    'up.title="Enviar imagem (png, jpg, jpeg)";' +
+    'up.title=e.malta.translate("Upload image")+" (png, jpg, jpeg)";' +
     'up.textContent="+";' +
     'box.appendChild(up);' +
     'if(total>1){' +
@@ -147,7 +168,7 @@ const galleryRenderer = ',gallery:function(t){return function(e,n){' +
         'if(!r.ok)throw new Error("upload falhou: "+r.status);' +
         'n.update({path:t.path,value:{path:dir+"/"+name}});' +
         'load()})' +
-      '.catch(function(err){alert(err.message)})};' +
+      '.catch(function(){alert(e.malta.translate("Image upload failed"))})};' +
     'load()};' +
   'return f("div",{class:"webos-wallpaper-grid",oncreate:build})}}';
 const gStart = src.indexOf('gallery:function(t){return function(e,n){');
@@ -166,5 +187,51 @@ if (gStart === -1) {
   src = src.slice(0, gStart) + galleryRenderer.slice(1) + src.slice(gEnd);
 }
 
+const galleryAnchor = ',gallery:function(t){';
+
+const replaceOnce = (before, after) => {
+  if (src.includes(after)) return;
+  if (!src.includes(before)) fail('settings anchor not found: ' + before);
+  src = src.replace(before, after);
+};
+
+replaceOnce('g=p({loading:!1', 'g=p({malta:t.make("webos/preferences"),loading:!1');
+const translatedLabel = 'marginBottom:0}},t.label?e.malta.translate(t.label):"")';
+src = src.replace('marginBottom:0}},e.malta.translate(t.label))', translatedLabel);
+replaceOnce('marginBottom:0}},t.label)', translatedLabel);
+replaceOnce('labels:tt.map((function(t){return t.title}))',
+  'labels:tt.map((function(r){return t.malta.translate(r.title)}))');
+replaceOnce('d("LBL_SAVE"))', 't.malta.translate("Save"))');
+replaceOnce('choices:t.choices(e),oninput',
+  'choices:((choices)=>Array.isArray(choices)?choices.map(o=>({...o,label:e.malta.translate(o.label)})):' +
+    'Object.fromEntries(Object.entries(choices).map(([k,v])=>[k,e.malta.translate(v)])))(t.choices(e)),oninput');
+replaceOnce('title:"Select background"', 'title:e.malta.translate("Select background")');
+replaceOnce('label:"Language (requires restart)",path:"locale.language",type:"select",choices:function(t){return t.locales}',
+  'label:"Language",path:"locale.language",type:"webosLanguage"');
+replaceOnce(galleryAnchor, ',webosLanguage:function(){return function(e){' +
+  'return f(H,{value:e.malta.locale(),choices:e.malta.locales,oninput:function(_,id){' +
+  'e.malta.setLocale(id)}})}}' + galleryAnchor);
+replaceOnce('n.on("settings/refresh",(function(){return g.refresh()}))',
+  'var m=t.make("webos/preferences"),refresh=function(){n.setTitle(m.translate("Settings"));g.refresh()};' +
+  'n.on("settings/refresh",(function(){return g.refresh()}));n.on("destroy",m.onLocale(refresh));refresh()');
+
+replaceOnce('path:"desktop.iconview.enabled",type:"select",choices:',
+  'path:"desktop.iconview.enabled",type:"select",transformValue:function(value){return String(value!==false)},choices:');
+
+const languageRenderer = ',webosLanguage:function(){';
+replaceOnce(languageRenderer,
+  ',webosRange:function(t){return function(e,n){' +
+  'return f("div",{style:{display:"flex",alignItems:"center",gap:"8px"}},[' +
+  'f("input",{type:"range",min:t.min,max:t.max,value:t.value,' +
+  '"aria-label":e.malta.translate(t.label),oninput:function(ev){' +
+  'return n.update({path:t.path,value:Number(ev.target.value)})}}),' +
+  'f("span",{},t.value+" px")])}},' +
+  'webosToggle:function(t){return function(e,n){return f("input",{' +
+  'type:"checkbox",checked:t.value,"aria-label":e.malta.translate(t.label),' +
+  'onchange:function(ev){return n.update({path:t.path,value:ev.target.checked})}})}},' +
+  'webosManageDock:function(){return function(e){return f(I,{onclick:function(){' +
+  'document.dispatchEvent(new Event("webos:manage-dock"))}},e.malta.translate("cust.manageDock"))}}' +
+  languageRenderer);
+
 fs.writeFileSync(file, src);
-console.log('settings patched (themes + wallpaper gallery)');
+console.log('settings patched (themes, wallpapers, dock and localization)');

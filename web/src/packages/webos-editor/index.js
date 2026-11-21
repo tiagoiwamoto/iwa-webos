@@ -2,6 +2,7 @@ import osjs from 'osjs';
 import {name as applicationName} from './metadata.json';
 import {api} from '../_shared/api.js';
 import {el, button, statusbar, layout} from '../_shared/ui.js';
+import {metaTitle, watchLocale} from '../_shared/i18n.js';
 
 let monacoPromise = null;
 
@@ -50,13 +51,13 @@ const register = (core, args, options, metadata) => {
   const sb = statusbar();
   let editor = null;
   let currentPath = null;
-  const winTitle = metadata.title.en_EN;
+  const winTitle = () => metaTitle(core, metadata);
   let win = null;
 
   const setPath = p => {
     currentPath = p;
     if (win) {
-      win.setTitle(p ? `${p} — ${winTitle}` : winTitle);
+      win.setTitle(p ? `${p} — ${winTitle()}` : winTitle());
     }
     sb.set(p || '(no file)');
   };
@@ -99,7 +100,7 @@ const register = (core, args, options, metadata) => {
 
   win = proc.createWindow({
     id: 'WebOSEditorWindow',
-    title: winTitle,
+    title: winTitle(),
     dimension: {width: 800, height: 520}
   })
     .on('destroy', () => {
@@ -142,6 +143,8 @@ const register = (core, args, options, metadata) => {
       }).catch(e => sb.error(e.message));
     });
 
+  watchLocale(proc, () => win.setTitle(
+    currentPath ? `${currentPath} — ${winTitle()}` : winTitle()));
   return proc;
 };
 

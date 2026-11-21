@@ -4,6 +4,7 @@ import {Terminal} from 'xterm';
 import {FitAddon} from 'xterm-addon-fit';
 import {terminalSocket} from '../_shared/api.js';
 import {el, css, statusbar} from '../_shared/ui.js';
+import {createLocalizedWindow} from '../_shared/i18n.js';
 
 const ensureXtermCss = () => {
   if (!document.querySelector('link[href="/xterm.css"]')) {
@@ -48,11 +49,13 @@ const register = (core, args, options, metadata) => {
         class: `wterm-tab${i === active ? ' active' : ''}`,
         onclick: () => select(i)
       },
-        el('span', {}, t.title),
-        el('span', {
-          class: 'x', title: 'close tab',
-          onclick: ev => { ev.stopPropagation(); closeTab(i); }
-        }, '×')));
+      el('span', {}, t.title),
+      el('span', {
+        class: 'x', title: 'close tab',
+        onclick: ev => {
+          ev.stopPropagation(); closeTab(i);
+        }
+      }, '×')));
     });
     tabsBar.appendChild(el('button', {
       class: 'wterm-new', title: 'new tab',
@@ -62,7 +65,9 @@ const register = (core, args, options, metadata) => {
 
   const select = i => {
     active = i;
-    tabs.forEach((t, j) => { t.pane.style.display = j === i ? '' : 'none'; });
+    tabs.forEach((t, j) => {
+      t.pane.style.display = j === i ? '' : 'none';
+    });
     if (i >= 0 && tabs[i]) {
       const t = tabs[i];
       t.fit.fit();
@@ -84,7 +89,9 @@ const register = (core, args, options, metadata) => {
       return;
     }
     if (t.ws) {
-      try { t.ws.close(); } catch (e) { /* noop */ }
+      try {
+        t.ws.close();
+      } catch (e) { /* noop */ }
     }
     t.term.dispose();
     t.pane.remove();
@@ -142,15 +149,16 @@ const register = (core, args, options, metadata) => {
     select(tabs.length - 1);
   };
 
-  proc.createWindow({
+  createLocalizedWindow(proc, {
     id: 'WebOSTerminalWindow',
-    title: metadata.title.en_EN,
     dimension: {width: 780, height: 440}
   })
     .on('destroy', () => {
       tabs.forEach(t => {
         if (t.ws) {
-          try { t.ws.close(); } catch (e) { /* noop */ }
+          try {
+            t.ws.close();
+          } catch (e) { /* noop */ }
         }
       });
       if (observer) {
