@@ -15,22 +15,22 @@ const KIND_APP = {alert: 'WebOSAlerts', updates: 'WebOSUpdate',
 const body = (t, it) => {
   const p = it.params || {};
   switch (it.kind) {
-    case 'alert':
-      return t('ntf.alert', {metric: p.metric, value: p.value,
-        threshold: p.threshold});
-    case 'updates':
-      return t('ntf.updates', {count: p.count});
-    case 'unit':
-      return p.name && p.name !== p.unit
-        ? `${p.unit} — ${p.name}` : p.unit;
-    case 'log':
-      return p.msg || p.unit || '';
-    case 'backup':
-      return p.last
-        ? t('ntf.backupLast', {days: p.days})
-        : t('ntf.backupNever');
-    default:
-      return '';
+  case 'alert':
+    return t('ntf.alert', {metric: p.metric, value: p.value,
+      threshold: p.threshold});
+  case 'updates':
+    return t('ntf.updates', {count: p.count});
+  case 'unit':
+    return p.name && p.name !== p.unit
+      ? `${p.unit} — ${p.name}` : p.unit;
+  case 'log':
+    return p.msg || p.unit || '';
+  case 'backup':
+    return p.last
+      ? t('ntf.backupLast', {days: p.days})
+      : t('ntf.backupNever');
+  default:
+    return '';
   }
 };
 
