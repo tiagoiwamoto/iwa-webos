@@ -6,8 +6,10 @@ A browser-based "operating system desktop" for administering Linux —
 an alternative to traditional Cockpit/CasaOS/Webmin UIs.
 
 - **Shell**: [OS.js](https://github.com/os-js/OS.js) (`web/`) — windows with
-  minimize/maximize/close, GNOME-style launcher dock, widgets and
-  wallpapers.
+  minimize/maximize/close, dock with launcher and click-to-restore,
+  widgets and wallpapers.
+- **6 languages**: local dictionaries (en, pt-BR, pt-PT, es, ja, zh) with
+  instant switch — window titles, Settings and apps re-translate live.
 - **Privileged backend**: Python FastAPI agent (`agent/`) listening on
   `127.0.0.1:8765`, reachable only through the OS.js server's authenticated
   proxy.
@@ -92,6 +94,12 @@ system; everything the panel does happens **inside the container**.
 SKIP_GIT=1 ./update.sh    # skips the pull (sources already updated/manual)
 ```
 
+Run it as a normal user — it re-execs itself under `sudo` and, when
+already root, pulls the repo as the `.git` owner via `runuser`. The
+System Update app triggers the same script through `systemd-run`; the
+agent locates the source checkout via `WEBOS_SOURCE_DIR` (written to
+`.env` by the installer) or clones the repo into `/opt/webos-src`.
+
 `update.sh` makes an extra backup in `/opt/webos-state-backup/` and runs
 `install.sh`, which **does not touch** the data:
 
@@ -153,18 +161,33 @@ user).
 | Tasks | Lists processes, TERM/KILL/INT signals (protects PID1/agent) | agent `/api/processes` |
 | Services | systemd units: start/stop/enable/status | `systemctl` |
 | Disks | `fdisk -l`, mklabel/mkpart/mkfs, mount/umount, wipefs | `lsblk`+`parted` |
-| Docker | Containers/images: start/stop/logs/pull | docker socket |
-| App Store | Installs server apps (CasaOS index) | `docker compose` |
+| Docker | Containers/images: start/stop/logs/pull, edit env/ports/params and recreate | docker socket |
+| App Store | CasaOS index + bundled catalog (`store/`): 14 classic apps — WordPress, phpBB, MyBB, SMF, Joomla, Drupal, Ghost, MediaWiki, PrestaShop, osTicket, Kanboard, Flarum, Matomo, phpMyAdmin — works offline, icons via authenticated proxy | `docker compose` |
 | Users | User CRUD, password, lock/unlock | `useradd`/`usermod` |
+| Packages | apt search/install/remove, pending system updates, one-click install of missing admin tools | `apt` |
+| Network | Interfaces, addresses, routes, listening ports | `ip`/`ss` |
+| Firewall | ufw rules: list, allow/deny, enable/disable | `ufw` |
+| Web Sites | Nginx vhosts and reverse proxies | `nginx` |
+| Certificates | Let's Encrypt TLS issue/renew per site | `certbot` |
+| Databases | PostgreSQL/MySQL manager: object tree, tabbed SQL console, saved queries, table designer, CSV import/export, pop-out result windows | `psql`/`mysql` |
+| Shares | Samba/NFS shares: list, create, valid users | `testparm`/`exportfs` |
+| Security | SSH daemon options + fail2ban jails and banned IPs | `sshd`/`fail2ban` |
+| Drive Health | SMART status and attributes per disk | `smartctl` |
+| VPN | WireGuard interfaces, peers and client configs | `wg` |
+| Alerts | CPU/RAM/disk usage thresholds → desktop notifications | agent `/api/server/alerts` |
 | Cron | Visual crontab: presets, toggle, per user | `crontab` |
 | Logs | Journald with filters (unit/prio/time/text), live tail, export | `journalctl` |
 | Remote Access | Saved SSH/SFTP/SCP/FTP connections + remote browser, command exec and Git (clone/pull/push/log) | `ssh`/`scp`/`curl`/`git` |
 | Backup | Sync local folders to Google Drive (OAuth via rclone, jobs with toggle + on-demand sync) | `rclone` |
 | Navigator | Netscape-classic style web browser — back/forward/reload/stop, Location bar, retro home and same-origin proxy for sites that block iframes | iframe + proxy (`requests`) |
-| System Update | Malta OS update from the launcher — runs update.sh via systemd-run (survives service restarts) with live log; preserves all state | `update.sh`/`systemd-run` |
-| SysInfo | CPU/RAM/disk/network gauges, model, uptime, hostname | agent `/api/system` |
+| System Update | Malta OS update from the launcher — runs update.sh via systemd-run (survives service restarts) with live log, progress bar and update lock; preserves all state | `update.sh`/`systemd-run` |
+| SysInfo | CPU/RAM/disk/net-I/O gauges, per-core bars, sensor temps, per-mount usage, open TCP conns, hostname editor | agent `/api/system` |
 | Editor | Monaco for host files | agent `/api/files` |
-| Settings | Themes, window style (Win11/macOS/KDE/GNOME), wallpapers | OS.js settings |
+| Settings | Themes, window style (Win11/macOS/KDE/GNOME), wallpaper gallery + upload, dock (size/position/magnify/manage), language | OS.js settings |
+
+The server-administration apps (Packages → Alerts) share one agent module
+(`agent/app/routers/server.py`) and offer **one-click install** when the
+underlying tool is missing.
 
 ## Authentication (PAM)
 
@@ -179,6 +202,8 @@ With `WEBOS_AUTH=pam` the login validates against `/etc/passwd` +
 - **Terminal** inherits the logged-in user (`initgroups`/`setuid` in the
   PTY).
 - **`home:/`** points to the real `/home/<user>` (`WEBOS_VFS_ROOT=/home`).
+- **Sessions** persist in `/opt/webos/.sessions.json` (7-day TTL); logging
+  out from the session menu revokes the token.
 
 Without `WEBOS_AUTH=pam` dev mode applies: any credential gets in
 (null-adapter) and the terminal runs as root.
@@ -238,8 +263,9 @@ cd web && npm install \
   `host:/` gives full filesystem access — admin tool.
 - **Disks**: destructive operations validate the device and refuse
   mounted ones, but there's no undo.
-- **App Store** downloads compose files from a remote index — only run a
-  trusted source.
+- **App Store** merges the remote CasaOS index with the bundled `store/`
+  catalog — local recipes win conflicts and install offline; only run
+  apps you trust either way.
 - Node ≥ 20.6 (`process.loadEnvFile`). Build tested with Node 26.
 - Webpack 4 uses md4; `scripts/build.js` aliases it to sha256.
 - `scripts/patch-settings.js` injects the appearance/wallpaper items into
@@ -251,14 +277,18 @@ cd web && npm install \
 install.sh / uninstall.sh  # auto-detected install / removal
 agent/app/main.py          # FastAPI: token auth, routers
 agent/app/routers/*.py     # auth, system, files, disks, users, docker,
-                           # services, processes, store, logs, cron, terminal(WS)
+                           # services, processes, store, logs, cron,
+                           # terminal(WS), remote, backup, browser,
+                           # server, notifications, sysupdate
+agent/tests/               # pytest suite for the agent API
+store/                     # bundled app-store catalog (compose recipes)
 web/src/server/webos.js    # authenticated proxy /api/webos/* + /ws/webos/terminal
 web/src/server/auth-pam.js # OS.js -> PAM adapter (WEBOS_AUTH=pam)
 web/src/client/config.js   # mountpoints, default wallpaper
 web/src/client/dock.js     # dock, launcher, session menu, appearance
 web/src/client/widgets.js  # desktop system widgets
 web/src/packages/webos-*   # desktop apps
-web/src/packages/_shared/  # api.js + ui.js
+web/src/packages/_shared/  # api.js + ui.js + i18n.js + server-app.js
 web/scripts/build.js       # unified build (md4->sha256, brand replace)
 web/scripts/patch-settings.js # injects sections into the Settings app
 docker/images/             # wallpapers in /home/images
@@ -302,6 +332,8 @@ deploy/*.service           # systemd units (production AND container)
   [python-dotenv](https://github.com/theskumar/python-dotenv)
 - [rclone](https://rclone.org/) — Google Drive backup (headless OAuth +
   `rclone sync`)
+- [pytest](https://pytest.org) + [httpx](https://www.python-httpx.org/) —
+  agent test suite (`agent/tests/`)
 
 **App store**
 
@@ -323,6 +355,16 @@ deploy/*.service           # systemd units (production AND container)
 - `crontab` ([cron](https://github.com/cronie-crond/cronie)) — scheduler
 - [PAM](https://github.com/linux-pam/linux-pam) (`pam_unix`) —
   authentication
+- [nginx](https://nginx.org/) +
+  [certbot](https://certbot.eff.org/) — web sites and Let's Encrypt
+  certificates
+- [PostgreSQL](https://www.postgresql.org/) /
+  [MariaDB](https://mariadb.org/) — managed by the Databases app
+- [Samba](https://www.samba.org/) + NFS — file shares
+- [UFW](https://wiki.ubuntu.com/UncomplicatedFirewall) — firewall
+- [WireGuard](https://www.wireguard.com/) — VPN
+- [fail2ban](https://github.com/fail2ban/fail2ban) + OpenSSH — security
+- [smartmontools](https://www.smartmontools.org/) — drive health
 
 **Assets**
 
